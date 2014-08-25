@@ -92,7 +92,6 @@ public class TouchPane extends Pane {
             for (Bounds bound : objectByBounds.keySet()){
                 if (objectByBounds.get(bound) == interactableGroup) {
                     return bound;
-                    break;
                 }
             }
             return null;
