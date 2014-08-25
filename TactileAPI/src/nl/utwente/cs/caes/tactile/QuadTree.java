@@ -11,8 +11,8 @@ public class QuadTree {
 	private final int MAX_OBJECTS = 10;
 	private final int MAX_LEVELS = 5;
 
-	private List<BoundingBox> objectBoundingBoxes = new ArrayList<BoundingBox>();
-	private BoundingBox bounds;
+	private List<Bounds> objectBoundingBoxes = new ArrayList<Bounds>();
+	private Bounds bounds;
 	private QuadTree parent;
 	private QuadTree[] children = new QuadTree[4];
 	private int level;
@@ -24,13 +24,13 @@ public class QuadTree {
 	 * @param bounds
 	 *            The rectangle this node covers
 	 */
-	public QuadTree(BoundingBox bounds) {
+	public QuadTree(Bounds bounds) {
 		this.parent = null;
 		this.bounds = bounds;
 		this.level = 0;
 	}
 
-	private QuadTree(BoundingBox bounds, QuadTree parent, int level) {
+	private QuadTree(Bounds bounds, QuadTree parent, int level) {
 		this.parent = parent;
 		this.bounds = bounds;
 		this.level = level;
@@ -116,7 +116,7 @@ public class QuadTree {
 	 * @param bounds
 	 *            The Bounds to insert
 	 */
-	public void insert(BoundingBox bounds) {
+	public void insert(Bounds bounds) {
 		if (children[0] != null) {
 			int index = getIndex(bounds);
 
@@ -168,24 +168,24 @@ public class QuadTree {
 	 * Determines which node the rectangle belongs to. Returns -1 if it doesn't
 	 * fit in a child node.
 	 * 
-	 * @param boundingBox
-	 *            The BoundingBox to find the index for
+	 * @param bounds
+	 *            The Bounds to find the index for
 	 * @return The index for rectangle
 	 */
-	private int getIndex(BoundingBox boundingBox) {
+	private int getIndex(Bounds bounds) {
 		int index = -1;
 		double verticalMidpoint = bounds.getMinX() + (bounds.getWidth() / 2);
 		double horizontalMidpoint = bounds.getMinY() + (bounds.getHeight() / 2);
 
 		// Object can completely fit within the top quadrants
-		boolean topQuadrant = (boundingBox.getMinY() < horizontalMidpoint && boundingBox
-				.getMinY() + boundingBox.getHeight() < horizontalMidpoint);
+		boolean topQuadrant = (bounds.getMinY() < horizontalMidpoint && bounds
+				.getMinY() + bounds.getHeight() < horizontalMidpoint);
 		// Object can completely fit within the bottom quadrants
-		boolean bottomQuadrant = (boundingBox.getMinY() > horizontalMidpoint);
+		boolean bottomQuadrant = (bounds.getMinY() > horizontalMidpoint);
 
 		// Object can completely fit within the left quadrants
-		if (boundingBox.getMinX() < verticalMidpoint
-				&& boundingBox.getMinX() + boundingBox.getWidth() < verticalMidpoint) {
+		if (bounds.getMinX() < verticalMidpoint
+				&& bounds.getMinX() + bounds.getWidth() < verticalMidpoint) {
 			if (topQuadrant) {
 				index = 0;
 			} else if (bottomQuadrant) {
@@ -193,7 +193,7 @@ public class QuadTree {
 			}
 		}
 		// Object can completely fit within the right quadrants
-		else if (boundingBox.getMinX() > verticalMidpoint) {
+		else if (bounds.getMinX() > verticalMidpoint) {
 			if (topQuadrant) {
 				index = 1;
 			} else if (bottomQuadrant) {
