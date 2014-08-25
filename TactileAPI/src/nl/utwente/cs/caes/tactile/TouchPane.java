@@ -15,10 +15,14 @@ public class TouchPane extends Pane {
 	
 	public TouchPane() {
 		super();
+		addResizeListeners();
+		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
 	}
 	
         public TouchPane(Node... children){
 		super(children);
+		addResizeListeners();
+		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
 	}
 	
 	private void addResizeListeners(){
@@ -50,6 +54,11 @@ public class TouchPane extends Pane {
 		});
 	}
 
-    public void register(InteractableGroup object) {
-    }
+
+	public void register(InteractableGroup object) {
+		Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
+		objectByBounds.put(objectBounds, object);
+		quadTree.insert(objectBounds);
+	}
+
 }
