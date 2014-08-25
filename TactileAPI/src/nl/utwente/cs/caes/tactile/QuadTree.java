@@ -3,14 +3,16 @@ package nl.utwente.cs.caes.tactile;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.scene.shape.Rectangle;
 
 public class QuadTree {
 	private final int MAX_OBJECTS = 10;
 	private final int MAX_LEVELS = 5;
 
-	private List<Rectangle> objects = new ArrayList<Rectangle>();
-	private Rectangle bounds;
+	private List<Bounds> objectBoundingBoxes = new ArrayList<Bounds>();
+	private Bounds bounds;
 	private QuadTree parent;
 	private QuadTree[] children = new QuadTree[4];
 	private int level;
@@ -22,13 +24,13 @@ public class QuadTree {
 	 * @param bounds
 	 *            The rectangle this node covers
 	 */
-	public QuadTree(Rectangle bounds) {
+	public QuadTree(Bounds bounds) {
 		this.parent = null;
 		this.bounds = bounds;
 		this.level = 0;
 	}
 
-	private QuadTree(Rectangle bounds, QuadTree parent, int level) {
+	private QuadTree(Bounds bounds, QuadTree parent, int level) {
 		this.parent = parent;
 		this.bounds = bounds;
 		this.level = level;
@@ -61,7 +63,7 @@ public class QuadTree {
 	 * 
 	 * @return The bounds of this node
 	 */
-	public Rectangle getBounds() {
+	public Bounds getBounds() {
 		return bounds;
 	}
 
@@ -69,7 +71,7 @@ public class QuadTree {
 	 * Clears the QuadTree.
 	 */
 	public void clear() {
-		objects.clear();
+		objectBoundingBoxes.clear();
 
 		for (int i = 0; i < children.length; i++) {
 			children[i].clear();
@@ -80,30 +82,30 @@ public class QuadTree {
 	/**
 	 * Retrieves all objects that could collide with the given object
 	 * 
-	 * @param rectangle
-	 *            The rectangle to find objects for
+	 * @param boundingBox
+	 *            The BoundingBox to find objects for
 	 * @return A list of objects rectangle could collide with
 	 */
-	public List retrieve(Rectangle rectangle) {
-		int index = getIndex(rectangle);
+	public List retrieve(BoundingBox boundingBox) {
+		int index = getIndex(boundingBox);
 		List returnObjects = new ArrayList();
 		if (index != -1 && children[0] != null) {
-			children[index].retrieve(returnObjects, rectangle);
+			children[index].retrieve(returnObjects, boundingBox);
 		}
 
-		returnObjects.addAll(objects);
+		returnObjects.addAll(objectBoundingBoxes);
 
 		return returnObjects;
 	}
 
 	// Help method for recursion
-	private List retrieve(List returnObjects, Rectangle rectangle) {
-		int index = getIndex(rectangle);
+	private List retrieve(List returnObjects, BoundingBox boundingBox) {
+		int index = getIndex(boundingBox);
 		if (index != -1 && children[0] != null) {
-			children[index].retrieve(returnObjects, rectangle);
+			children[index].retrieve(returnObjects, boundingBox);
 		}
 
-		returnObjects.addAll(objects);
+		returnObjects.addAll(objectBoundingBoxes);
 
 		return returnObjects;
 	}
@@ -111,31 +113,31 @@ public class QuadTree {
 	/**
 	 * Inserts a rectangle into the QuadTree.
 	 * 
-	 * @param rectangle
-	 *            The Rectangle to insert
+	 * @param bounds
+	 *            The Bounds to insert
 	 */
-	public void insert(Rectangle rectangle) {
+	public void insert(Bounds bounds) {
 		if (children[0] != null) {
-			int index = getIndex(rectangle);
+			int index = getIndex(bounds);
 
 			if (index != -1) {
-				children[index].insert(rectangle);
+				children[index].insert(bounds);
 
 				return;
 			}
 		}
 
-		objects.add(rectangle);
+		objectBoundingBoxes.add(bounds);
 
-		if (objects.size() > MAX_OBJECTS && level < MAX_LEVELS
+		if (objectBoundingBoxes.size() > MAX_OBJECTS && level < MAX_LEVELS
 				&& children[0] == null) {
 			split();
 
 			int i = 0;
-			while (i < objects.size()) {
-				int index = getIndex(objects.get(i));
+			while (i < objectBoundingBoxes.size()) {
+				int index = getIndex(objectBoundingBoxes.get(i));
 				if (index != -1) {
-					children[index].insert(objects.remove(i));
+					children[index].insert(objectBoundingBoxes.remove(i));
 				} else {
 					i++;
 				}
@@ -149,16 +151,16 @@ public class QuadTree {
 	private void split() {
 		double halfWidth = bounds.getWidth() / 2.0;
 		double halfHeight = bounds.getHeight() / 2.0;
-		double x = bounds.getX();
-		double y = bounds.getY();
+		double x = bounds.getMinX();
+		double y = bounds.getMinY();
 
-		children[0] = new QuadTree(new Rectangle(x, y, halfWidth, halfHeight),
+		children[0] = new QuadTree(new BoundingBox(x, y, halfWidth, halfHeight),
 				this, level + 1);
-		children[1] = new QuadTree(new Rectangle(x + halfWidth, y, halfWidth,
+		children[1] = new QuadTree(new BoundingBox(x + halfWidth, y, halfWidth,
 				halfHeight), this, level + 1);
-		children[2] = new QuadTree(new Rectangle(x + halfWidth, y + halfHeight,
+		children[2] = new QuadTree(new BoundingBox(x + halfWidth, y + halfHeight,
 				halfWidth, halfHeight), this, level + 1);
-		children[3] = new QuadTree(new Rectangle(x, y + halfHeight, halfWidth,
+		children[3] = new QuadTree(new BoundingBox(x, y + halfHeight, halfWidth,
 				halfHeight), this, level + 1);
 	}
 
@@ -166,24 +168,24 @@ public class QuadTree {
 	 * Determines which node the rectangle belongs to. Returns -1 if it doesn't
 	 * fit in a child node.
 	 * 
-	 * @param rectangle
-	 *            The rectangle to find the index for
+	 * @param bounds
+	 *            The Bounds to find the index for
 	 * @return The index for rectangle
 	 */
-	private int getIndex(Rectangle rectangle) {
+	private int getIndex(Bounds bounds) {
 		int index = -1;
-		double verticalMidpoint = bounds.getX() + (bounds.getWidth() / 2);
-		double horizontalMidpoint = bounds.getY() + (bounds.getHeight() / 2);
+		double verticalMidpoint = bounds.getMinX() + (bounds.getWidth() / 2);
+		double horizontalMidpoint = bounds.getMinY() + (bounds.getHeight() / 2);
 
 		// Object can completely fit within the top quadrants
-		boolean topQuadrant = (rectangle.getY() < horizontalMidpoint && rectangle
-				.getY() + rectangle.getHeight() < horizontalMidpoint);
+		boolean topQuadrant = (bounds.getMinY() < horizontalMidpoint && bounds
+				.getMinY() + bounds.getHeight() < horizontalMidpoint);
 		// Object can completely fit within the bottom quadrants
-		boolean bottomQuadrant = (rectangle.getY() > horizontalMidpoint);
+		boolean bottomQuadrant = (bounds.getMinY() > horizontalMidpoint);
 
 		// Object can completely fit within the left quadrants
-		if (rectangle.getX() < verticalMidpoint
-				&& rectangle.getX() + rectangle.getWidth() < verticalMidpoint) {
+		if (bounds.getMinX() < verticalMidpoint
+				&& bounds.getMinX() + bounds.getWidth() < verticalMidpoint) {
 			if (topQuadrant) {
 				index = 0;
 			} else if (bottomQuadrant) {
@@ -191,7 +193,7 @@ public class QuadTree {
 			}
 		}
 		// Object can completely fit within the right quadrants
-		else if (rectangle.getX() > verticalMidpoint) {
+		else if (bounds.getMinX() > verticalMidpoint) {
 			if (topQuadrant) {
 				index = 1;
 			} else if (bottomQuadrant) {
@@ -209,12 +211,12 @@ public class QuadTree {
 	 * @param oldObject
 	 * @param newObject
 	 */
-	public void update(Rectangle oldObject, Rectangle newObject) {
+	public void update(BoundingBox oldObject, BoundingBox newObject) {
 		if (oldObject.equals(newObject)) {
 			return;
 		}
 
-		// Can be optimised
+		// Can be optimized
 		delete(oldObject);
 		insert(newObject);
 	}
@@ -227,8 +229,8 @@ public class QuadTree {
 	 * @return The QuadTree it was deleted from. Null if the object does not
 	 *         exist in the QuadTree.
 	 */
-	public QuadTree delete(Rectangle object) {
-		if (objects.remove(object)) {
+	public QuadTree delete(BoundingBox object) {
+		if (objectBoundingBoxes.remove(object)) {
 			return this;
 		}
 
