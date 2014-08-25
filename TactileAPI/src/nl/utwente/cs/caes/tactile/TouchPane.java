@@ -15,20 +15,19 @@ public class TouchPane extends Pane {
 	
 	public TouchPane() {
 		super();
-		addResizeListeners();
-		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
+		initialise();
 	}
 	
-        public TouchPane(Node... children){
+    public TouchPane(Node... children){
 		super(children);
-		addResizeListeners();
-		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
+		initialise();
 	}
 	
-	private void addResizeListeners(){
+    // Called by all constructors
+	private void initialise() {
 		TouchPane thisPane = this;
 		
-		// Can be optimised
+		// Add resize listeners (needs optimisation)
 		widthProperty().addListener(new ChangeListener<Number>() {
 
 			@Override
@@ -52,6 +51,9 @@ public class TouchPane extends Pane {
 				}
 			}
 		});
+		
+		// Initialise QuadTree
+		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
 	}
 
 
@@ -59,6 +61,18 @@ public class TouchPane extends Pane {
 		Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
 		objectByBounds.put(objectBounds, object);
 		quadTree.insert(objectBounds);
+	}
+	
+	public void deregister(InteractableGroup object) {
+		Bounds toRemove = null;
+		for (Bounds bounds : objectByBounds.keySet()){
+			if (objectByBounds.get(bounds) == object) {
+				toRemove = bounds;
+				break;
+			}
+		}
+		objectByBounds.remove(toRemove);
+		quadTree.delete(toRemove);
 	}
 
 }

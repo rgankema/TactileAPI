@@ -11,7 +11,15 @@ public class DraggableGroup extends Group {
 
 	public DraggableGroup(Node... nodes) {
 		super(nodes);
-
+		initialise();
+	}
+	
+	public DraggableGroup() {
+		super();
+		initialise();
+	}
+	
+	private void initialise() {
 		final Delta dragDelta = new Delta();
 
 		// Consume any synthesized MouseEvent so that TouchEvents aren't handled twice
@@ -82,7 +90,6 @@ public class DraggableGroup extends Group {
 				setTranslateY(event.getSceneY() + dragDelta.y);
 			}
 		});
-
 	}
 
 	private class Delta {
