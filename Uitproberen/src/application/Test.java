@@ -6,16 +6,19 @@
 
 package application;
 
-import javafx.scene.paint.Color;
+import java.util.HashMap;
+import java.util.Map;
 import javafx.scene.shape.Rectangle;
 import nl.utwente.cs.caes.tactile.QuadTree;
 
 
 /**
  *
- * @author Bernhard Laptop
+ * @author 
  */
 public class Test {
+    
+    Map<Object, Rectangle> objectToRectangle;
     
     public static void main(String[] args) {
         Rectangle rectangle1;
@@ -26,7 +29,13 @@ public class Test {
         qt.insert(rectangle2);
         System.out.println(qt.retrieve(rectangle2));
     }
+
+    public Test() {
+        this.objectToRectangle = new HashMap<>();
+    }
     
     
-    
+    public Rectangle getRectangle(Object object){
+        return objectToRectangle.get(object);
+    }
 }

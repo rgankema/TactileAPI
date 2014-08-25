@@ -19,7 +19,7 @@ public class TouchPane extends Pane {
 		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
 	}
 	
-	public TouchPane(Node... children){
+        public TouchPane(Node... children){
 		super(children);
 		addResizeListeners();
 		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
@@ -59,4 +59,5 @@ public class TouchPane extends Pane {
 		objectByBounds.put(objectBounds, object);
 		quadTree.insert(objectBounds);
 	}
+
 }
