@@ -9,17 +9,17 @@ import javafx.scene.shape.Rectangle;
 
 public class TouchPane extends Pane {
 	private Map<Rectangle, InteractableGroup> objectByBounds = new HashMap<Rectangle, InteractableGroup>();
-	private QuadTree quadTree;
+    private QuadTree quadTree;
+
+    public TouchPane() {
+            super();
+    }
 	
-	public TouchPane() {
-		super();
-	}
-	
-	public TouchPane(Node... children){
+    public TouchPane(Node... children){
 		super(children);
 	}
 
-	public void register(InteractableGroup object) {
-		
-	}
+    public void register(InteractableGroup object) {
+        
+    }
 }
