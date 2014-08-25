@@ -5,9 +5,9 @@ import java.util.List;
 
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
-import javafx.scene.shape.Rectangle;
 
-public class QuadTree {
+// public keyword should be removed later on, should be package-private
+public final class QuadTree {
 	private final int MAX_OBJECTS = 10;
 	private final int MAX_LEVELS = 5;
 
@@ -86,20 +86,19 @@ public class QuadTree {
 	 *            The BoundingBox to find objects for
 	 * @return A list of objects rectangle could collide with
 	 */
-	public List retrieve(BoundingBox boundingBox) {
+	public List<Bounds> retrieve(Bounds boundingBox) {
 		int index = getIndex(boundingBox);
-		List returnObjects = new ArrayList();
+		List<Bounds> returnObjects = new ArrayList<Bounds>();
 		if (index != -1 && children[0] != null) {
 			children[index].retrieve(returnObjects, boundingBox);
 		}
-
 		returnObjects.addAll(objectBoundingBoxes);
 
 		return returnObjects;
 	}
 
 	// Help method for recursion
-	private List retrieve(List returnObjects, BoundingBox boundingBox) {
+	private List<Bounds> retrieve(List<Bounds> returnObjects, Bounds boundingBox) {
 		int index = getIndex(boundingBox);
 		if (index != -1 && children[0] != null) {
 			children[index].retrieve(returnObjects, boundingBox);

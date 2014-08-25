@@ -69,6 +69,8 @@ public class DraggableGroup extends Group {
 			@Override
 			public void handle(MouseEvent event) {
 				System.out.println("MouseEvent");
+				System.out.println(event.getSource());
+				System.out.println(event.getTarget());
 				isInUse = false;
 			}
 		});

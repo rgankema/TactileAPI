@@ -10,7 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 
 public class TouchPane extends Pane {
-	private Map<Bounds, InteractableGroup> objectByBounds = new HashMap<Bounds, InteractableGroup>();
+	private Map<Bounds, ActionGroup> objectByBounds = new HashMap<Bounds, ActionGroup>();
 	private QuadTree quadTree;
 	
 	public TouchPane() {
@@ -57,13 +57,13 @@ public class TouchPane extends Pane {
 	}
 
 
-	public void register(InteractableGroup object) {
+	public void register(ActionGroup object) {
 		Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
 		objectByBounds.put(objectBounds, object);
 		quadTree.insert(objectBounds);
 	}
 	
-	public void deregister(InteractableGroup object) {
+	public void deregister(ActionGroup object) {
 		Bounds toRemove = null;
 		for (Bounds bounds : objectByBounds.keySet()){
 			if (objectByBounds.get(bounds) == object) {
