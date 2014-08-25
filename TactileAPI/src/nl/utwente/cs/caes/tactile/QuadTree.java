@@ -5,13 +5,13 @@ import java.util.List;
 
 import javafx.scene.shape.Rectangle;
 
-class QuadTree {
+public class QuadTree {
 	private final int MAX_OBJECTS = 10;
 	private final int MAX_LEVELS = 5;
 
-	private List<Rectangle> objects;
+	private List<Rectangle> objects = new ArrayList<Rectangle>();
 	private Rectangle bounds;
-	private QuadTree[] children;
+	private QuadTree[] children = new QuadTree[4];
 	private int level;
 
 	/**
