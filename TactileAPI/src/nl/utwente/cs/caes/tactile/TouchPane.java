@@ -2,7 +2,8 @@ package nl.utwente.cs.caes.tactile;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
@@ -56,9 +57,39 @@ public class TouchPane extends Pane {
 
 
 	public void register(InteractableGroup object) {
-		Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
-		objectByBounds.put(objectBounds, object);
-		quadTree.insert(objectBounds);
-	}
+		if (!objectByBounds.containsValue(object)) {
+                    Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
 
+                    objectByBounds.put(objectBounds, object);
+                    quadTree.insert(objectBounds);
+                }
+	}
+           
+        /**
+         * 
+         * @param bounds
+         * @return
+         */
+        public InteractableGroup getInteractableGroup(Bounds bounds) {
+                return objectByBounds.get(bounds);
+        }
+        
+        public Bounds getBounds(InteractableGroup interactableGroup) {
+            for (Bounds bound : objectByBounds.keySet()){
+                if (objectByBounds.get(bound) == interactableGroup) {
+                    return bound;
+                }
+            }
+            return null;
+        }
+        
+    /**
+     *
+     * @param value
+     * @return
+     */
+    public Bounds getKeysByValue(InteractableGroup value) {
+        
+    }
+        
 }
