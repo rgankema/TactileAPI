@@ -2,7 +2,8 @@ package nl.utwente.cs.caes.tactile;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
@@ -12,60 +13,65 @@ import javafx.scene.layout.Pane;
 public class TouchPane extends Pane {
 	private Map<Bounds, ActionGroup> objectByBounds = new HashMap<Bounds, ActionGroup>();
 	private QuadTree quadTree;
-	
+
 	public TouchPane() {
 		super();
 		initialise();
 	}
-	
-    public TouchPane(Node... children){
+
+	public TouchPane(Node... children) {
 		super(children);
 		initialise();
 	}
-	
-    // Called by all constructors
+
+	// Called by all constructors
 	private void initialise() {
 		TouchPane thisPane = this;
-		
+
 		// Add resize listeners (needs optimisation)
 		widthProperty().addListener(new ChangeListener<Number>() {
 
 			@Override
-			public void changed(ObservableValue<? extends Number> observableValue,
+			public void changed(
+					ObservableValue<? extends Number> observableValue,
 					Number oldWidth, Number newWidth) {
-				quadTree = new QuadTree(thisPane.localToScene(getBoundsInLocal()));
+				quadTree = new QuadTree(thisPane
+						.localToScene(getBoundsInLocal()));
 				for (Bounds bounds : objectByBounds.keySet()) {
 					quadTree.insert(bounds);
 				}
 			}
 		});
-		
+
 		heightProperty().addListener(new ChangeListener<Number>() {
 
 			@Override
-			public void changed(ObservableValue<? extends Number> observableValue,
+			public void changed(
+					ObservableValue<? extends Number> observableValue,
 					Number oldHeight, Number newHeight) {
-				quadTree = new QuadTree(thisPane.localToScene(getBoundsInLocal()));
+				quadTree = new QuadTree(thisPane
+						.localToScene(getBoundsInLocal()));
 				for (Bounds bounds : objectByBounds.keySet()) {
 					quadTree.insert(bounds);
 				}
 			}
 		});
-		
+
 		// Initialise QuadTree
 		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
 	}
 
-
 	public void register(ActionGroup object) {
-		Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
-		objectByBounds.put(objectBounds, object);
-		quadTree.insert(objectBounds);
+		if (!objectByBounds.containsValue(object)) {
+			Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
+			objectByBounds.put(objectBounds, object);
+			quadTree.insert(objectBounds);
+		}
 	}
-	
+
 	public void deregister(ActionGroup object) {
 		Bounds toRemove = null;
-		for (Bounds bounds : objectByBounds.keySet()){
+		for (Bounds bounds : objectByBounds.keySet()) {
 			if (objectByBounds.get(bounds) == object) {
 				toRemove = bounds;
 				break;
@@ -74,5 +80,4 @@ public class TouchPane extends Pane {
 		objectByBounds.remove(toRemove);
 		quadTree.delete(toRemove);
 	}
-
 }
