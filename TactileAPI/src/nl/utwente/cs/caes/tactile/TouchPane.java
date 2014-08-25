@@ -51,6 +51,5 @@ public class TouchPane extends Pane {
 	}
 
     public void register(InteractableGroup object) {
-        
     }
 }
