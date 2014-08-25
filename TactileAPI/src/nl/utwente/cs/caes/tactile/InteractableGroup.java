@@ -1,5 +1,7 @@
 package nl.utwente.cs.caes.tactile;
 
-public class InteractableGroup {
+import javafx.scene.Group;
 
+public class InteractableGroup extends Group {
+	
 }
