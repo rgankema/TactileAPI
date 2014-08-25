@@ -229,7 +229,7 @@ public class QuadTree {
 	 * @return The QuadTree it was deleted from. Null if the object does not
 	 *         exist in the QuadTree.
 	 */
-	public QuadTree delete(BoundingBox object) {
+	public QuadTree delete(Bounds object) {
 		if (objectBoundingBoxes.remove(object)) {
 			return this;
 		}
