@@ -87,14 +87,8 @@ public final class QuadTree {
 	 * @return A list of objects rectangle could collide with
 	 */
 	public List<Bounds> retrieve(Bounds boundingBox) {
-		int index = getIndex(boundingBox);
 		List<Bounds> returnObjects = new ArrayList<Bounds>();
-		if (index != -1 && children[0] != null) {
-			children[index].retrieve(returnObjects, boundingBox);
-		}
-		returnObjects.addAll(objectBoundingBoxes);
-
-		return returnObjects;
+		return retrieve(returnObjects, boundingBox);
 	}
 
 	// Help method for recursion
@@ -210,25 +204,21 @@ public final class QuadTree {
 	 * @param oldObject
 	 * @param newObject
 	 */
-	public void update(BoundingBox oldObject, BoundingBox newObject) {
-		if (oldObject.equals(newObject)) {
-			return;
-		}
-
-		// Can be optimized
-		delete(oldObject);
+	public void update(Bounds oldObject, Bounds newObject) {
+		// Needs to be optimized
+		remove(oldObject);
 		insert(newObject);
 	}
 
 	/**
-	 * Deletes an object, and returns the QuadTree it was deleted from.
+	 * Removes an object, and returns the QuadTree it was deleted from.
 	 * 
 	 * @param object
 	 *            The object that is to be deleted.
 	 * @return The QuadTree it was deleted from. Null if the object does not
 	 *         exist in the QuadTree.
 	 */
-	public QuadTree delete(Bounds object) {
+	public QuadTree remove(Bounds object) {
 		if (objectBoundingBoxes.remove(object)) {
 			return this;
 		}
@@ -238,7 +228,7 @@ public final class QuadTree {
 		}
 
 		int index = getIndex(object);
-		return children[index].delete(object);
+		return children[index].remove(object);
 	}
 
 }

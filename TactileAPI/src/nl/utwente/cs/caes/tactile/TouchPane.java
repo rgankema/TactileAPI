@@ -1,17 +1,19 @@
 package nl.utwente.cs.caes.tactile;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
+import javafx.animation.AnimationTimer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 
 public class TouchPane extends Pane {
-	private Map<Bounds, ActionGroup> objectByBounds = new HashMap<Bounds, ActionGroup>();
+	private Map<Bounds, ActionGroup> objectByBounds = new IdentityHashMap<Bounds, ActionGroup>();
 	private QuadTree quadTree;
 
 	public TouchPane() {
@@ -59,25 +61,83 @@ public class TouchPane extends Pane {
 
 		// Initialise QuadTree
 		quadTree = new QuadTree(this.localToScene(getBoundsInLocal()));
+
+		// Create AnimationTimer for collision checking
+		new AnimationTimer() {
+
+			@Override
+			public void handle(long now) {
+				// Update QuadTree, can likely be optimised
+				Map<Bounds, ActionGroup> newMap = new IdentityHashMap<Bounds, ActionGroup>();
+				for (Bounds oldBounds : objectByBounds.keySet()) {
+					ActionGroup actionGroup = objectByBounds.get(oldBounds);
+					Bounds newBounds = actionGroup.localToScene(actionGroup
+							.getBoundsInLocal());
+					quadTree.update(oldBounds, newBounds);
+					newMap.put(newBounds, actionGroup);
+				}
+				objectByBounds = newMap;
+
+				// Check for collisions
+				for (Bounds bounds : objectByBounds.keySet()) {
+					for (Bounds otherBounds : quadTree.retrieve(bounds)) {
+						if (bounds != otherBounds) {
+							if (bounds.intersects(otherBounds)) {
+								System.out.println("Collision detected");
+								// Todo: Fire real event, and also detect proximity
+							}
+						}
+					}
+				}
+			}
+		}.start();
 	}
 
-	public void register(ActionGroup object) {
-		if (!objectByBounds.containsValue(object)) {
-			Bounds objectBounds = object.localToScene(object.getBoundsInLocal());
-			objectByBounds.put(objectBounds, object);
+	/**
+	 * Registers an ActionGroup to the TouchPane. The TouchPane will track the
+	 * position of the ActionGroup and check for collisions / proximity events.
+	 * The ActionGroup should have this TouchPane as (indirect) ancestor.
+	 * 
+	 * @param actionGroup
+	 *            The ActionGroup that is to be tracked
+	 * @throws IllegalArgumentException
+	 *             If the ActionGroup does not have this TouchPane as (indirect)
+	 *             ancestor
+	 */
+	public void register(ActionGroup actionGroup) {
+		if (!objectByBounds.containsValue(actionGroup)) {
+			Parent ancestor = actionGroup.getParent();
+			while (ancestor != this) {
+				try {
+					ancestor = ancestor.getParent();
+				} catch (NullPointerException e) {
+					throw new IllegalArgumentException(
+							"The provided ActionGroup does not have this TouchPane as ancestor!");
+				}
+			}
+
+			Bounds objectBounds = actionGroup.localToScene(actionGroup
+					.getBoundsInLocal());
+			objectByBounds.put(objectBounds, actionGroup);
 			quadTree.insert(objectBounds);
 		}
 	}
 
-	public void deregister(ActionGroup object) {
+	/**
+	 * Deregisters an ActionGroup from the TouchPane.
+	 * 
+	 * @param actionGroup
+	 *            The ActionGroup that shoud be deregistered
+	 */
+	public void deregister(ActionGroup actionGroup) {
 		Bounds toRemove = null;
 		for (Bounds bounds : objectByBounds.keySet()) {
-			if (objectByBounds.get(bounds) == object) {
+			if (objectByBounds.get(bounds) == actionGroup) {
 				toRemove = bounds;
 				break;
 			}
 		}
 		objectByBounds.remove(toRemove);
-		quadTree.delete(toRemove);
+		quadTree.remove(toRemove);
 	}
 }

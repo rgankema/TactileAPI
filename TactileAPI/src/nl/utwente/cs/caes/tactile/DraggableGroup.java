@@ -36,7 +36,6 @@ public class DraggableGroup extends Group {
 		setOnTouchPressed(new EventHandler<TouchEvent>() {
 			@Override
 			public void handle(TouchEvent event) {
-				System.out.println("TouchEvent");
 				isInUse = true;
 				// record a delta distance for the drag and drop operation.
 				dragDelta.x = getTranslateX()
@@ -49,7 +48,6 @@ public class DraggableGroup extends Group {
 		setOnMousePressed(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				System.out.println("MouseEvent");
 				isInUse = true;
 				// record a delta distance for the drag and drop operation.
 				dragDelta.x = getTranslateX() - event.getSceneX();
@@ -60,7 +58,6 @@ public class DraggableGroup extends Group {
 		setOnTouchReleased(new EventHandler<TouchEvent>() {
 			@Override
 			public void handle(TouchEvent event) {
-				System.out.println("TouchEvent");
 				isInUse = false;
 			}
 		});
@@ -68,9 +65,6 @@ public class DraggableGroup extends Group {
 		setOnMouseReleased(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				System.out.println("MouseEvent");
-				System.out.println(event.getSource());
-				System.out.println(event.getTarget());
 				isInUse = false;
 			}
 		});
@@ -78,7 +72,6 @@ public class DraggableGroup extends Group {
 		setOnTouchMoved(new EventHandler<TouchEvent>() {
 			@Override
 			public void handle(TouchEvent event) {
-				System.out.println("TouchEvent");
 				setTranslateX(event.getTouchPoint().getSceneX() + dragDelta.x);
 				setTranslateY(event.getTouchPoint().getSceneY() + dragDelta.y);
 			}
@@ -87,11 +80,21 @@ public class DraggableGroup extends Group {
 		setOnMouseDragged(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				System.out.println("MouseEvent");
 				setTranslateX(event.getSceneX() + dragDelta.x);
 				setTranslateY(event.getSceneY() + dragDelta.y);
 			}
 		});
+	}
+	
+	// Kan aangeroepen worden door een ActionGroup om weg te gaan als er een
+	// andere incompatible ActionGroup in de buurt is. De distance is de
+	// distance (ongeveer) tussen de twee ActionGroups, de angle is de richting
+	// waarin de DraggableGroup moet bewegen, in graden. Bij een kleinere distance
+	// zou er dan bijvoorbeeld harder weggegaan kunnen worden?
+	protected void requestMove(double smallestPositiveGap, double angle){
+		if (!isInUse){
+			// Ga weg
+		}
 	}
 
 	private class Delta {

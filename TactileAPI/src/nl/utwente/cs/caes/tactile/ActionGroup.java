@@ -5,7 +5,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 
 public class ActionGroup extends Group {
-
+	
 	public ActionGroup() {
 		super();
 	}
