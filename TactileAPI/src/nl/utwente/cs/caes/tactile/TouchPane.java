@@ -1,19 +1,20 @@
 package nl.utwente.cs.caes.tactile;
 
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javafx.animation.AnimationTimer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 
 public class TouchPane extends Pane {
-	private Map<Bounds, ActionGroup> objectByBounds = new IdentityHashMap<Bounds, ActionGroup>();
+	private Set<ActionGroup> actionGroups = new HashSet<ActionGroup>();
 	private QuadTree quadTree;
 
 	public TouchPane() {
@@ -39,8 +40,8 @@ public class TouchPane extends Pane {
 					Number oldWidth, Number newWidth) {
 				quadTree = new QuadTree(thisPane
 						.localToScene(getBoundsInLocal()));
-				for (Bounds bounds : objectByBounds.keySet()) {
-					quadTree.insert(bounds);
+				for (Node ag : actionGroups) {
+					quadTree.insert(ag);
 				}
 			}
 		});
@@ -53,8 +54,8 @@ public class TouchPane extends Pane {
 					Number oldHeight, Number newHeight) {
 				quadTree = new QuadTree(thisPane
 						.localToScene(getBoundsInLocal()));
-				for (Bounds bounds : objectByBounds.keySet()) {
-					quadTree.insert(bounds);
+				for (Node ag : actionGroups) {
+					quadTree.insert(ag);
 				}
 			}
 		});
@@ -67,28 +68,10 @@ public class TouchPane extends Pane {
 
 			@Override
 			public void handle(long now) {
-				// Update QuadTree, can likely be optimised
-				Map<Bounds, ActionGroup> newMap = new IdentityHashMap<Bounds, ActionGroup>();
-				for (Bounds oldBounds : objectByBounds.keySet()) {
-					ActionGroup actionGroup = objectByBounds.get(oldBounds);
-					Bounds newBounds = actionGroup.localToScene(actionGroup
-							.getBoundsInLocal());
-					quadTree.update(oldBounds, newBounds);
-					newMap.put(newBounds, actionGroup);
-				}
-				objectByBounds = newMap;
+				// Update QuadTree
+				quadTree.update();
 
-				// Check for collisions
-				for (Bounds bounds : objectByBounds.keySet()) {
-					for (Bounds otherBounds : quadTree.retrieve(bounds)) {
-						if (bounds != otherBounds) {
-							if (bounds.intersects(otherBounds)) {
-								System.out.println("Collision detected");
-								// Todo: Fire real event, and also detect proximity
-							}
-						}
-					}
-				}
+				// TODO: Check for collisions
 			}
 		}.start();
 	}
@@ -105,7 +88,7 @@ public class TouchPane extends Pane {
 	 *             ancestor
 	 */
 	public void register(ActionGroup actionGroup) {
-		if (!objectByBounds.containsValue(actionGroup)) {
+		if (actionGroups.add(actionGroup)) {
 			Parent ancestor = actionGroup.getParent();
 			while (ancestor != this) {
 				try {
@@ -115,11 +98,7 @@ public class TouchPane extends Pane {
 							"The provided ActionGroup does not have this TouchPane as ancestor!");
 				}
 			}
-
-			Bounds objectBounds = actionGroup.localToScene(actionGroup
-					.getBoundsInLocal());
-			objectByBounds.put(objectBounds, actionGroup);
-			quadTree.insert(objectBounds);
+			quadTree.insert(actionGroup);
 		}
 	}
 
@@ -130,14 +109,7 @@ public class TouchPane extends Pane {
 	 *            The ActionGroup that shoud be deregistered
 	 */
 	public void deregister(ActionGroup actionGroup) {
-		Bounds toRemove = null;
-		for (Bounds bounds : objectByBounds.keySet()) {
-			if (objectByBounds.get(bounds) == actionGroup) {
-				toRemove = bounds;
-				break;
-			}
-		}
-		objectByBounds.remove(toRemove);
-		quadTree.remove(toRemove);
+		actionGroups.remove(actionGroup);
+		quadTree.remove(actionGroup);
 	}
 }

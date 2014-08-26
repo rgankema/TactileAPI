@@ -1,145 +1,114 @@
 package nl.utwente.cs.caes.tactile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 
-// public keyword should be removed later on, should be package-private
-public final class QuadTree {
+class QuadTree {
+	private final int MAX_DEPTH = 5;
 	private final int MAX_OBJECTS = 10;
-	private final int MAX_LEVELS = 5;
+	private double proximityThreshold;
 
-	private List<Bounds> objectBoundingBoxes = new ArrayList<Bounds>();
-	private Bounds bounds;
+	// Codes for getIndex
+	private final int THIS_NODE = -1;
+	private final int OTHER_NODE = -2;
+
 	private QuadTree parent;
-	private QuadTree[] children = new QuadTree[4];
-	private int level;
+	private QuadTree[] children;
+	private Bounds bounds;
+	private final int level;
+	private Map<Node, Bounds> boundsByObjects = new HashMap<Node, Bounds>();
 
 	/**
-	 * Creates a new QuadTree with the given maximum amount of objects per node
-	 * and the bounds of this node.
+	 * Constructor of the QuadTree
 	 * 
 	 * @param bounds
-	 *            The rectangle this node covers
+	 *            The bounds of the 2D space that this QuadTree divides
+	 * @param proximityThreshold
+	 *            The maximum gap between two Nodes which makes them neighbors
 	 */
 	public QuadTree(Bounds bounds) {
-		this.parent = null;
 		this.bounds = bounds;
 		this.level = 0;
+		this.proximityThreshold = 25;
 	}
 
-	private QuadTree(Bounds bounds, QuadTree parent, int level) {
-		this.parent = parent;
+	private QuadTree(Bounds bounds, QuadTree parent) {
 		this.bounds = bounds;
-		this.level = level;
+		this.parent = parent;
+		this.level = parent.level + 1;
+		this.proximityThreshold = parent.proximityThreshold;
 	}
 
 	/**
-	 * Gets the parent of this node.
-	 * 
-	 * @return The parent of this node
+	 * Clears the QuadTree and its children
 	 */
-	public QuadTree getParent() {
+	public void clear() {
+		if (children != null) {
+			for (int i = 0; i < 4; i++) {
+				children[i].clear();
+				children[i] = null;
+			}
+		}
+		boundsByObjects.clear();
+		parent = null;
+	}
+
+	/**
+	 * Inserts an object into the QuadTree
+	 * @param object	The object that is to be inserted 
+	 */
+	public void insert(Node object) {
+		Bounds bounds = object.localToScene(object.getBoundsInLocal());
+		Bounds boundsAround = getProximityBounds(bounds);
+		insert(object, boundsAround);
+	}
+
+	private void insert(Node object, Bounds bounds) {
+		QuadTree insertNode = getTreeNode(bounds);
+		if (insertNode == this || insertNode == null) {
+			boundsByObjects.put(object, bounds);
+
+			Set<Node> objects = boundsByObjects.keySet();
+			if (objects.size() >= MAX_OBJECTS) {
+				split();
+			}
+		} else {
+			insertNode.insert(object, bounds);
+		}
+	}
+
+	/**
+	 * Returns the QuadTree that should store an object with the given Bounds
+	 * 
+	 * @param objectBounds
+	 *            The bounds of a certain object
+	 * @return The QuadTree it belongs to
+	 */
+	private QuadTree getTreeNode(Bounds objectBounds) {
+		if (this.bounds.contains(objectBounds)) {
+			if (children != null) {
+				for (int i = 0; i < 4; i++) {
+					if (children[i].bounds.contains(objectBounds)) {
+						return children[i];
+					}
+				}
+			}
+			return this;
+		}
 		return parent;
 	}
 
 	/**
-	 * Gets the root of this tree.
-	 * 
-	 * @return The root of this tree
-	 */
-	public QuadTree getRoot() {
-		QuadTree root = this;
-		while (root.getParent() != null) {
-			root = root.getParent();
-		}
-		return root;
-	}
-
-	/**
-	 * Gets the bounds of this node.
-	 * 
-	 * @return The bounds of this node
-	 */
-	public Bounds getBounds() {
-		return bounds;
-	}
-
-	/**
-	 * Clears the QuadTree.
-	 */
-	public void clear() {
-		objectBoundingBoxes.clear();
-
-		for (int i = 0; i < children.length; i++) {
-			children[i].clear();
-			children[i] = null;
-		}
-	}
-
-	/**
-	 * Retrieves all objects that could collide with the given object
-	 * 
-	 * @param boundingBox
-	 *            The BoundingBox to find objects for
-	 * @return A list of objects rectangle could collide with
-	 */
-	public List<Bounds> retrieve(Bounds boundingBox) {
-		List<Bounds> returnObjects = new ArrayList<Bounds>();
-		return retrieve(returnObjects, boundingBox);
-	}
-
-	// Help method for recursion
-	private List<Bounds> retrieve(List<Bounds> returnObjects, Bounds boundingBox) {
-		int index = getIndex(boundingBox);
-		if (index != -1 && children[0] != null) {
-			children[index].retrieve(returnObjects, boundingBox);
-		}
-
-		returnObjects.addAll(objectBoundingBoxes);
-
-		return returnObjects;
-	}
-
-	/**
-	 * Inserts a rectangle into the QuadTree.
-	 * 
-	 * @param bounds
-	 *            The Bounds to insert
-	 */
-	public void insert(Bounds bounds) {
-		if (children[0] != null) {
-			int index = getIndex(bounds);
-
-			if (index != -1) {
-				children[index].insert(bounds);
-
-				return;
-			}
-		}
-
-		objectBoundingBoxes.add(bounds);
-
-		if (objectBoundingBoxes.size() > MAX_OBJECTS && level < MAX_LEVELS
-				&& children[0] == null) {
-			split();
-
-			int i = 0;
-			while (i < objectBoundingBoxes.size()) {
-				int index = getIndex(objectBoundingBoxes.get(i));
-				if (index != -1) {
-					children[index].insert(objectBoundingBoxes.remove(i));
-				} else {
-					i++;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Creates four children for this node.
+	 * Creates four children for this node, and adds objects from this node to
+	 * the corresponding child nodes.
 	 */
 	private void split() {
 		double halfWidth = bounds.getWidth() / 2.0;
@@ -147,88 +116,115 @@ public final class QuadTree {
 		double x = bounds.getMinX();
 		double y = bounds.getMinY();
 
-		children[0] = new QuadTree(new BoundingBox(x, y, halfWidth, halfHeight),
-				this, level + 1);
+		children = new QuadTree[4];
+		children[0] = new QuadTree(
+				new BoundingBox(x, y, halfWidth, halfHeight), this);
 		children[1] = new QuadTree(new BoundingBox(x + halfWidth, y, halfWidth,
-				halfHeight), this, level + 1);
-		children[2] = new QuadTree(new BoundingBox(x + halfWidth, y + halfHeight,
-				halfWidth, halfHeight), this, level + 1);
-		children[3] = new QuadTree(new BoundingBox(x, y + halfHeight, halfWidth,
-				halfHeight), this, level + 1);
-	}
+				halfHeight), this);
+		children[2] = new QuadTree(new BoundingBox(x + halfWidth, y
+				+ halfHeight, halfWidth, halfHeight), this);
+		children[3] = new QuadTree(new BoundingBox(x, y + halfHeight,
+				halfWidth, halfHeight), this);
 
-	/**
-	 * Determines which node the rectangle belongs to. Returns -1 if it doesn't
-	 * fit in a child node.
-	 * 
-	 * @param bounds
-	 *            The Bounds to find the index for
-	 * @return The index for rectangle
-	 */
-	private int getIndex(Bounds bounds) {
-		int index = -1;
-		double verticalMidpoint = bounds.getMinX() + (bounds.getWidth() / 2);
-		double horizontalMidpoint = bounds.getMinY() + (bounds.getHeight() / 2);
+		Iterator<Node> iterator = boundsByObjects.keySet().iterator();
+		while (iterator.hasNext()) {
+			Node object = iterator.next();
+			Bounds objectBounds = boundsByObjects.get(object);
+			QuadTree insertNode = getTreeNode(objectBounds);
 
-		// Object can completely fit within the top quadrants
-		boolean topQuadrant = (bounds.getMinY() < horizontalMidpoint && bounds
-				.getMinY() + bounds.getHeight() < horizontalMidpoint);
-		// Object can completely fit within the bottom quadrants
-		boolean bottomQuadrant = (bounds.getMinY() > horizontalMidpoint);
-
-		// Object can completely fit within the left quadrants
-		if (bounds.getMinX() < verticalMidpoint
-				&& bounds.getMinX() + bounds.getWidth() < verticalMidpoint) {
-			if (topQuadrant) {
-				index = 0;
-			} else if (bottomQuadrant) {
-				index = 3;
+			if (insertNode != this && insertNode != null) {
+				iterator.remove();
+				insertNode.boundsByObjects.put(object, objectBounds);
 			}
 		}
-		// Object can completely fit within the right quadrants
-		else if (bounds.getMinX() > verticalMidpoint) {
-			if (topQuadrant) {
-				index = 1;
-			} else if (bottomQuadrant) {
-				index = 2;
-			}
-		}
-
-		return index;
 	}
 
 	/**
-	 * Updates an object. If the object doesn't fit in the node it's currently
-	 * in, it will be moved to one it does belong to.
-	 * 
-	 * @param oldObject
-	 * @param newObject
-	 */
-	public void update(Bounds oldObject, Bounds newObject) {
-		// Needs to be optimized
-		remove(oldObject);
-		insert(newObject);
-	}
-
-	/**
-	 * Removes an object, and returns the QuadTree it was deleted from.
+	 * Removes an object from the QuadTree
 	 * 
 	 * @param object
-	 *            The object that is to be deleted.
-	 * @return The QuadTree it was deleted from. Null if the object does not
-	 *         exist in the QuadTree.
+	 *            The object that is to be removed
 	 */
-	public QuadTree remove(Bounds object) {
-		if (objectBoundingBoxes.remove(object)) {
-			return this;
+	public void remove(Node object) {
+		Bounds bounds = object.localToScene(object.getBoundsInLocal());
+		QuadTree removeNode = getTreeNode(getProximityBounds(bounds));
+
+		if (removeNode == this) {
+			boundsByObjects.remove(object);
+		} else {
+			removeNode.remove(object);
+		}
+	}
+
+	/**
+	 * Updates the QuadTree. Each object that has changed bounds is inserted
+	 * again.
+	 */
+	public void update() {
+		Iterator<Node> iterator = boundsByObjects.keySet().iterator();
+		List<Node> objectsToAdd = new ArrayList<Node>();
+		List<Bounds> boundsToAdd = new ArrayList<Bounds>();
+
+		while (iterator.hasNext()) {
+			Node object = iterator.next();
+			Bounds bounds = object.localToScene(object.getBoundsInLocal());
+			Bounds boundsAround = getProximityBounds(bounds);
+
+			if (!boundsAround.equals(boundsByObjects.get(object))) {
+				iterator.remove();
+				objectsToAdd.add(object);
+				boundsToAdd.add(boundsAround);
+			}
 		}
 
-		if (children[0] == null) {
-			return null;
+		for (int i = 0; i < objectsToAdd.size(); i++) {
+			insert(objectsToAdd.get(i), boundsToAdd.get(i));
 		}
 
-		int index = getIndex(object);
-		return children[index].remove(object);
+		if (children != null) {
+			for (int i = 0; i < 4; i++) {
+				children[i].update();
+			}
+		}
+	}
+
+	/**
+	 * Sets the proximity threshold. This value is used to determine whether two
+	 * objects are within range to trigger a ProximityEvent.
+	 * 
+	 * @param threshold
+	 *            The new value for the proximity threshold
+	 */
+	public void setProximityThreshold(double threshold) {
+		if (threshold > 0) {
+			this.proximityThreshold = threshold;
+			for (QuadTree child : children) {
+				child.setProximityThreshold(threshold);
+			}
+		} else {
+			throw new IllegalArgumentException(
+					"Proximity threshold should be a positive value");
+		}
+	}
+
+	/**
+	 * Gets the current proximity threshold. This value is used to determine
+	 * whether two objects are within range to trigger a ProximityEvent. The
+	 * default value is 25.
+	 * 
+	 * @return The current value for the proximity threshold
+	 */
+	public double getProximityThreshold() {
+		return this.proximityThreshold;
+	}
+
+	// Help method to get the Bounds needed for proximity detection
+	private Bounds getProximityBounds(Bounds bounds) {
+		double x = bounds.getMinX() - proximityThreshold / 2;
+		double y = bounds.getMinY() - proximityThreshold / 2;
+		double w = bounds.getWidth() + proximityThreshold;
+		double h = bounds.getHeight() + proximityThreshold;
+		return new BoundingBox(x, y, w, h);
 	}
 
 }
