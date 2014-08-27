@@ -26,7 +26,7 @@ public class DraggableGroupTest extends Application {
 
 		TouchPane tp = new TouchPane();
 
-		for (int i = 0; i < 25; i++) {
+		for (int i = 0; i < 2; i++) {
 			FlowPane panel1 = new FlowPane();
 			ActionGroup ag1 = new ActionGroup(new Rectangle(0, 0, 25, 25));
 			panel1.getChildren().add(ag1);

@@ -24,7 +24,7 @@ class QuadTree {
 	private QuadTree[] children;
 	private Bounds bounds;
 	private final int level;
-	private Map<Node, Bounds> boundsByObjects = new HashMap<Node, Bounds>();
+	private Map<Node, Bounds> proximityBoundsByObject = new HashMap<Node, Bounds>();
 
 	/**
 	 * Constructor of the QuadTree
@@ -57,13 +57,15 @@ class QuadTree {
 				children[i] = null;
 			}
 		}
-		boundsByObjects.clear();
+		proximityBoundsByObject.clear();
 		parent = null;
 	}
 
 	/**
 	 * Inserts an object into the QuadTree
-	 * @param object	The object that is to be inserted 
+	 * 
+	 * @param object
+	 *            The object that is to be inserted
 	 */
 	public void insert(Node object) {
 		Bounds bounds = object.localToScene(object.getBoundsInLocal());
@@ -74,9 +76,9 @@ class QuadTree {
 	private void insert(Node object, Bounds bounds) {
 		QuadTree insertNode = getTreeNode(bounds);
 		if (insertNode == this || insertNode == null) {
-			boundsByObjects.put(object, bounds);
+			proximityBoundsByObject.put(object, bounds);
 
-			Set<Node> objects = boundsByObjects.keySet();
+			Set<Node> objects = proximityBoundsByObject.keySet();
 			if (objects.size() >= MAX_OBJECTS) {
 				split();
 			}
@@ -126,15 +128,15 @@ class QuadTree {
 		children[3] = new QuadTree(new BoundingBox(x, y + halfHeight,
 				halfWidth, halfHeight), this);
 
-		Iterator<Node> iterator = boundsByObjects.keySet().iterator();
+		Iterator<Node> iterator = proximityBoundsByObject.keySet().iterator();
 		while (iterator.hasNext()) {
 			Node object = iterator.next();
-			Bounds objectBounds = boundsByObjects.get(object);
+			Bounds objectBounds = proximityBoundsByObject.get(object);
 			QuadTree insertNode = getTreeNode(objectBounds);
 
 			if (insertNode != this && insertNode != null) {
 				iterator.remove();
-				insertNode.boundsByObjects.put(object, objectBounds);
+				insertNode.proximityBoundsByObject.put(object, objectBounds);
 			}
 		}
 	}
@@ -150,7 +152,7 @@ class QuadTree {
 		QuadTree removeNode = getTreeNode(getProximityBounds(bounds));
 
 		if (removeNode == this) {
-			boundsByObjects.remove(object);
+			proximityBoundsByObject.remove(object);
 		} else {
 			removeNode.remove(object);
 		}
@@ -161,7 +163,7 @@ class QuadTree {
 	 * again.
 	 */
 	public void update() {
-		Iterator<Node> iterator = boundsByObjects.keySet().iterator();
+		Iterator<Node> iterator = proximityBoundsByObject.keySet().iterator();
 		List<Node> objectsToAdd = new ArrayList<Node>();
 		List<Bounds> boundsToAdd = new ArrayList<Bounds>();
 
@@ -170,7 +172,7 @@ class QuadTree {
 			Bounds bounds = object.localToScene(object.getBoundsInLocal());
 			Bounds boundsAround = getProximityBounds(bounds);
 
-			if (!boundsAround.equals(boundsByObjects.get(object))) {
+			if (!boundsAround.equals(proximityBoundsByObject.get(object))) {
 				iterator.remove();
 				objectsToAdd.add(object);
 				boundsToAdd.add(boundsAround);
@@ -227,4 +229,26 @@ class QuadTree {
 		return new BoundingBox(x, y, w, h);
 	}
 
+	/**
+	 * Retrieves all the objects that could be in the proximity (or collide
+	 * with) the given object.
+	 * 
+	 * @param object
+	 *            The object to find neighbors for
+	 */
+	public List<Node> retrieve(Node object) {
+		List<Node> returnObjects = new ArrayList<Node>();
+		return retrieve(object, returnObjects);
+	}
+
+	private List<Node> retrieve(Node object, List<Node> returnObjects) {
+		QuadTree retrieveNode = getTreeNode(proximityBoundsByObject.get(object));
+
+		if (retrieveNode != this && retrieveNode != null) {
+			retrieveNode.retrieve(object, returnObjects);
+		}
+
+		returnObjects.addAll(proximityBoundsByObject.keySet());
+		return returnObjects;
+	}
 }

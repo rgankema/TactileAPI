@@ -1,13 +1,13 @@
 package nl.utwente.cs.caes.tactile;
 
 import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import javafx.animation.AnimationTimer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -71,7 +71,48 @@ public class TouchPane extends Pane {
 				// Update QuadTree
 				quadTree.update();
 
-				// TODO: Check for collisions
+				for (ActionGroup thisObject : actionGroups) {
+					Bounds thisBounds = thisObject.localToScene(thisObject.getBoundsInLocal());
+					double proximityThreshold = quadTree.getProximityThreshold();
+					double x = thisBounds.getMinX() - proximityThreshold;
+					double y = thisBounds.getMinY() - proximityThreshold;
+					double w = thisBounds.getWidth() + proximityThreshold * 2;
+					double h = thisBounds.getHeight() + proximityThreshold * 2;
+					Bounds proximityBounds = new BoundingBox(x, y, w, h);
+					
+					List<Node> otherObjects = quadTree.retrieve(thisObject);
+					for (Node otherNode : otherObjects) {
+						ActionGroup otherObject = (ActionGroup) otherNode;
+						
+						if (thisObject == otherObject) {
+							continue;
+						}
+						
+						Bounds otherBounds = otherObject.localToScene(otherObject.getBoundsInLocal());
+						if (thisBounds.intersects(otherBounds)){
+							if (thisObject.getActionGroupsColliding().add(otherObject)) {
+								otherObject.getActionGroupsColliding().add(thisObject);
+								System.out.println("Collision started");
+							}
+						}
+						else if (proximityBounds.intersects(otherBounds)){
+							if (thisObject.getActionGroupsColliding().remove(otherObject)) {
+								otherObject.getActionGroupsColliding().remove(thisObject);
+								System.out.println("Collision stopped");
+							}
+							if (thisObject.getActionGroupsInProximity().add(otherObject)) {
+								otherObject.getActionGroupsInProximity().add(thisObject);
+								System.out.println("Proximity entered");
+							}
+						}
+						else {
+							if (thisObject.getActionGroupsInProximity().remove(otherObject)) {
+								otherObject.getActionGroupsInProximity().remove(thisObject);
+								System.out.println("Proximity left");
+							} 
+						}
+					}
+				}
 			}
 		}.start();
 	}
