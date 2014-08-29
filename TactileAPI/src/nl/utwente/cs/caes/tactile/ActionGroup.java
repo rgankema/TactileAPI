@@ -11,7 +11,9 @@ import javafx.scene.Parent;
 
 public class ActionGroup extends Group {
 	private Set<ActionGroup> actionGroupsColliding = new HashSet<ActionGroup>();
+	private Set<ActionGroup> actionGroupsCollidingUnmodifiable = Collections.unmodifiableSet(actionGroupsColliding);
 	private Set<ActionGroup> actionGroupsInProximity = new HashSet<ActionGroup>();
+	private Set<ActionGroup> actionGroupsInProximityUnmodifiable = Collections.unmodifiableSet(actionGroupsColliding);
 	
 	public ActionGroup() {
 		super();
@@ -39,11 +41,11 @@ public class ActionGroup extends Group {
 	}
 	
 	public Set<ActionGroup> getActionGroupsCollidingUnmodifiable() {
-		return Collections.unmodifiableSet(actionGroupsColliding);
+		return actionGroupsCollidingUnmodifiable;
 	}
 	
 	public Set<ActionGroup> getActionGroupsInProximityUnmodifiable() {
-		return Collections.unmodifiableSet(actionGroupsColliding);
+		return actionGroupsInProximityUnmodifiable;
 	}
 	
 	protected Set<ActionGroup> getActionGroupsColliding(){

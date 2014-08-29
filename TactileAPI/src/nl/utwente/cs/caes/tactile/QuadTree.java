@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
@@ -14,9 +16,6 @@ import javafx.scene.Node;
 class QuadTree {
 	private final int MAX_DEPTH = 5;
 	private final int MAX_OBJECTS = 10;
-	private double proximityThreshold;
-
-	// Codes for getIndex
 
 	private QuadTree parent;
 	private QuadTree[] children;
@@ -35,14 +34,12 @@ class QuadTree {
 	public QuadTree(Bounds bounds) {
 		this.bounds = bounds;
 		this.level = 0;
-		this.proximityThreshold = 25;
 	}
 
 	private QuadTree(Bounds bounds, QuadTree parent) {
 		this.bounds = bounds;
 		this.parent = parent;
 		this.level = parent.level + 1;
-		this.proximityThreshold = parent.proximityThreshold;
 	}
 
 	/**
@@ -187,43 +184,54 @@ class QuadTree {
 			}
 		}
 	}
-
+	
 	/**
-	 * Sets the proximity threshold. This value is used to determine whether two
-	 * objects are within range to trigger a ProximityEvent.
 	 * 
-	 * @param threshold
-	 *            The new value for the proximity threshold
 	 */
-	public void setProximityThreshold(double threshold) {
-		if (threshold > 0) {
-			this.proximityThreshold = threshold;
-			for (QuadTree child : children) {
-				child.setProximityThreshold(threshold);
-			}
-		} else {
-			throw new IllegalArgumentException(
-					"Proximity threshold should be a positive value");
-		}
+	private DoubleProperty proximityThreshold;
+	
+	public final void setProximityThreshold(double threshold) {
+		proximityThresholdProperty().set(threshold);
 	}
 
-	/**
-	 * Gets the current proximity threshold. This value is used to determine
-	 * whether two objects are within range to trigger a ProximityEvent. The
-	 * default value is 25.
-	 * 
-	 * @return The current value for the proximity threshold
-	 */
-	public double getProximityThreshold() {
-		return this.proximityThreshold;
+	public final double getProximityThreshold() {
+		return proximityThresholdProperty().get();
+	}
+	
+	public final DoubleProperty proximityThresholdProperty() {
+		if (proximityThreshold == null) {
+			
+			double value = 25.0;
+			if (parent != null) {
+				value = parent.getProximityThreshold();
+			}
+			
+			proximityThreshold = new SimpleDoubleProperty(value) {
+				@Override
+				public void set(double value) {
+					if (value > 0) {
+						super.set(value);
+						if (children != null) {
+							for (QuadTree child : children) {
+								child.setProximityThreshold(value);
+							}
+						}
+					} else {
+						throw new IllegalArgumentException(
+								"Proximity threshold should be a positive value");
+					}
+				}
+			};
+		}
+		return proximityThreshold;
 	}
 
 	// Help method to get the Bounds needed for proximity detection
 	private Bounds getProximityBounds(Bounds bounds) {
-		double x = bounds.getMinX() - proximityThreshold / 2;
-		double y = bounds.getMinY() - proximityThreshold / 2;
-		double w = bounds.getWidth() + proximityThreshold;
-		double h = bounds.getHeight() + proximityThreshold;
+		double x = bounds.getMinX() - getProximityThreshold() / 2;
+		double y = bounds.getMinY() - getProximityThreshold() / 2;
+		double w = bounds.getWidth() + getProximityThreshold();
+		double h = bounds.getHeight() + getProximityThreshold();
 		return new BoundingBox(x, y, w, h);
 	}
 
