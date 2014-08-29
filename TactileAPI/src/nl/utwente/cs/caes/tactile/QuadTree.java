@@ -242,7 +242,12 @@ class QuadTree {
 	private List<Node> retrieve(Node object, List<Node> returnObjects) {
 		QuadTree retrieveNode = getTreeNode(proximityBoundsByObject.get(object));
 
-		if (retrieveNode != this && retrieveNode != null) {
+		if ((retrieveNode == this || retrieveNode == null || retrieveNode.level < this.level) && children != null) {
+			for (QuadTree child : children) {
+				child.retrieve(object, returnObjects);
+			}
+		}
+		else if (retrieveNode.level > this.level) {
 			retrieveNode.retrieve(object, returnObjects);
 		}
 

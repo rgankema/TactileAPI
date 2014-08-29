@@ -92,7 +92,7 @@ public class TouchPane extends Pane {
 						Bounds otherBounds = otherObject.localToScene(otherObject.getBoundsInLocal());
 						if (thisBounds.intersects(otherBounds)){
 							if (thisObject.getActionGroupsColliding().add(otherObject)) {
-								System.out.println("Bla");
+								System.out.println("Collision started");
 								otherObject.getActionGroupsColliding().add(thisObject);
 								thisObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_STARTED, thisObject, otherObject));
 								otherObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_STARTED, otherObject, thisObject));
@@ -100,11 +100,13 @@ public class TouchPane extends Pane {
 						}
 						else if (proximityBounds.intersects(otherBounds)){
 							if (thisObject.getActionGroupsColliding().remove(otherObject)) {
+								System.out.println("Collision ended");
 								otherObject.getActionGroupsColliding().remove(thisObject);
 								thisObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_ENDED, thisObject, otherObject));
 								otherObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_ENDED, otherObject, thisObject));
 							}
 							if (thisObject.getActionGroupsInProximity().add(otherObject)) {
+								System.out.println("Proximity entered");
 								otherObject.getActionGroupsInProximity().add(thisObject);
 								thisObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_ENTERED, thisObject, otherObject));
 								otherObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_ENTERED, otherObject, thisObject));
@@ -112,6 +114,7 @@ public class TouchPane extends Pane {
 						}
 						else {
 							if (thisObject.getActionGroupsInProximity().remove(otherObject)) {
+								System.out.println("Proximity left");
 								otherObject.getActionGroupsInProximity().remove(thisObject);
 								thisObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_LEFT, thisObject, otherObject));
 								otherObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_LEFT, otherObject, thisObject));
