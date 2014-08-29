@@ -12,6 +12,7 @@ import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
+import nl.utwente.cs.caes.tactile.event.CollisionEvent;
 
 public class TouchPane extends Pane {
 	private Set<ActionGroup> actionGroups = new HashSet<ActionGroup>();
@@ -91,24 +92,29 @@ public class TouchPane extends Pane {
 						Bounds otherBounds = otherObject.localToScene(otherObject.getBoundsInLocal());
 						if (thisBounds.intersects(otherBounds)){
 							if (thisObject.getActionGroupsColliding().add(otherObject)) {
+								System.out.println("Bla");
 								otherObject.getActionGroupsColliding().add(thisObject);
-								System.out.println("Collision started");
+								thisObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_STARTED, thisObject, otherObject));
+								otherObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_STARTED, otherObject, thisObject));
 							}
 						}
 						else if (proximityBounds.intersects(otherBounds)){
 							if (thisObject.getActionGroupsColliding().remove(otherObject)) {
 								otherObject.getActionGroupsColliding().remove(thisObject);
-								System.out.println("Collision stopped");
+								thisObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_ENDED, thisObject, otherObject));
+								otherObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_ENDED, otherObject, thisObject));
 							}
 							if (thisObject.getActionGroupsInProximity().add(otherObject)) {
 								otherObject.getActionGroupsInProximity().add(thisObject);
-								System.out.println("Proximity entered");
+								thisObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_ENTERED, thisObject, otherObject));
+								otherObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_ENTERED, otherObject, thisObject));
 							}
 						}
 						else {
 							if (thisObject.getActionGroupsInProximity().remove(otherObject)) {
 								otherObject.getActionGroupsInProximity().remove(thisObject);
-								System.out.println("Proximity left");
+								thisObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_LEFT, thisObject, otherObject));
+								otherObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_LEFT, otherObject, thisObject));
 							} 
 						}
 					}

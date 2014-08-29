@@ -17,8 +17,6 @@ class QuadTree {
 	private double proximityThreshold;
 
 	// Codes for getIndex
-	private final int THIS_NODE = -1;
-	private final int OTHER_NODE = -2;
 
 	private QuadTree parent;
 	private QuadTree[] children;
@@ -79,7 +77,7 @@ class QuadTree {
 			proximityBoundsByObject.put(object, bounds);
 
 			Set<Node> objects = proximityBoundsByObject.keySet();
-			if (objects.size() >= MAX_OBJECTS) {
+			if (objects.size() >= MAX_OBJECTS && this.level < MAX_DEPTH) {
 				split();
 			}
 		} else {
