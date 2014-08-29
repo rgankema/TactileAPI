@@ -105,25 +105,28 @@ public class DraggableGroup extends Group {
 	private ReadOnlyBooleanWrapper active = new ReadOnlyBooleanWrapper();
 	
 	private void setActive(boolean value) {
-		// Call activeProperty to instantiate the Property
-		activeProperty();
-		active.set(true);
+		activePropertyImpl().set(true);
 	}
 	
 	public boolean isActive() {
-		return activeProperty().get();
+		return active == null ? false : active.get();
 	}
 	
 	public ReadOnlyBooleanProperty activeProperty(){
+		return activePropertyImpl().getReadOnlyProperty();
+	}
+	
+	private ReadOnlyBooleanWrapper activePropertyImpl() {
 		if (active == null) {
 			active = new ReadOnlyBooleanWrapper();
-			active.set(false);
 		}
-		return active.getReadOnlyProperty();
+		return active;
 	}
 	
 	/**
-	 * 
+	 * Whether this {@code Node} will go to the foreground when {@link #activeProperty() active} is 
+	 * set to true. If set to true, {@link #goToForeground()} is called whenever {@link #activeProperty() is
+	 * set to true.
 	 */
 	private BooleanProperty goToForegroundOnActive;
 	
@@ -135,12 +138,12 @@ public class DraggableGroup extends Group {
 		return goToForegroundOnActive;
 	}
 	
-	public boolean isGoToForegroundOnActive(){
-		return goToForegroundOnActiveProperty().get();
-	}
-	
 	public void setGoToForegroundOnActive(boolean value){
 		goToForegroundOnActiveProperty().set(value);
+	}
+	
+	public boolean isGoToForegroundOnActive(){
+		return goToForegroundOnActive == null ? true : goToForegroundOnActive.get();
 	}
 	
 	/**
