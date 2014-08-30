@@ -64,8 +64,13 @@ class QuadTree {
 	 */
 	public void insert(Node object) {
 		Bounds bounds = object.localToScene(object.getBoundsInLocal());
-		Bounds boundsAround = getProximityBounds(bounds);
-		insert(object, boundsAround);
+		if (getProximityThreshold() > 0) {
+			Bounds boundsAround = getProximityBounds(bounds);
+			insert(object, boundsAround);
+		}
+		else {
+			insert(object, bounds);
+		}
 	}
 
 	private void insert(Node object, Bounds bounds) {
@@ -186,7 +191,11 @@ class QuadTree {
 	}
 	
 	/**
+	 * The maximum distance between two {@code ActionGroups} at which they are considered neighbors,
+	 * and thus a proximity event is fired. An IllegalArgumentException is thrown when this value is
+	 * set lower than 0.
 	 * 
+	 * @defaultvalue 25.0
 	 */
 	private DoubleProperty proximityThreshold;
 	
@@ -209,7 +218,7 @@ class QuadTree {
 			proximityThreshold = new SimpleDoubleProperty(value) {
 				@Override
 				public void set(double value) {
-					if (value > 0) {
+					if (value >= 0) {
 						super.set(value);
 						if (children != null) {
 							for (QuadTree child : children) {

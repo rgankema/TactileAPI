@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import javafx.animation.AnimationTimer;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.BoundingBox;
@@ -74,56 +75,101 @@ public class TouchPane extends Pane {
 
 				for (ActionGroup thisObject : actionGroups) {
 					Bounds thisBounds = thisObject.localToScene(thisObject.getBoundsInLocal());
-					double proximityThreshold = quadTree.getProximityThreshold();
-					double x = thisBounds.getMinX() - proximityThreshold;
-					double y = thisBounds.getMinY() - proximityThreshold;
-					double w = thisBounds.getWidth() + proximityThreshold * 2;
-					double h = thisBounds.getHeight() + proximityThreshold * 2;
-					Bounds proximityBounds = new BoundingBox(x, y, w, h);
-					
+					Bounds proximityBounds = null;
+					double proximityThreshold = getProximityThreshold();
+					if (proximityThreshold > 0) {
+						double x = thisBounds.getMinX() - proximityThreshold;
+						double y = thisBounds.getMinY() - proximityThreshold;
+						double w = thisBounds.getWidth() + proximityThreshold * 2;
+						double h = thisBounds.getHeight() + proximityThreshold * 2;
+						proximityBounds = new BoundingBox(x, y, w, h);
+					}
+
 					List<Node> otherObjects = quadTree.retrieve(thisObject);
 					for (Node otherNode : otherObjects) {
 						ActionGroup otherObject = (ActionGroup) otherNode;
-						
+
 						if (thisObject == otherObject) {
 							continue;
 						}
-						
+
 						Bounds otherBounds = otherObject.localToScene(otherObject.getBoundsInLocal());
-						if (thisBounds.intersects(otherBounds)){
+						
+						if (thisBounds.intersects(otherBounds)) {
 							if (thisObject.getActionGroupsColliding().add(otherObject)) {
-								System.out.println("Collision started");
 								otherObject.getActionGroupsColliding().add(thisObject);
-								thisObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_STARTED, thisObject, otherObject));
-								otherObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_STARTED, otherObject, thisObject));
+								
+								thisObject.fireEvent(new CollisionEvent(
+										CollisionEvent.COLLISION_STARTED,
+										thisObject, otherObject));
+								otherObject.fireEvent(new CollisionEvent(
+										CollisionEvent.COLLISION_STARTED,
+										otherObject, thisObject));
 							}
-						}
-						else if (proximityBounds.intersects(otherBounds)){
-							if (thisObject.getActionGroupsColliding().remove(otherObject)) {
-								System.out.println("Collision ended");
-								otherObject.getActionGroupsColliding().remove(thisObject);
-								thisObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_ENDED, thisObject, otherObject));
-								otherObject.fireEvent(new CollisionEvent(CollisionEvent.COLLISION_ENDED, otherObject, thisObject));
-							}
-							if (thisObject.getActionGroupsInProximity().add(otherObject)) {
-								System.out.println("Proximity entered");
-								otherObject.getActionGroupsInProximity().add(thisObject);
-								thisObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_ENTERED, thisObject, otherObject));
-								otherObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_ENTERED, otherObject, thisObject));
-							}
-						}
+						} 
 						else {
-							if (thisObject.getActionGroupsInProximity().remove(otherObject)) {
-								System.out.println("Proximity left");
-								otherObject.getActionGroupsInProximity().remove(thisObject);
-								thisObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_LEFT, thisObject, otherObject));
-								otherObject.fireEvent(new CollisionEvent(CollisionEvent.PROXIMITY_LEFT, otherObject, thisObject));
-							} 
+							if (thisObject.getActionGroupsColliding().remove(otherObject)) {
+								otherObject.getActionGroupsColliding().remove(thisObject);
+								
+								thisObject.fireEvent(new CollisionEvent(
+										CollisionEvent.COLLISION_ENDED,
+										thisObject, otherObject));
+								otherObject.fireEvent(new CollisionEvent(
+										CollisionEvent.COLLISION_ENDED,
+										otherObject, thisObject));
+							}
+							if (proximityBounds != null && proximityBounds.intersects(otherBounds)) {
+								if (thisObject.getActionGroupsInProximity().add(otherObject)) {
+									otherObject.getActionGroupsInProximity().add(thisObject);
+									
+									thisObject.fireEvent(new CollisionEvent(
+											CollisionEvent.PROXIMITY_ENTERED,
+											thisObject, otherObject));
+									otherObject.fireEvent(new CollisionEvent(
+											CollisionEvent.PROXIMITY_ENTERED,
+											otherObject, thisObject));
+								}	
+							}
+							else {
+								if (thisObject.getActionGroupsInProximity().remove(otherObject)) {
+									otherObject.getActionGroupsInProximity().remove(thisObject);
+									
+									thisObject.fireEvent(new CollisionEvent(
+											CollisionEvent.PROXIMITY_LEFT,
+											thisObject, otherObject));
+									otherObject.fireEvent(new CollisionEvent(
+											CollisionEvent.PROXIMITY_LEFT,
+											otherObject, thisObject));
+								}
+							}
 						}
 					}
 				}
 			}
 		}.start();
+	}
+
+	public final void setProximityThreshold(double threshold) {
+		proximityThresholdProperty().set(threshold);
+	}
+
+	public final double getProximityThreshold() {
+		return proximityThresholdProperty().get();
+	}
+
+	/**
+	 * Specifies how close two ActionGroups have to be to each other to fire
+	 * {@code CollisionEvent#PROXIMITY_ENTERED} events. When set to 0, the
+	 * TouchPane won't fire {@code CollisionEvent#PROXIMITY_ENTERED} events at
+	 * all. {@code CollisionEvent#PROXIMITY_LEFT} events will still be fired for
+	 * any ActionGroup pair that entered each other's proximity before the
+	 * threshold was set to 0. When set to a negative value, an
+	 * IllegalArgumentException is thrown.
+	 * 
+	 * @defaultvalue 25.0
+	 */
+	public final DoubleProperty proximityThresholdProperty() {
+		return quadTree.proximityThresholdProperty();
 	}
 
 	/**
