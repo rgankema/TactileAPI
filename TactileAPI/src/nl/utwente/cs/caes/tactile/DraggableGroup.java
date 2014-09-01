@@ -1,7 +1,7 @@
 package nl.utwente.cs.caes.tactile;
 
 import javafx.animation.Interpolator;
-import javafx.animation.PathTransition;
+import javafx.animation.TranslateTransition;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -13,9 +13,6 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.LineTo;
-import javafx.scene.shape.MoveTo;
-import javafx.scene.shape.Path;
 import javafx.util.Duration;
 
 public class DraggableGroup extends Group {
@@ -142,7 +139,7 @@ public class DraggableGroup extends Group {
 	 */
 	private BooleanProperty goToForegroundOnActive;
 	
-	public BooleanProperty goToForegroundOnActiveProperty(){
+	public BooleanProperty goToForegroundOnActiveProperty() {
 		if (goToForegroundOnActive == null) {
 			goToForegroundOnActive = new SimpleBooleanProperty();
 			goToForegroundOnActive.set(true);
@@ -150,99 +147,12 @@ public class DraggableGroup extends Group {
 		return goToForegroundOnActive;
 	}
 	
-	public void setGoToForegroundOnActive(boolean value){
+	public void setGoToForegroundOnActive(boolean value) {
 		goToForegroundOnActiveProperty().set(value);
 	}
 	
-	public boolean isGoToForegroundOnActive(){
+	public boolean isGoToForegroundOnActive() {
 		return goToForegroundOnActive == null ? true : goToForegroundOnActive.get();
-	}
-	
-	/**
-	 * Requests this {@code DraggableGroup} to move away from another
-	 * {@code DraggableGroup}. The speed with which it will move away depends on
-	 * the distance from the other group.
-	 * 
-	 * @param group
-	 *            The {@code DraggableGroup} to move away from
-	 * @param distance
-	 *            The maximum value of the resulting horizontal or vertical gap
-	 *            between the two DraggableGroups
-	 * @throws IllegalArgumentException
-	 *             When a negative value is provided for distance
-	 */
-	public void moveAwayFrom(DraggableGroup group, double distance){
-		if (distance < 0) {
-			throw new IllegalArgumentException("distance cannot be a negative value!");
-		}
-		
-		Bounds thisBounds = this.localToScene(this.getBoundsInLocal());
-		Bounds otherBounds = group.localToScene(group.getBoundsInLocal());
-		double thisX = thisBounds.getMinX() + thisBounds.getWidth() / 2;
-		double thisY = thisBounds.getMinY() + thisBounds.getHeight() / 2;
-		double otherX = otherBounds.getMinX() + thisBounds.getWidth() / 2;
-		double otherY = otherBounds.getMinY() + thisBounds.getHeight() / 2;
-		
-		double distanceX = thisX - otherX;
-		double distanceY = thisY - otherY;
-		double ratio = distanceX / distanceY;
-		
-		double gapX, gapY;
-		
-		if (distanceX < 0) {
-			gapX = thisBounds.getMaxX() - otherBounds.getMinX();
-		} else {
-			gapX = otherBounds.getMaxX() - thisBounds.getMinX();
-		}
-		if (distanceY < 0) {
-			gapY = thisBounds.getMaxY() - otherBounds.getMinY();
-		} else {
-			gapY = otherBounds.getMaxY() - thisBounds.getMinY();
-		}
-		
-		// Only if either the horizontal or vertical distance is smaller than
-		// the desired distance between the ActionGroups we need to actually move.
-		if (gapX < distance || gapY < distance) {
-			double deltaX = distance - gapX;
-			double deltaY = distance - gapY;
-			double destX, destY;
-			
-			if (gapX < gapY) {
-				if (distanceX < 0) {
-					destX = thisX - deltaX;
-				} else {
-					destX = thisX + deltaX;
-				}
-				if (distanceY < 0) {
-					destY = thisY - deltaX / ratio;
-				} else {
-					destY = thisY + deltaX / ratio;
-				}
-			} else {
-				if (distanceY < 0) {
-					destY = thisY - deltaY;
-				} else {
-					destY = thisY + deltaY;
-				}
-				if (distanceX < 0) {
-					destX = thisX - deltaY * ratio;
-				} else {
-					destX = thisX + deltaY * ratio;
-				}
-			}
-
-			Path path = new Path(new MoveTo(thisX, thisY), new LineTo(destX, destY));
-			PathTransition transition = new PathTransition(new Duration(500), path, this);
-			transition.setInterpolator(new Interpolator() {
-				@Override
-				protected double curve(double t) {
-					return Math.sqrt(t);
-				}
-			});
-			transition.play();
-		}
-		
-		
 	}
 	
 	/**

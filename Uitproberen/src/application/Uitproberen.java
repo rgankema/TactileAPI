@@ -57,12 +57,18 @@ public class Uitproberen extends Application {
 			dg.setTranslateY(Math.random()*750);
 			tp.register(ag);
 			
-			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>(){
+			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>() {
 				@Override
 				public void handle(ActionGroupEvent event) {
 					System.out.println(event.getEventType()+" "+event.getSource()+"->"+event.getTarget());
+				}
+			});
+			
+			ag.addEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, new EventHandler<ActionGroupEvent>() {
+				@Override
+				public void handle(ActionGroupEvent event) {
 					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && !event.getOtherGroup().getId().equals(event.getTarget().getId())){
-						event.getOtherGroup().getDraggableGroupParent().moveAwayFrom(event.getTarget().getDraggableGroupParent(), tp.getProximityThreshold());
+						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 2.5);
 					}
 					event.consume();
 				}				

@@ -294,7 +294,7 @@ class QuadTree {
 				child.retrieve(object, returnObjects);
 			}
 		}
-		else if (retrieveNode.level > this.level) {
+		else if (retrieveNode != null && retrieveNode.level > this.level) {
 			retrieveNode.retrieve(object, returnObjects);
 		}
 
