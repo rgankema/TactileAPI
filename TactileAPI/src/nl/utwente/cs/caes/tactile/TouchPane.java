@@ -13,7 +13,7 @@ import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
-import nl.utwente.cs.caes.tactile.event.CollisionEvent;
+import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class TouchPane extends Pane {
 	private Set<ActionGroup> actionGroups = new HashSet<ActionGroup>();
@@ -40,8 +40,7 @@ public class TouchPane extends Pane {
 			public void changed(
 					ObservableValue<? extends Number> observableValue,
 					Number oldWidth, Number newWidth) {
-				quadTree = new QuadTree(thisPane
-						.localToScene(getBoundsInLocal()));
+				quadTree.setBounds(thisPane.localToScene(getBoundsInLocal()));
 				for (Node ag : actionGroups) {
 					quadTree.insert(ag);
 				}
@@ -54,8 +53,7 @@ public class TouchPane extends Pane {
 			public void changed(
 					ObservableValue<? extends Number> observableValue,
 					Number oldHeight, Number newHeight) {
-				quadTree = new QuadTree(thisPane
-						.localToScene(getBoundsInLocal()));
+				quadTree.setBounds(thisPane.localToScene(getBoundsInLocal()));
 				for (Node ag : actionGroups) {
 					quadTree.insert(ag);
 				}
@@ -99,11 +97,11 @@ public class TouchPane extends Pane {
 							if (thisObject.getActionGroupsColliding().add(otherObject)) {
 								otherObject.getActionGroupsColliding().add(thisObject);
 								
-								thisObject.fireEvent(new CollisionEvent(
-										CollisionEvent.COLLISION_STARTED,
+								thisObject.fireEvent(new ActionGroupEvent(
+										ActionGroupEvent.AREA_ENTERED,
 										thisObject, otherObject));
-								otherObject.fireEvent(new CollisionEvent(
-										CollisionEvent.COLLISION_STARTED,
+								otherObject.fireEvent(new ActionGroupEvent(
+										ActionGroupEvent.AREA_ENTERED,
 										otherObject, thisObject));
 							}
 						} 
@@ -111,22 +109,22 @@ public class TouchPane extends Pane {
 							if (thisObject.getActionGroupsColliding().remove(otherObject)) {
 								otherObject.getActionGroupsColliding().remove(thisObject);
 								
-								thisObject.fireEvent(new CollisionEvent(
-										CollisionEvent.COLLISION_ENDED,
+								thisObject.fireEvent(new ActionGroupEvent(
+										ActionGroupEvent.AREA_LEFT,
 										thisObject, otherObject));
-								otherObject.fireEvent(new CollisionEvent(
-										CollisionEvent.COLLISION_ENDED,
+								otherObject.fireEvent(new ActionGroupEvent(
+										ActionGroupEvent.AREA_LEFT,
 										otherObject, thisObject));
 							}
 							if (proximityBounds != null && proximityBounds.intersects(otherBounds)) {
 								if (thisObject.getActionGroupsInProximity().add(otherObject)) {
 									otherObject.getActionGroupsInProximity().add(thisObject);
 									
-									thisObject.fireEvent(new CollisionEvent(
-											CollisionEvent.PROXIMITY_ENTERED,
+									thisObject.fireEvent(new ActionGroupEvent(
+											ActionGroupEvent.PROXIMITY_ENTERED,
 											thisObject, otherObject));
-									otherObject.fireEvent(new CollisionEvent(
-											CollisionEvent.PROXIMITY_ENTERED,
+									otherObject.fireEvent(new ActionGroupEvent(
+											ActionGroupEvent.PROXIMITY_ENTERED,
 											otherObject, thisObject));
 								}	
 							}
@@ -134,11 +132,11 @@ public class TouchPane extends Pane {
 								if (thisObject.getActionGroupsInProximity().remove(otherObject)) {
 									otherObject.getActionGroupsInProximity().remove(thisObject);
 									
-									thisObject.fireEvent(new CollisionEvent(
-											CollisionEvent.PROXIMITY_LEFT,
+									thisObject.fireEvent(new ActionGroupEvent(
+											ActionGroupEvent.PROXIMITY_LEFT,
 											thisObject, otherObject));
-									otherObject.fireEvent(new CollisionEvent(
-											CollisionEvent.PROXIMITY_LEFT,
+									otherObject.fireEvent(new ActionGroupEvent(
+											ActionGroupEvent.PROXIMITY_LEFT,
 											otherObject, thisObject));
 								}
 							}
