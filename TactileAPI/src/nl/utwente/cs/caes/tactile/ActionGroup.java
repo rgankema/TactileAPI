@@ -2,7 +2,6 @@ package nl.utwente.cs.caes.tactile;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javafx.animation.Interpolator;
@@ -22,10 +21,11 @@ public class ActionGroup extends Group {
 	public ActionGroup() {
 		super();
 	}
-
-	public ActionGroup(Node... nodes) {
+	
+	public ActionGroup(Node... nodes){
 		super(nodes);
 	}
+
 
 	/**
 	 * Finds the first ancestor of this ActionGroup that is a DraggableGroup
@@ -34,7 +34,7 @@ public class ActionGroup extends Group {
 	 *         null if there is no such ancestor
 	 */
 	public final DraggableGroup getDraggableGroupParent() {
-		Parent ancestor = this;
+		Parent ancestor = getParent();
 		while (!(ancestor instanceof DraggableGroup)) {
 			ancestor = ancestor.getParent();
 		}
@@ -46,18 +46,19 @@ public class ActionGroup extends Group {
 	
 	/**
 	 * Requests this {@code ActionGroup} to move away from another
-	 * {@code ActionGroup}. The speed with which it will move away depends on
-	 * the distance from the other group.
+	 * {@code ActionGroup}.
 	 * 
 	 * @param group
 	 *            The {@code ActionGroup} to move away from
 	 * @param distance
 	 *            The maximum value of the resulting horizontal or vertical gap
 	 *            between the two {@code ActionGroups}
+	 * @param duration
+	 *            How long the animation should play
 	 * @throws IllegalArgumentException
 	 *             When a negative value is provided for distance
 	 */
-	public void moveAwayFrom(ActionGroup group, double distance){
+	public void moveAwayFrom(ActionGroup group, double distance, double duration){
 		if (distance < 0) {
 			throw new IllegalArgumentException("distance cannot be a negative value!");
 		}
@@ -127,20 +128,67 @@ public class ActionGroup extends Group {
 				deltaX = deltaY * ratio;
 			}
 			
+			// Waarschijnlijk moet dit uiteindelijk compleet anders, door alleen
+			// een vector mee te geven aan de ActionGroup/DraggableParent,
+			// en iets van een Physics engine te implementeren die dan telkens
+			// z'n locatie update
+			
 			// Animate the transition
-			TranslateTransition transition = new TranslateTransition(new Duration(500), this.getDraggableGroupParent());
+			TranslateTransition transition = new TranslateTransition(new Duration(duration), this.getDraggableGroupParent());
 			transition.setByX(deltaX);
 			transition.setByY(deltaY);
 			transition.setInterpolator(new Interpolator() {
 				@Override
 				protected double curve(double t) {
-					return Math.sqrt(t);
+					return Math.cbrt(t);
 				}
 			});
 			transition.play();
 		}
 	}
+
+	/**
+	 * Requests this {@code ActionGroup} to move away from another
+	 * {@code ActionGroup}. The animation will take 500ms.
+	 * 
+	 * @param group
+	 *            The {@code ActionGroup} to move away from
+	 * @param distance
+	 *            The maximum value of the resulting horizontal or vertical gap
+	 *            between the two {@code ActionGroups}
+	 * @throws IllegalArgumentException
+	 *             When a negative value is provided for distance
+	 */
+	public void moveAwayFrom(ActionGroup group, double distance) {
+		moveAwayFrom(group, distance, 500);
+	}
 	
+	/**
+	 * Requests this {@code ActionGroup} to move away from another
+	 * {@code ActionGroup}. The animation will take 500ms, and the distance will
+	 * be equal to the ProximityThreshold of the first ancestor that is a
+	 * {@code TouchPane}.
+	 * 
+	 * @param group
+	 *            The {@code ActionGroup} to move away from
+	 * @throws IllegalArgumentException
+	 *             When a negative value is provided for distance
+	 * @throws IllegalStateException
+	 *             When this {@ActionGroup} does not have a
+	 *             {@TouchPane} as ancestor
+	 */
+	public void moveAwayFrom(ActionGroup group) {
+		Parent ancestor = getDraggableGroupParent();
+		while (!(ancestor instanceof TouchPane)) {
+			ancestor = ancestor.getParent();
+		}
+		if (!(ancestor instanceof TouchPane)) {
+			throw new IllegalStateException("This ActionGroup does not have a TouchPane as ancestor!");
+		}
+		
+		double distance = ((TouchPane)ancestor).getProximityThreshold();
+		moveAwayFrom(group, distance, 500);
+	}
 	public Set<ActionGroup> getActionGroupsCollidingUnmodifiable() {
 		return actionGroupsCollidingUnmodifiable;
 	}

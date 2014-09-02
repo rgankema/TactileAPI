@@ -68,7 +68,7 @@ public class Uitproberen extends Application {
 				@Override
 				public void handle(ActionGroupEvent event) {
 					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && !event.getOtherGroup().getId().equals(event.getTarget().getId())){
-						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 2.5);
+						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 2.5, 300);
 					}
 					event.consume();
 				}				

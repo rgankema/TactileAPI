@@ -41,9 +41,6 @@ public class TouchPane extends Pane {
 					ObservableValue<? extends Number> observableValue,
 					Number oldWidth, Number newWidth) {
 				quadTree.setBounds(thisPane.localToScene(getBoundsInLocal()));
-				for (Node ag : actionGroups) {
-					quadTree.insert(ag);
-				}
 			}
 		});
 
@@ -54,9 +51,6 @@ public class TouchPane extends Pane {
 					ObservableValue<? extends Number> observableValue,
 					Number oldHeight, Number newHeight) {
 				quadTree.setBounds(thisPane.localToScene(getBoundsInLocal()));
-				for (Node ag : actionGroups) {
-					quadTree.insert(ag);
-				}
 			}
 		});
 
@@ -65,7 +59,6 @@ public class TouchPane extends Pane {
 
 		// Create AnimationTimer for collision checking
 		new AnimationTimer() {
-
 			@Override
 			public void handle(long now) {
 				// Update QuadTree

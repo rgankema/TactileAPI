@@ -1,19 +1,15 @@
 package nl.utwente.cs.caes.tactile;
 
-import javafx.animation.Interpolator;
-import javafx.animation.TranslateTransition;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
-import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
-import javafx.util.Duration;
 
 public class DraggableGroup extends Group {
 	
@@ -30,7 +26,6 @@ public class DraggableGroup extends Group {
 	// Called by the constructors
 	private void initialise() {
 		final DragContext dragContext = new DragContext();
-		DraggableGroup thisGroup = this;
 		
 		setOnMousePressed(new EventHandler<MouseEvent>() {
 			@Override
