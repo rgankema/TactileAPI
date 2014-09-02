@@ -114,9 +114,13 @@ public class PhysicsController extends AnimationTimer {
 				continue;
 			}
 			
-			dg.setTranslateX(dg.getTranslateX() + dg.getVector().getX() * TIME_STEP * 10);
-			dg.setTranslateY(dg.getTranslateY() + dg.getVector().getY() * TIME_STEP * 10);
+			translate(dg);
 		}
+	}
+	
+	private void translate(DraggableGroup dg) {
+		Point2D originalVector = dg.getVector();
+		
 	}
 	
 	private void checkCollisions() {
