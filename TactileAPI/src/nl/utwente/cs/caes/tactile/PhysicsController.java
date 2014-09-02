@@ -14,10 +14,12 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.shape.Line;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class PhysicsController extends AnimationTimer {
 	private static final double TIME_STEP = 1d/60d;
+	
 	private double accumulatedTime;
 	private long previousTime = 0;
 	
@@ -39,6 +41,7 @@ public class PhysicsController extends AnimationTimer {
 					ObservableValue<? extends Number> observableValue,
 					Number oldWidth, Number newWidth) {
 				quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
+				System.out.println(quadTree.getBounds());
 			}
 		});
 
@@ -49,6 +52,7 @@ public class PhysicsController extends AnimationTimer {
 					ObservableValue<? extends Number> observableValue,
 					Number oldHeight, Number newHeight) {
 				quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
+				System.out.println(quadTree.getBounds());
 			}
 		});
 
@@ -98,11 +102,10 @@ public class PhysicsController extends AnimationTimer {
 	}
 	
 	private void updatePositions() {
-		Point2D ZERO_VECTOR = new Point2D(0, 0);
 		List<DraggableGroup> draggableGroups = new ArrayList<DraggableGroup>();
 		for (Node child : pane.getChildren()) {
 			if (child instanceof DraggableGroup) {
-				if (!((DraggableGroup) child).getVector().equals(ZERO_VECTOR)) {
+				if (!((DraggableGroup) child).getVector().equals(Point2D.ZERO)) {
 					draggableGroups.add((DraggableGroup)child);
 				}
 			}
@@ -110,16 +113,68 @@ public class PhysicsController extends AnimationTimer {
 		for (DraggableGroup dg : draggableGroups) {
 			dg.setVector(dg.getVector().multiply(0.9));
 			if (Math.abs(dg.getVector().getX()) < 0.1 && Math.abs(dg.getVector().getY()) < 0.1) {
-				dg.setVector(ZERO_VECTOR);
+				dg.setVector(Point2D.ZERO);
 				continue;
 			}
 			
-			translate(dg);
+			translate(dg, dg.getVector().getX() * TIME_STEP * 10, dg.getVector().getY() * TIME_STEP * 10);
 		}
 	}
 	
-	private void translate(DraggableGroup dg) {
-		Point2D originalVector = dg.getVector();
+	private void translate(DraggableGroup draggableGroup, double deltaX, double deltaY) {
+		// Het hele gezeik met Bounds blijkt niet goed te werken, dus dit ook niet
+		if (!pane.isBordersCollide()) {
+			draggableGroup.setTranslateX(draggableGroup.getTranslateX() + deltaX);
+			draggableGroup.setTranslateY(draggableGroup.getTranslateY() + deltaY);
+			return;
+		}
+		
+		Bounds tpBounds = pane.localToScene(pane.getBoundsInLocal());
+		Bounds dgBounds = draggableGroup.localToScene(draggableGroup.getBoundsInLocal());
+		
+		double destX = dgBounds.getMinX() + deltaX;
+		double destY = dgBounds.getMinY() + deltaY;
+		double ratio = deltaX / deltaY;
+		
+		Bounds dgDestinationBounds = new BoundingBox(destX, destY, dgBounds.getWidth(), dgBounds.getHeight());
+		
+		if (tpBounds.contains(dgDestinationBounds)) {
+			draggableGroup.setTranslateX(draggableGroup.getTranslateX() + deltaX);
+			draggableGroup.setTranslateY(draggableGroup.getTranslateY() + deltaY);
+		} else {
+			Point2D vec1 = null, vec2 = null;
+			if (deltaX < 0 && destX < tpBounds.getMinX()) {
+				deltaX = tpBounds.getMinX() - dgBounds.getMinX();
+				deltaY = deltaX / ratio;
+				vec1 = new Point2D(deltaX, deltaY);
+			}
+			else if (deltaX > 0 && destX > tpBounds.getMaxX() - dgBounds.getWidth()) {
+				deltaX = tpBounds.getMaxX() - dgBounds.getMaxX();
+				deltaY = deltaX / ratio;
+				vec1 = new Point2D(deltaX, deltaY);
+			}
+			if (deltaY < 0 && destY < tpBounds.getMinY()) {
+				deltaY = tpBounds.getMinY() - dgBounds.getMinY();
+				deltaX = deltaY * ratio;
+				vec2 = new Point2D(deltaX, deltaY);
+			}
+			else if (deltaY > 0 && destY > tpBounds.getMaxY() - dgBounds.getHeight()) {
+				deltaY = tpBounds.getMaxY() - dgBounds.getMaxY();
+				deltaX = deltaY * ratio;
+				vec2 = new Point2D(deltaX, deltaY);
+			}
+			if (vec1 == null || (vec2 != null && vec1.magnitude() > vec2.magnitude())) {
+				deltaX = vec2.getX();
+				deltaY = vec2.getY();
+			} else {
+				deltaX = vec1.getX();
+				deltaY = vec1.getY();
+			}
+			// TODO Reflection vector berekenen
+			draggableGroup.setTranslateX(draggableGroup.getTranslateX() + deltaX);
+			draggableGroup.setTranslateY(draggableGroup.getTranslateY() + deltaY);
+			
+		}
 		
 	}
 	

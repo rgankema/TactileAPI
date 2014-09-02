@@ -30,6 +30,8 @@ public class Uitproberen extends Application {
 		Scene scene = new Scene(root, 800, 800);
 
 		TouchPane tp = new TouchPane();
+		tp.setBackground(new Background(new BackgroundFill(Color.GREY, null, null)));
+		tp.setBordersCollide(true);
 		tp.setProximityThreshold(30);
 		
 		for (int i = 0; i < 15; i++) {
@@ -60,7 +62,7 @@ public class Uitproberen extends Application {
 			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>() {
 				@Override
 				public void handle(ActionGroupEvent event) {
-					//System.out.println(event.getEventType()+" "+event.getSource()+"->"+event.getTarget());
+					System.out.println(event.getEventType()+" "+event.getSource()+"->"+event.getTarget());
 				}
 			});
 			
@@ -68,7 +70,7 @@ public class Uitproberen extends Application {
 				@Override
 				public void handle(ActionGroupEvent event) {
 					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && !event.getOtherGroup().getId().equals(event.getTarget().getId())){
-						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 2.5, 300);
+						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 5.5, 300);
 					}
 					event.consume();
 				}				

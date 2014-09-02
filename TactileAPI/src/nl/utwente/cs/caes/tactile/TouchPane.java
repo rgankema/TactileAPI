@@ -26,93 +26,25 @@ public class TouchPane extends Pane {
 	}
 	
 	/**
-	 * Whether {@code DraggableGroups} will collide with the left border of this TouchPane.
+	 * Whether {@code DraggableGroups} will collide with the borders of this TouchPane.
 	 * If set to true the {@code TouchPane} will prevent {@code ActionGroups} that are moving
-	 * because of user input or physics to move farther to the left than x = 0.
+	 * because of user input or physics to move outside of the {@code TouchPane's} boundaries.
 	 */
-	private BooleanProperty leftBorderCollides;
+	private BooleanProperty bordersCollide;
 	
-	public final void setLeftBorderCollides(boolean value) {
-		leftBorderCollidesProperty().set(value);
+	public final void setBordersCollide(boolean value) {
+		bordersCollideProperty().set(value);
 	}
 	
-	public final boolean isLeftBorderCollides() {
-		return leftBorderCollidesProperty().get();
+	public final boolean isBordersCollide() {
+		return bordersCollideProperty().get();
 	}
 	
-	public final BooleanProperty leftBorderCollidesProperty() {
-		if (leftBorderCollides == null) {
-			leftBorderCollides = new SimpleBooleanProperty(false);
+	public final BooleanProperty bordersCollideProperty() {
+		if (bordersCollide == null) {
+			bordersCollide = new SimpleBooleanProperty(false);
 		}
-		return leftBorderCollides;
-	}
-	
-	/**
-	 * Whether {@code DraggableGroups} will collide with the right border of this TouchPane.
-	 * If set to true the {@code TouchPane} will prevent {@code ActionGroups} that are moving
-	 * because of user input or physics to move farther to the right than x = TouchPane.width -
-	 * ActionGroup.width.
-	 */
-	private BooleanProperty rightBorderCollides;
-	
-	public final void setRightBorderCollides(boolean value) {
-		rightBorderCollidesProperty().set(value);
-	}
-	
-	public final boolean isRightBorderCollides() {
-		return rightBorderCollidesProperty().get();
-	}
-	
-	public final BooleanProperty rightBorderCollidesProperty() {
-		if (rightBorderCollides == null) {
-			rightBorderCollides = new SimpleBooleanProperty(false);
-		}
-		return rightBorderCollides;
-	}
-	
-	/**
-	 * Whether {@code DraggableGroups} will collide with the top border of this TouchPane.
-	 * If set to true the {@code TouchPane} will prevent {@code ActionGroups} that are moving
-	 * because of user input or physics to move farther to the top than y = 0.
-	 */
-	private BooleanProperty topBorderCollides;
-	
-	public final void setTopBorderCollides(boolean value) {
-		topBorderCollidesProperty().set(value);
-	}
-	
-	public final boolean isTopBorderCollides() {
-		return topBorderCollidesProperty().get();
-	}
-	
-	public final BooleanProperty topBorderCollidesProperty() {
-		if (topBorderCollides == null) {
-			topBorderCollides = new SimpleBooleanProperty(false);
-		}
-		return topBorderCollides;
-	}
-	
-	/**
-	 * Whether {@code DraggableGroups} will collide with the bottom border of this TouchPane.
-	 * If set to true the {@code TouchPane} will prevent {@code ActionGroups} that are moving
-	 * because of user input or physics to move farther to the bottom than y = TouchPane.height -
-	 * ActionGroup.height.
-	 */
-	private BooleanProperty bottomBorderCollides;
-	
-	public final void setBottomBorderCollides(boolean value) {
-		bottomBorderCollidesProperty().set(value);
-	}
-	
-	public final boolean isBottomBorderCollides() {
-		return bottomBorderCollidesProperty().get();
-	}
-	
-	public final BooleanProperty bottomBorderCollidesProperty() {
-		if (bottomBorderCollides == null) {
-			bottomBorderCollides = new SimpleBooleanProperty(false);
-		}
-		return bottomBorderCollides;
+		return bordersCollide;
 	}
 	
 	public final void setProximityThreshold(double threshold) {
