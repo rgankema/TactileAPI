@@ -60,7 +60,7 @@ public class Uitproberen extends Application {
 			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>() {
 				@Override
 				public void handle(ActionGroupEvent event) {
-					System.out.println(event.getEventType()+" "+event.getSource()+"->"+event.getTarget());
+					//System.out.println(event.getEventType()+" "+event.getSource()+"->"+event.getTarget());
 				}
 			});
 			

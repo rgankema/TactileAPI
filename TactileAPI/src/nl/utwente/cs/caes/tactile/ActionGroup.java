@@ -4,13 +4,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javafx.animation.Interpolator;
-import javafx.animation.TranslateTransition;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.util.Duration;
 
 public class ActionGroup extends Group {
 	private Set<ActionGroup> actionGroupsColliding = new HashSet<ActionGroup>();
@@ -128,22 +125,7 @@ public class ActionGroup extends Group {
 				deltaX = deltaY * ratio;
 			}
 			
-			// Waarschijnlijk moet dit uiteindelijk compleet anders, door alleen
-			// een vector mee te geven aan de ActionGroup/DraggableParent,
-			// en iets van een Physics engine te implementeren die dan telkens
-			// z'n locatie update
-			
-			// Animate the transition
-			TranslateTransition transition = new TranslateTransition(new Duration(duration), this.getDraggableGroupParent());
-			transition.setByX(deltaX);
-			transition.setByY(deltaY);
-			transition.setInterpolator(new Interpolator() {
-				@Override
-				protected double curve(double t) {
-					return Math.cbrt(t);
-				}
-			});
-			transition.play();
+			getDraggableGroupParent().setVector(getDraggableGroupParent().getVector().add(deltaX, deltaY));
 		}
 	}
 

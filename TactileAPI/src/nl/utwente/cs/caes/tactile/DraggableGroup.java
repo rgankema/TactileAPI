@@ -3,8 +3,11 @@ package nl.utwente.cs.caes.tactile;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -148,6 +151,30 @@ public class DraggableGroup extends Group {
 	
 	public boolean isGoToForegroundOnActive() {
 		return goToForegroundOnActive == null ? true : goToForegroundOnActive.get();
+	}
+	
+	/**
+	 * The 2D velocity vector for this {@DraggableGroup}
+	 */
+	private ReadOnlyObjectWrapper<Point2D> vector;
+	
+	void setVector(Point2D value) {
+		vectorPropertyImpl().set(value);
+	}
+	
+	public Point2D getVector() {
+		return vectorPropertyImpl().get();
+	}
+	
+	public ReadOnlyObjectProperty<Point2D> vectorProperty() {
+		return vectorPropertyImpl().getReadOnlyProperty();
+	}
+	
+	ReadOnlyObjectWrapper<Point2D> vectorPropertyImpl() {
+		if (vector == null) {
+			vector = new ReadOnlyObjectWrapper<Point2D>(new Point2D(0, 0));
+		}
+		return vector;
 	}
 	
 	/**
