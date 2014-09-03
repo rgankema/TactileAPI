@@ -7,6 +7,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -35,8 +36,8 @@ public class DraggableGroup extends Group {
 			public void handle(MouseEvent event) {
 				setActive(true);
 				// record a delta distance for the drag and drop operation.
-				dragContext.deltaX = getTranslateX() - event.getSceneX();
-				dragContext.deltaY = getTranslateY() - event.getSceneY();
+				dragContext.deltaX = getLayoutX() - event.getSceneX();
+				dragContext.deltaY = getLayoutY() - event.getSceneY();
 				if (isGoToForegroundOnActive()) {
 					goToForeground();
 				}
@@ -53,8 +54,30 @@ public class DraggableGroup extends Group {
 		setOnMouseDragged(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				setTranslateX(event.getSceneX() + dragContext.deltaX);
-				setTranslateY(event.getSceneY() + dragContext.deltaY);
+				double x = event.getSceneX() + dragContext.deltaX;
+				double y = event.getSceneY() + dragContext.deltaY;
+				
+				Parent parent = getParent();
+				if (parent instanceof TouchPane) {
+					TouchPane pane = (TouchPane) parent;
+					if (pane.isBordersCollide()) {
+						DraggableGroup dg = DraggableGroup.this;
+						Bounds paneBounds = pane.getBoundsInLocal();
+						Bounds thisBounds = dg.getBoundsInLocal();
+						
+						if (x < paneBounds.getMinX()) {
+							x = paneBounds.getMinX();
+						} else if (x > paneBounds.getMaxX() - thisBounds.getWidth()) {
+							x = paneBounds.getMaxX() - thisBounds.getWidth();
+						}
+						if (y < paneBounds.getMinY()) {
+							y = paneBounds.getMinY();
+						} else if (y > paneBounds.getMaxY() - thisBounds.getHeight()) {
+							y = paneBounds.getMaxY() - thisBounds.getHeight();
+						}
+					}
+				}
+				relocate(x, y);
 			}
 		});
 
@@ -74,10 +97,10 @@ public class DraggableGroup extends Group {
 			public void handle(TouchEvent event) {
 				setActive(true);
 				// record a delta distance for the drag and drop operation.
-				dragContext.deltaX = getTranslateX()
+				dragContext.deltaX = getLayoutX()
 						- event.getTouchPoint().getSceneX();
 				dragContext.deltaY = getTranslateY()
-						- event.getTouchPoint().getSceneY();
+						- event.getLayoutX().getSceneY();
 				if (isGoToForegroundOnActive()) {
 					goToForeground();
 				}

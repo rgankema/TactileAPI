@@ -4,9 +4,10 @@ import java.net.SocketException;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
-import javafx.scene.Group;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.FlowPane;
@@ -26,13 +27,12 @@ public class Uitproberen extends Application {
 
 	public void start(Stage primaryStage) throws SocketException {
 		primaryStage.setTitle("The test");
-		Group root = new Group();
-		Scene scene = new Scene(root, 800, 800);
 
 		TouchPane tp = new TouchPane();
 		tp.setBackground(new Background(new BackgroundFill(Color.GREY, null, null)));
 		tp.setBordersCollide(true);
 		tp.setProximityThreshold(30);
+		tp.setPrefSize(800, 800);
 		
 		for (int i = 0; i < 15; i++) {
 			FlowPane fp = new FlowPane();
@@ -55,14 +55,13 @@ public class Uitproberen extends Application {
 			
 			DraggableGroup dg = new DraggableGroup(fp);
 			tp.getChildren().add(dg);
-			dg.setTranslateX(Math.random()*750);
-			dg.setTranslateY(Math.random()*750);
+			dg.relocate(Math.random()*750, Math.random()*750);
 			tp.register(ag);
 			
 			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>() {
 				@Override
 				public void handle(ActionGroupEvent event) {
-					System.out.println(event.getEventType()+" "+event.getSource()+"->"+event.getTarget());
+				//	System.out.println(event.getEventType()+" "+event.getSource()+"->"+event.getTarget());
 				}
 			});
 			
@@ -70,15 +69,27 @@ public class Uitproberen extends Application {
 				@Override
 				public void handle(ActionGroupEvent event) {
 					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && !event.getOtherGroup().getId().equals(event.getTarget().getId())){
-						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 5.5, 300);
+						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 25, 300);
+					}
+				}				
+			});
+			
+			ag.addEventHandler(ActionGroupEvent.AREA_ENTERED, new EventHandler<ActionGroupEvent>() {
+				@Override
+				public void handle(ActionGroupEvent event) {
+					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && !event.getOtherGroup().getId().equals(event.getTarget().getId())){
+						if (event.getTarget().getDraggableGroupParent().isActive()) {
+							tp.deregister(event.getOtherGroup());
+							tp.getChildren().remove(event.getOtherGroup().getDraggableGroupParent());
+						}
 					}
 					event.consume();
 				}				
 			});
 		}
 
-		root.getChildren().add(tp);
-
+		Parent root = new FlowPane(tp);
+		Scene scene = new Scene(root);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
