@@ -1,9 +1,11 @@
 package nl.utwente.cs.caes.tactile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.DoubleProperty;
@@ -23,7 +25,7 @@ public class PhysicsController extends AnimationTimer {
 	private double accumulatedTime;
 	private long previousTime = 0;
 	
-	private Set<ActionGroup> actionGroups = new HashSet<ActionGroup>();
+	private Set<ActionGroup> actionGroups;
 	private QuadTree quadTree;
 	private TouchPane pane;
 	
@@ -33,6 +35,9 @@ public class PhysicsController extends AnimationTimer {
 	}
 	
 	private void initialise() {
+		ConcurrentHashMap<ActionGroup, Boolean> map = new ConcurrentHashMap<>();
+		actionGroups = Collections.newSetFromMap(map);
+		
 		// Add resize listeners (needs optimisation)
 		pane.widthProperty().addListener(new ChangeListener<Number>() {
 
@@ -96,9 +101,9 @@ public class PhysicsController extends AnimationTimer {
 		
 		while(accumulatedTime >= TIME_STEP) {
 			updatePositions();
+			checkCollisions();
 			accumulatedTime -= TIME_STEP;
 		}
-		checkCollisions();
 	}
 	
 	private void updatePositions() {
@@ -117,7 +122,7 @@ public class PhysicsController extends AnimationTimer {
 				continue;
 			}
 			
-			translate(dg, dg.getVector().getX() * TIME_STEP * 10, dg.getVector().getY() * TIME_STEP * 10);
+			translate(dg, dg.getVector().getX() * TIME_STEP, dg.getVector().getY() * TIME_STEP);
 		}
 	}
 	

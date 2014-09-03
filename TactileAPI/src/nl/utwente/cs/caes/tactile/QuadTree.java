@@ -224,7 +224,7 @@ class QuadTree {
 		Bounds bounds = object.localToScene(object.getBoundsInLocal());
 		QuadTree removeNode = getTreeNode(getProximityBounds(bounds));
 
-		if (removeNode == this) {
+		if (removeNode == this || removeNode == null) {
 			proximityBoundsByObject.remove(object);
 		} else {
 			removeNode.remove(object);

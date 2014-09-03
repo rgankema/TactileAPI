@@ -7,6 +7,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -38,8 +39,8 @@ public class DraggableGroup extends Group {
 			public void handle(MouseEvent event) {
 				setActive(true);
 				// record a delta distance for the drag and drop operation.
-				dragContext.deltaX = getTranslateX() - event.getSceneX();
-				dragContext.deltaY = getTranslateY() - event.getSceneY();
+				dragContext.deltaX = getLayoutX() - event.getSceneX();
+				dragContext.deltaY = getLayoutY() - event.getSceneY();
 				dragContext.spdPastX = new double[pastFrames];
 				dragContext.spdPastY = new double[pastFrames];
 				dragContext.pastIndex = 0;
@@ -63,7 +64,7 @@ public class DraggableGroup extends Group {
 				System.out.println("X: " + speedX);
 				System.out.println("y: " + speedY);
 
-				setVector(new Point2D(speedX,speedY));
+				//setVector(new Point2D(speedX,speedY));
 				
 				setActive(false);
 			}
@@ -72,16 +73,39 @@ public class DraggableGroup extends Group {
 		setOnMouseDragged(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				double moveX = event.getSceneX() + dragContext.deltaX; //how much should move in X direction this frame
-				double moveY = event.getSceneY() + dragContext.deltaY;
-				setTranslateX(moveX);
-				setTranslateY(moveY);
 				
-				dragContext.spdPastX[dragContext.pastIndex] = dragContext.deltaX;
-				dragContext.spdPastY[dragContext.pastIndex] = moveY;
+				
+				double x = event.getSceneX() + dragContext.deltaX;
+				double y = event.getSceneY() + dragContext.deltaY;
+				
+				Parent parent = getParent();
+				if (parent instanceof TouchPane) {
+					TouchPane pane = (TouchPane) parent;
+					if (pane.isBordersCollide()) {
+						DraggableGroup dg = DraggableGroup.this;
+						Bounds paneBounds = pane.getBoundsInLocal();
+						Bounds thisBounds = dg.getBoundsInLocal();
+						
+						if (x < paneBounds.getMinX()) {
+							x = paneBounds.getMinX();
+						} else if (x > paneBounds.getMaxX() - thisBounds.getWidth()) {
+							x = paneBounds.getMaxX() - thisBounds.getWidth();
+						}
+						if (y < paneBounds.getMinY()) {
+							y = paneBounds.getMinY();
+						} else if (y > paneBounds.getMaxY() - thisBounds.getHeight()) {
+							y = paneBounds.getMaxY() - thisBounds.getHeight();
+						}
+					}
+				}
+				
+				dragContext.spdPastX[dragContext.pastIndex] = getLayoutX();
+				dragContext.spdPastY[dragContext.pastIndex] = getLayoutY();
 				dragContext.pastIndex = (dragContext.pastIndex + 1) % pastFrames;
+				
+				
+				relocate(x, y);
 			}
-			
 		});
 
 		/*	Misschien hebben we niet eens TouchEvents nodig, ziet er naar uit dat alles met MouseEvents ook al werkt
@@ -100,10 +124,10 @@ public class DraggableGroup extends Group {
 			public void handle(TouchEvent event) {
 				setActive(true);
 				// record a delta distance for the drag and drop operation.
-				dragContext.deltaX = getTranslateX()
+				dragContext.deltaX = getLayoutX()
 						- event.getTouchPoint().getSceneX();
 				dragContext.deltaY = getTranslateY()
-						- event.getTouchPoint().getSceneY();
+						- event.getLayoutX().getSceneY();
 				if (isGoToForegroundOnActive()) {
 					goToForeground();
 				}
