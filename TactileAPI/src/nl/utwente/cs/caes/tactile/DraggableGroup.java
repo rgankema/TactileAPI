@@ -17,6 +17,11 @@ import javafx.scene.layout.Pane;
 
 public class DraggableGroup extends Group {
 	
+	// Number of frames over which speed is calculated
+	public static final int pastFrames = 20;
+	//Multiplication for length of vector to make them big enough
+	public static final double forceMult = 50;
+	
 	public DraggableGroup(Node... nodes) {
 		super(nodes);
 		initialise();
@@ -37,15 +42,17 @@ public class DraggableGroup extends Group {
 			public void handle(MouseEvent event) {
 				setActive(true);
 				
+				dragContext.spdPastX = new double[pastFrames];
+				dragContext.spdPastY = new double[pastFrames];
+				dragContext.pastIndex = 0;
+				
 				if (thisGroup.getParent() == null) {
 					return;
 				}
 				
-				Point2D cursorInScreen = new Point2D(event.getScreenX(), event.getScreenY());
-				Point2D cursorInParent = thisGroup.getParent().screenToLocal(cursorInScreen);
-				
-				dragContext.deltaX = getLayoutX() - cursorInParent.getX();
-				dragContext.deltaY = getLayoutY() - cursorInParent.getY();
+				// record a delta distance for the drag and drop operation.
+				dragContext.deltaX = getLayoutX() - event.getSceneX();
+				dragContext.deltaY = getLayoutY() - event.getSceneY();				
 				
 				if (isGoToForegroundOnActive()) {
 					goToForeground();
@@ -56,6 +63,17 @@ public class DraggableGroup extends Group {
 		setOnMouseReleased(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
+				//TODO implement speed on release
+				double speedX = 0, speedY = 0;
+				for(int i = 0; i < pastFrames && i <= dragContext.spdPastX.length; i++){
+					speedX += dragContext.spdPastX[i];
+					speedY += dragContext.spdPastY[i];
+				}
+				speedX = speedX / (double) dragContext.spdPastX.length;
+				speedY = speedY / (double) dragContext.spdPastY.length;
+
+				setVector(new Point2D(speedX*forceMult,speedY*forceMult));
+				
 				setActive(false);
 			}
 		});
@@ -66,11 +84,8 @@ public class DraggableGroup extends Group {
 				if (thisGroup.getParent() == null)
 					return;
 				
-				Point2D cursorInScreen = new Point2D(event.getScreenX(), event.getScreenY());
-				Point2D cursorInParent = thisGroup.getParent().screenToLocal(cursorInScreen);
-				
-				double x = cursorInParent.getX() + dragContext.deltaX;
-				double y = cursorInParent.getY() + dragContext.deltaY;
+				double x = event.getSceneX() + dragContext.deltaX;
+				double y = event.getSceneY() + dragContext.deltaY;
 				
 				Parent parent = getParent();
 				if (parent instanceof TouchPane) {
@@ -91,6 +106,11 @@ public class DraggableGroup extends Group {
 						}
 					}
 				}
+				
+				dragContext.spdPastX[dragContext.pastIndex] = x - getLayoutX();
+				dragContext.spdPastY[dragContext.pastIndex] = y - getLayoutY();
+				dragContext.pastIndex = (dragContext.pastIndex + 1) % pastFrames;
+				
 				relocate(x, y);
 			}
 		});
@@ -230,5 +250,7 @@ public class DraggableGroup extends Group {
 	// Help class used for moving
 	private class DragContext {
 		double deltaX, deltaY;
+		double[] spdPastX, spdPastY; //Keep record of past translation amounts
+		int pastIndex;
 	}
 }
