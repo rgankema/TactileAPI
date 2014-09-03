@@ -18,7 +18,9 @@ import javafx.scene.layout.Pane;
 public class DraggableGroup extends Group {
 	
 	// Number of frames over which speed is calculated
-	public static final int pastFrames = 30;
+	public static final int pastFrames = 20;
+	//Multiplication for length of vector to make them big enough
+	public static final double forceMult = 50;
 	
 	public DraggableGroup(Node... nodes) {
 		super(nodes);
@@ -41,6 +43,7 @@ public class DraggableGroup extends Group {
 				// record a delta distance for the drag and drop operation.
 				dragContext.deltaX = getLayoutX() - event.getSceneX();
 				dragContext.deltaY = getLayoutY() - event.getSceneY();
+				
 				dragContext.spdPastX = new double[pastFrames];
 				dragContext.spdPastY = new double[pastFrames];
 				dragContext.pastIndex = 0;
@@ -56,15 +59,17 @@ public class DraggableGroup extends Group {
 				//TODO implement speed on release
 				double speedX = 0, speedY = 0;
 				for(int i = 0; i < pastFrames && i <= dragContext.spdPastX.length; i++){
-					speedX += dragContext.spdPastX[i] ;
-					speedY += dragContext.spdPastY[i] * ((double) 1/(double) pastFrames);
+					speedX += dragContext.spdPastX[i];
+					speedY += dragContext.spdPastY[i];
 				}
 				speedX = speedX / (double) dragContext.spdPastX.length;
 				speedY = speedY / (double) dragContext.spdPastY.length;
+				speedX = -1.0 * speedX;
+				speedY = -1.0 * speedY;
 				System.out.println("X: " + speedX);
 				System.out.println("y: " + speedY);
 
-				//setVector(new Point2D(speedX,speedY));
+				setVector(new Point2D(speedX*forceMult,speedY*forceMult));
 				
 				setActive(false);
 			}
@@ -99,10 +104,9 @@ public class DraggableGroup extends Group {
 					}
 				}
 				
-				dragContext.spdPastX[dragContext.pastIndex] = getLayoutX();
-				dragContext.spdPastY[dragContext.pastIndex] = getLayoutY();
+				dragContext.spdPastX[dragContext.pastIndex] = getLayoutX() - x;
+				dragContext.spdPastY[dragContext.pastIndex] = getLayoutY() - y;
 				dragContext.pastIndex = (dragContext.pastIndex + 1) % pastFrames;
-				
 				
 				relocate(x, y);
 			}
@@ -243,6 +247,7 @@ public class DraggableGroup extends Group {
 	// Help class used for moving
 	private class DragContext {
 		double deltaX, deltaY;
+		//double prevX, prevY;
 		double[] spdPastX, spdPastY; //Keep record of past translation amounts
 		int pastIndex;
 	}
