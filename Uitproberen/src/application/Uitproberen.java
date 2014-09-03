@@ -55,7 +55,7 @@ public class Uitproberen extends Application {
 			
 			DraggableGroup dg = new DraggableGroup(fp);
 			tp.getChildren().add(dg);
-			dg.relocate(Math.random()*750, Math.random()*750);
+			dg.relocate(Math.random()*750, Math.random()*700);
 			tp.register(ag);
 			
 			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>() {

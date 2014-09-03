@@ -29,15 +29,24 @@ public class DraggableGroup extends Group {
 	
 	// Called by the constructors
 	private void initialise() {
-		final DragContext dragContext = new DragContext();
+		DragContext dragContext = new DragContext();
+		DraggableGroup thisGroup = this;
 		
 		setOnMousePressed(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
 				setActive(true);
-				// record a delta distance for the drag and drop operation.
-				dragContext.deltaX = getLayoutX() - event.getSceneX();
-				dragContext.deltaY = getLayoutY() - event.getSceneY();
+				
+				if (thisGroup.getParent() == null) {
+					return;
+				}
+				
+				Point2D cursorInScreen = new Point2D(event.getScreenX(), event.getScreenY());
+				Point2D cursorInParent = thisGroup.getParent().screenToLocal(cursorInScreen);
+				
+				dragContext.deltaX = getLayoutX() - cursorInParent.getX();
+				dragContext.deltaY = getLayoutY() - cursorInParent.getY();
+				
 				if (isGoToForegroundOnActive()) {
 					goToForeground();
 				}
@@ -54,25 +63,30 @@ public class DraggableGroup extends Group {
 		setOnMouseDragged(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				double x = event.getSceneX() + dragContext.deltaX;
-				double y = event.getSceneY() + dragContext.deltaY;
+				if (thisGroup.getParent() == null)
+					return;
+				
+				Point2D cursorInScreen = new Point2D(event.getScreenX(), event.getScreenY());
+				Point2D cursorInParent = thisGroup.getParent().screenToLocal(cursorInScreen);
+				
+				double x = cursorInParent.getX() + dragContext.deltaX;
+				double y = cursorInParent.getY() + dragContext.deltaY;
 				
 				Parent parent = getParent();
 				if (parent instanceof TouchPane) {
 					TouchPane pane = (TouchPane) parent;
 					if (pane.isBordersCollide()) {
-						DraggableGroup dg = DraggableGroup.this;
 						Bounds paneBounds = pane.getBoundsInLocal();
-						Bounds thisBounds = dg.getBoundsInLocal();
+						Bounds thisBounds = thisGroup.getBoundsInLocal();
 						
 						if (x < paneBounds.getMinX()) {
 							x = paneBounds.getMinX();
-						} else if (x > paneBounds.getMaxX() - thisBounds.getWidth()) {
+						} else if (x + thisBounds.getWidth() > paneBounds.getMaxX()) {
 							x = paneBounds.getMaxX() - thisBounds.getWidth();
 						}
 						if (y < paneBounds.getMinY()) {
 							y = paneBounds.getMinY();
-						} else if (y > paneBounds.getMaxY() - thisBounds.getHeight()) {
+						} else if (y + thisBounds.getHeight() > paneBounds.getMaxY()) {
 							y = paneBounds.getMaxY() - thisBounds.getHeight();
 						}
 					}

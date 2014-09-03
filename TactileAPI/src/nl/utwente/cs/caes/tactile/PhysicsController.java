@@ -46,7 +46,6 @@ public class PhysicsController extends AnimationTimer {
 					ObservableValue<? extends Number> observableValue,
 					Number oldWidth, Number newWidth) {
 				quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
-				System.out.println(quadTree.getBounds());
 			}
 		});
 
@@ -57,7 +56,6 @@ public class PhysicsController extends AnimationTimer {
 					ObservableValue<? extends Number> observableValue,
 					Number oldHeight, Number newHeight) {
 				quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
-				System.out.println(quadTree.getBounds());
 			}
 		});
 
@@ -129,8 +127,8 @@ public class PhysicsController extends AnimationTimer {
 	private void translate(DraggableGroup draggableGroup, double deltaX, double deltaY) {
 		// Het hele gezeik met Bounds blijkt niet goed te werken, dus dit ook niet
 		if (!pane.isBordersCollide()) {
-			draggableGroup.setTranslateX(draggableGroup.getTranslateX() + deltaX);
-			draggableGroup.setTranslateY(draggableGroup.getTranslateY() + deltaY);
+			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
+			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
 			return;
 		}
 		
@@ -144,8 +142,8 @@ public class PhysicsController extends AnimationTimer {
 		Bounds dgDestinationBounds = new BoundingBox(destX, destY, dgBounds.getWidth(), dgBounds.getHeight());
 		
 		if (tpBounds.contains(dgDestinationBounds)) {
-			draggableGroup.setTranslateX(draggableGroup.getTranslateX() + deltaX);
-			draggableGroup.setTranslateY(draggableGroup.getTranslateY() + deltaY);
+			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
+			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
 		} else {
 			Point2D vec1 = null, vec2 = null;
 			if (deltaX < 0 && destX < tpBounds.getMinX()) {
@@ -176,8 +174,8 @@ public class PhysicsController extends AnimationTimer {
 				deltaY = vec1.getY();
 			}
 			// TODO Reflection vector berekenen
-			draggableGroup.setTranslateX(draggableGroup.getTranslateX() + deltaX);
-			draggableGroup.setTranslateY(draggableGroup.getTranslateY() + deltaY);
+			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
+			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
 			
 		}
 		
