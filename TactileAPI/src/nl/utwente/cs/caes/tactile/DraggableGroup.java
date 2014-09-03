@@ -16,6 +16,9 @@ import javafx.scene.layout.Pane;
 
 public class DraggableGroup extends Group {
 	
+	// Number of frames over which speed is calculated
+	public static final int pastFrames = 30;
+	
 	public DraggableGroup(Node... nodes) {
 		super(nodes);
 		initialise();
@@ -37,6 +40,9 @@ public class DraggableGroup extends Group {
 				// record a delta distance for the drag and drop operation.
 				dragContext.deltaX = getTranslateX() - event.getSceneX();
 				dragContext.deltaY = getTranslateY() - event.getSceneY();
+				dragContext.spdPastX = new double[pastFrames];
+				dragContext.spdPastY = new double[pastFrames];
+				dragContext.pastIndex = 0;
 				if (isGoToForegroundOnActive()) {
 					goToForeground();
 				}
@@ -46,6 +52,19 @@ public class DraggableGroup extends Group {
 		setOnMouseReleased(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
+				//TODO implement speed on release
+				double speedX = 0, speedY = 0;
+				for(int i = 0; i < pastFrames && i <= dragContext.spdPastX.length; i++){
+					speedX += dragContext.spdPastX[i] ;
+					speedY += dragContext.spdPastY[i] * ((double) 1/(double) pastFrames);
+				}
+				speedX = speedX / (double) dragContext.spdPastX.length;
+				speedY = speedY / (double) dragContext.spdPastY.length;
+				System.out.println("X: " + speedX);
+				System.out.println("y: " + speedY);
+
+				setVector(new Point2D(speedX,speedY));
+				
 				setActive(false);
 			}
 		});
@@ -53,9 +72,16 @@ public class DraggableGroup extends Group {
 		setOnMouseDragged(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				setTranslateX(event.getSceneX() + dragContext.deltaX);
-				setTranslateY(event.getSceneY() + dragContext.deltaY);
+				double moveX = event.getSceneX() + dragContext.deltaX; //how much should move in X direction this frame
+				double moveY = event.getSceneY() + dragContext.deltaY;
+				setTranslateX(moveX);
+				setTranslateY(moveY);
+				
+				dragContext.spdPastX[dragContext.pastIndex] = dragContext.deltaX;
+				dragContext.spdPastY[dragContext.pastIndex] = moveY;
+				dragContext.pastIndex = (dragContext.pastIndex + 1) % pastFrames;
 			}
+			
 		});
 
 		/*	Misschien hebben we niet eens TouchEvents nodig, ziet er naar uit dat alles met MouseEvents ook al werkt
@@ -193,5 +219,7 @@ public class DraggableGroup extends Group {
 	// Help class used for moving
 	private class DragContext {
 		double deltaX, deltaY;
+		double[] spdPastX, spdPastY; //Keep record of past translation amounts
+		int pastIndex;
 	}
 }
