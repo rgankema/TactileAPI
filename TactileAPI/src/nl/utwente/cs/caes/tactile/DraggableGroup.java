@@ -64,10 +64,6 @@ public class DraggableGroup extends Group {
 				}
 				speedX = speedX / (double) dragContext.spdPastX.length;
 				speedY = speedY / (double) dragContext.spdPastY.length;
-				speedX = -1.0 * speedX;
-				speedY = -1.0 * speedY;
-				System.out.println("X: " + speedX);
-				System.out.println("y: " + speedY);
 
 				setVector(new Point2D(speedX*forceMult,speedY*forceMult));
 				
@@ -104,8 +100,8 @@ public class DraggableGroup extends Group {
 					}
 				}
 				
-				dragContext.spdPastX[dragContext.pastIndex] = getLayoutX() - x;
-				dragContext.spdPastY[dragContext.pastIndex] = getLayoutY() - y;
+				dragContext.spdPastX[dragContext.pastIndex] = x - getLayoutX();
+				dragContext.spdPastY[dragContext.pastIndex] = y - getLayoutY();
 				dragContext.pastIndex = (dragContext.pastIndex + 1) % pastFrames;
 				
 				relocate(x, y);
