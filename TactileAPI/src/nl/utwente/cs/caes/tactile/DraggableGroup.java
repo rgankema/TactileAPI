@@ -9,7 +9,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -97,6 +96,9 @@ public class DraggableGroup extends Group {
 	private void handleTouchDown(DragContext dragContext, double sceneX, double sceneY) {
 		currentTouches++;
 		setActive(true);
+		if (isZeroVectorOnActive()) {
+			vectorPropertyImpl().set(Point2D.ZERO);
+		}
 		
 		dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
 		dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
@@ -215,8 +217,10 @@ public class DraggableGroup extends Group {
 	}
 	
 	/**
-	 * Whether this {@code DraggableGroup} will slide in the direction it was being dragged to after a TouchReleased
-	 * or MouseReleased event.
+	 * Whether this {@code DraggableGroup} will slide further in the direction
+	 * it was being dragged to after a TouchReleased or MouseReleased event. If
+	 * true, the {@code DraggableGroup} will be given a vector that will cause
+	 * it to slide in that direction.
 	 * 
 	 * @defaultvalue false
 	 */
@@ -235,6 +239,29 @@ public class DraggableGroup extends Group {
 			slideOnRelease = new SimpleBooleanProperty(false);
 		}
 		return slideOnRelease;
+	}
+	
+	/**
+	 * Whether this {@code DraggableGroup} will set its {@link #vector} to a zero vector
+	 * when {@link #active} is set to true.
+	 * 
+	 * @defaultvalue true
+	 */
+	private BooleanProperty zeroVectorOnActive;
+	
+	public void setZeroVectorOnActive(boolean value) {
+		zeroVectorOnActiveProperty().set(value);
+	}
+	
+	public boolean isZeroVectorOnActive() {
+		return zeroVectorOnActiveProperty().get();
+	}
+	
+	public final BooleanProperty zeroVectorOnActiveProperty() {
+		if (zeroVectorOnActive == null) {
+			zeroVectorOnActive = new SimpleBooleanProperty(true);
+		}
+		return zeroVectorOnActive;
 	}
 	
 	/**

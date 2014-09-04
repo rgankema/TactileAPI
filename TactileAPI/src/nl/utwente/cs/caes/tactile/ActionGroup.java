@@ -43,19 +43,26 @@ public class ActionGroup extends Group {
 	
 	/**
 	 * Requests this {@code ActionGroup} to move away from another
-	 * {@code ActionGroup}.
+	 * {@code ActionGroup}. This {@code ActionGroup} will be given
+	 * a vector that will be added to the vector of the first 
+	 * {@code DraggableGroup} that is an ancestor of this {@ActionGroup}.
+	 * The magnitude of this vector depends on how far away this {@ActionGroup}
+	 * is from the other {@ActionGroup}, and the value of {@code force}.
 	 * 
 	 * @param group
 	 *            The {@code ActionGroup} to move away from
-	 * @param distance
-	 *            The maximum value of the resulting horizontal or vertical gap
-	 *            between the two {@code ActionGroups}
+	 * @param force
+	 *            The higher this number, the greater the magnitude
+	 *            of the vector that will be given to this {@code ActionGroup}
 	 * @throws IllegalArgumentException
-	 *             When a negative value is provided for distance
+	 *             When a negative value is provided for force
 	 */
-	public void moveAwayFrom(ActionGroup group, double distance){
-		if (distance < 0) {
+	public void moveAwayFrom(ActionGroup group, double force){
+		if (force < 0) {
 			throw new IllegalArgumentException("distance cannot be a negative value!");
+		}
+		if (getDraggableGroupParent() == null) {
+			return;
 		}
 		
 		Bounds thisBounds = this.localToScene(this.getBoundsInLocal());
@@ -87,20 +94,20 @@ public class ActionGroup extends Group {
 		
 		// Only if either the horizontal or vertical distance is smaller than
 		// the desired distance between the ActionGroups we need to actually move.
-		if (gapX < distance || gapY < distance) {
+		if (gapX < force || gapY < force) {
 			double deltaX, deltaY;
-			double maxDeltaX = distance - gapX;
-			double maxDeltaY = distance - gapY;
+			double maxDeltaX = force - gapX;
+			double maxDeltaY = force - gapY;
 			
 			// Calculate the amount of translation needed in X and Y
 			if (gapX < gapY) {
-				deltaX = distance - gapX;
+				deltaX = force - gapX;
 				if (distanceX < 0) {
 					deltaX = -deltaX;
 				}
 				deltaY = deltaX / ratio;
 			} else {
-				deltaY = distance - gapY;
+				deltaY = force - gapY;
 				if (distanceY < 0) {
 					deltaY = -deltaY;
 				}
