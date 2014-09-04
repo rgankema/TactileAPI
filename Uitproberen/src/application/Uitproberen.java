@@ -7,7 +7,6 @@ import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.FlowPane;
@@ -69,7 +68,7 @@ public class Uitproberen extends Application {
 				@Override
 				public void handle(ActionGroupEvent event) {
 					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && !event.getOtherGroup().getId().equals(event.getTarget().getId())){
-						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 25, 300);
+						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
 					}
 				}				
 			});

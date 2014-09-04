@@ -13,14 +13,11 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TouchEvent;
 import javafx.scene.layout.Pane;
 
 public class DraggableGroup extends Group {
-	
-	// Number of frames over which speed is calculated
-	public static final int pastFrames = 20;
-	//Multiplication for length of vector to make them big enough
-	public static final double forceMult = 50;
+	private int currentTouches = 0;
 	
 	public DraggableGroup(Node... nodes) {
 		super(nodes);
@@ -40,10 +37,11 @@ public class DraggableGroup extends Group {
 		setOnMousePressed(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
+				currentTouches++;
 				setActive(true);
 				
-				dragContext.spdPastX = new double[pastFrames];
-				dragContext.spdPastY = new double[pastFrames];
+				dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
+				dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
 				dragContext.pastIndex = 0;
 				
 				if (thisGroup.getParent() == null) {
@@ -63,17 +61,17 @@ public class DraggableGroup extends Group {
 		setOnMouseReleased(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				//TODO implement speed on release
 				double speedX = 0, speedY = 0;
-				for(int i = 0; i < pastFrames && i <= dragContext.spdPastX.length; i++){
-					speedX += dragContext.spdPastX[i];
-					speedY += dragContext.spdPastY[i];
+				for(int i = 0; i < DragContext.PAST_FRAMES && i <= dragContext.pastSpeedsX.length; i++){
+					speedX += dragContext.pastSpeedsX[i];
+					speedY += dragContext.pastSpeedsY[i];
 				}
-				speedX = speedX / (double) dragContext.spdPastX.length;
-				speedY = speedY / (double) dragContext.spdPastY.length;
+				speedX = speedX / (double) dragContext.pastSpeedsX.length;
+				speedY = speedY / (double) dragContext.pastSpeedsY.length;
 
-				setVector(new Point2D(speedX*forceMult,speedY*forceMult));
+				setVector(new Point2D(speedX*DragContext.FORCE_MULT,speedY*DragContext.FORCE_MULT));
 				
+				currentTouches--;
 				setActive(false);
 			}
 		});
@@ -81,7 +79,7 @@ public class DraggableGroup extends Group {
 		setOnMouseDragged(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				if (thisGroup.getParent() == null)
+				if (thisGroup.getParent() == null || currentTouches > 1)
 					return;
 				
 				double x = event.getSceneX() + dragContext.deltaX;
@@ -107,15 +105,14 @@ public class DraggableGroup extends Group {
 					}
 				}
 				
-				dragContext.spdPastX[dragContext.pastIndex] = x - getLayoutX();
-				dragContext.spdPastY[dragContext.pastIndex] = y - getLayoutY();
-				dragContext.pastIndex = (dragContext.pastIndex + 1) % pastFrames;
+				dragContext.pastSpeedsX[dragContext.pastIndex] = x - getLayoutX();
+				dragContext.pastSpeedsY[dragContext.pastIndex] = y - getLayoutY();
+				dragContext.pastIndex = (dragContext.pastIndex + 1) % dragContext.PAST_FRAMES;
 				
 				relocate(x, y);
 			}
 		});
 
-		/*	Misschien hebben we niet eens TouchEvents nodig, ziet er naar uit dat alles met MouseEvents ook al werkt
 		// Consume any synthesized MouseEvent so that TouchEvents aren't handled twice
 		addEventFilter(MouseEvent.ANY, new EventHandler<MouseEvent>() {
 			@Override
@@ -129,12 +126,21 @@ public class DraggableGroup extends Group {
 		setOnTouchPressed(new EventHandler<TouchEvent>() {
 			@Override
 			public void handle(TouchEvent event) {
+				currentTouches++;
 				setActive(true);
+				
+				dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
+				dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
+				dragContext.pastIndex = 0;
+				
+				if (thisGroup.getParent() == null) {
+					return;
+				}
+				
 				// record a delta distance for the drag and drop operation.
-				dragContext.deltaX = getLayoutX()
-						- event.getTouchPoint().getSceneX();
-				dragContext.deltaY = getTranslateY()
-						- event.getLayoutX().getSceneY();
+				dragContext.deltaX = getLayoutX() - event.getTouchPoint().getSceneX();
+				dragContext.deltaY = getLayoutY() - event.getTouchPoint().getSceneY();				
+				
 				if (isGoToForegroundOnActive()) {
 					goToForeground();
 				}
@@ -145,6 +151,17 @@ public class DraggableGroup extends Group {
 		setOnTouchReleased(new EventHandler<TouchEvent>() {
 			@Override
 			public void handle(TouchEvent event) {
+				double speedX = 0, speedY = 0;
+				for(int i = 0; i < DragContext.PAST_FRAMES && i <= dragContext.pastSpeedsX.length; i++){
+					speedX += dragContext.pastSpeedsX[i];
+					speedY += dragContext.pastSpeedsY[i];
+				}
+				speedX = speedX / (double) dragContext.pastSpeedsX.length;
+				speedY = speedY / (double) dragContext.pastSpeedsY.length;
+
+				setVector(new Point2D(speedX*DragContext.FORCE_MULT,speedY*DragContext.FORCE_MULT));
+				
+				currentTouches--;
 				setActive(false);
 			}
 		});
@@ -152,11 +169,39 @@ public class DraggableGroup extends Group {
 		setOnTouchMoved(new EventHandler<TouchEvent>() {
 			@Override
 			public void handle(TouchEvent event) {
-				setTranslateX(event.getTouchPoint().getSceneX() + dragContext.deltaX);
-				setTranslateY(event.getTouchPoint().getSceneY() + dragContext.deltaY);
+				if (thisGroup.getParent() == null || currentTouches > 1)
+					return;
+				
+				double x = event.getTouchPoint().getSceneX() + dragContext.deltaX;
+				double y = event.getTouchPoint().getSceneY() + dragContext.deltaY;
+				
+				Parent parent = getParent();
+				if (parent instanceof TouchPane) {
+					TouchPane pane = (TouchPane) parent;
+					if (pane.isBordersCollide()) {
+						Bounds paneBounds = pane.getBoundsInLocal();
+						Bounds thisBounds = thisGroup.getBoundsInLocal();
+						
+						if (x < paneBounds.getMinX()) {
+							x = paneBounds.getMinX();
+						} else if (x + thisBounds.getWidth() > paneBounds.getMaxX()) {
+							x = paneBounds.getMaxX() - thisBounds.getWidth();
+						}
+						if (y < paneBounds.getMinY()) {
+							y = paneBounds.getMinY();
+						} else if (y + thisBounds.getHeight() > paneBounds.getMaxY()) {
+							y = paneBounds.getMaxY() - thisBounds.getHeight();
+						}
+					}
+				}
+				
+				dragContext.pastSpeedsX[dragContext.pastIndex] = x - getLayoutX();
+				dragContext.pastSpeedsY[dragContext.pastIndex] = y - getLayoutY();
+				dragContext.pastIndex = (dragContext.pastIndex + 1) % DragContext.PAST_FRAMES;
+				
+				relocate(x, y);
 			}
 		});
-		*/
 
 	}
 
@@ -249,8 +294,11 @@ public class DraggableGroup extends Group {
 
 	// Help class used for moving
 	private class DragContext {
+		static final int PAST_FRAMES = 20;
+		static final int FORCE_MULT = 50;
+		
 		double deltaX, deltaY;
-		double[] spdPastX, spdPastY; //Keep record of past translation amounts
+		double[] pastSpeedsX, pastSpeedsY; //Keep record of past translation amounts
 		int pastIndex;
 	}
 }

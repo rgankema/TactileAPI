@@ -21,6 +21,10 @@ import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class PhysicsController extends AnimationTimer {
 	private static final double TIME_STEP = 1d/60d;
+	private static final Point2D LEFT_NORMAL = new Point2D(1, 0);
+	private static final Point2D RIGHT_NORMAL = new Point2D(-1, 0);
+	private static final Point2D TOP_NORMAL = new Point2D(0, 1);
+	private static final Point2D BOTTOM_NORMAL = new Point2D(0, -1);
 	
 	private double accumulatedTime;
 	private long previousTime = 0;
@@ -114,7 +118,7 @@ public class PhysicsController extends AnimationTimer {
 			}
 		}
 		for (DraggableGroup dg : draggableGroups) {
-			dg.setVector(dg.getVector().multiply(0.9));
+			dg.setVector(dg.getVector().multiply(0.95));
 			if (Math.abs(dg.getVector().getX()) < 0.1 && Math.abs(dg.getVector().getY()) < 0.1) {
 				dg.setVector(Point2D.ZERO);
 				continue;
@@ -125,18 +129,17 @@ public class PhysicsController extends AnimationTimer {
 	}
 	
 	private void translate(DraggableGroup draggableGroup, double deltaX, double deltaY) {
-		// Het hele gezeik met Bounds blijkt niet goed te werken, dus dit ook niet
 		if (!pane.isBordersCollide()) {
 			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
 			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
 			return;
 		}
 		
-		Bounds tpBounds = pane.localToScene(pane.getBoundsInLocal());
-		Bounds dgBounds = draggableGroup.localToScene(draggableGroup.getBoundsInLocal());
+		Bounds tpBounds = pane.getBoundsInLocal();
+		Bounds dgBounds = draggableGroup.getBoundsInParent();
 		
-		double destX = dgBounds.getMinX() + deltaX;
-		double destY = dgBounds.getMinY() + deltaY;
+		double destX = draggableGroup.getLayoutX() + deltaX;
+		double destY = draggableGroup.getLayoutY() + deltaY;
 		double ratio = deltaX / deltaY;
 		
 		Bounds dgDestinationBounds = new BoundingBox(destX, destY, dgBounds.getWidth(), dgBounds.getHeight());
@@ -145,40 +148,55 @@ public class PhysicsController extends AnimationTimer {
 			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
 			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
 		} else {
-			Point2D vec1 = null, vec2 = null;
-			if (deltaX < 0 && destX < tpBounds.getMinX()) {
+			Point2D vecOriginal = new Point2D(deltaX, deltaY);
+			Point2D vecNew = null, vecNew1 = null, vecNew2 = null, vecRest, vecNormal = null, vecReflection;
+			
+			Bounds left = new BoundingBox(tpBounds.getMinX() - 1e6d, tpBounds.getMinY() - 1e6d, 1e6d, tpBounds.getHeight() + 2*1e6d);
+			Bounds right = new BoundingBox(tpBounds.getMaxX(), tpBounds.getMinY() - 1e6d, 1e6d, tpBounds.getHeight() + 2*1e6d);
+			Bounds top = new BoundingBox(tpBounds.getMinX() - 1e6d, tpBounds.getMinY() - 1e6d, tpBounds.getWidth() + 2*1e6d, 1e6d);
+			Bounds bottom = new BoundingBox(tpBounds.getMinX() - 1e6d, tpBounds.getMaxY(), tpBounds.getWidth() + 2*1e6d, 1e6d);
+			
+			if (deltaX < 0 && left.intersects(dgDestinationBounds)) {
 				deltaX = tpBounds.getMinX() - dgBounds.getMinX();
 				deltaY = deltaX / ratio;
-				vec1 = new Point2D(deltaX, deltaY);
-			}
-			else if (deltaX > 0 && destX > tpBounds.getMaxX() - dgBounds.getWidth()) {
+				vecNew1 = new Point2D(deltaX, deltaY);
+			} else if (deltaX > 0 && right.intersects(dgDestinationBounds)) {
 				deltaX = tpBounds.getMaxX() - dgBounds.getMaxX();
 				deltaY = deltaX / ratio;
-				vec1 = new Point2D(deltaX, deltaY);
+				vecNew1 = new Point2D(deltaX, deltaY);
 			}
-			if (deltaY < 0 && destY < tpBounds.getMinY()) {
+			if (deltaY < 0 && top.intersects(dgDestinationBounds)) {
 				deltaY = tpBounds.getMinY() - dgBounds.getMinY();
 				deltaX = deltaY * ratio;
-				vec2 = new Point2D(deltaX, deltaY);
-			}
-			else if (deltaY > 0 && destY > tpBounds.getMaxY() - dgBounds.getHeight()) {
+				vecNew2 = new Point2D(deltaX, deltaY);
+			} else if (deltaY > 0 && bottom.intersects(dgDestinationBounds)) {
 				deltaY = tpBounds.getMaxY() - dgBounds.getMaxY();
 				deltaX = deltaY * ratio;
-				vec2 = new Point2D(deltaX, deltaY);
+				vecNew2 = new Point2D(deltaX, deltaY);
 			}
-			if (vec1 == null || (vec2 != null && vec1.magnitude() > vec2.magnitude())) {
-				deltaX = vec2.getX();
-				deltaY = vec2.getY();
-			} else {
-				deltaX = vec1.getX();
-				deltaY = vec1.getY();
+			
+			if (vecNew1 == null && vecNew2 == null) {
+				draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
+				draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
+				return;
+			} else if (vecNew1 == null || (vecNew2 != null && vecNew1.magnitude() > vecNew2.magnitude())) {
+				// Would hit top/bottom boundary before left/right
+				vecNew = vecNew2;
+				vecNormal = (deltaY < 0) ? TOP_NORMAL : BOTTOM_NORMAL;
+			} else if (vecNew1 != null){
+				// Would hit left/right boundary before top/bottom
+				vecNew = vecNew1;
+				vecNormal = (deltaX < 0) ? LEFT_NORMAL : RIGHT_NORMAL;
 			}
-			// TODO Reflection vector berekenen
+			
+			vecRest = vecOriginal.subtract(vecNew);
+			vecReflection = vecRest.subtract(vecNormal.multiply(2*vecRest.dotProduct(vecNormal)));
 			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
 			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
+			draggableGroup.setVector(vecReflection);
+			translate(draggableGroup, vecReflection.getX(), vecReflection.getY());
 			
 		}
-		
 	}
 	
 	private void checkCollisions() {

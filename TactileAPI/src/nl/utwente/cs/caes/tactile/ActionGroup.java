@@ -50,12 +50,10 @@ public class ActionGroup extends Group {
 	 * @param distance
 	 *            The maximum value of the resulting horizontal or vertical gap
 	 *            between the two {@code ActionGroups}
-	 * @param duration
-	 *            How long the animation should play
 	 * @throws IllegalArgumentException
 	 *             When a negative value is provided for distance
 	 */
-	public void moveAwayFrom(ActionGroup group, double distance, double duration){
+	public void moveAwayFrom(ActionGroup group, double distance){
 		if (distance < 0) {
 			throw new IllegalArgumentException("distance cannot be a negative value!");
 		}
@@ -128,49 +126,7 @@ public class ActionGroup extends Group {
 			getDraggableGroupParent().setVector(getDraggableGroupParent().getVector().add(deltaX, deltaY));
 		}
 	}
-
-	/**
-	 * Requests this {@code ActionGroup} to move away from another
-	 * {@code ActionGroup}. The animation will take 500ms.
-	 * 
-	 * @param group
-	 *            The {@code ActionGroup} to move away from
-	 * @param distance
-	 *            The maximum value of the resulting horizontal or vertical gap
-	 *            between the two {@code ActionGroups}
-	 * @throws IllegalArgumentException
-	 *             When a negative value is provided for distance
-	 */
-	public void moveAwayFrom(ActionGroup group, double distance) {
-		moveAwayFrom(group, distance, 500);
-	}
 	
-	/**
-	 * Requests this {@code ActionGroup} to move away from another
-	 * {@code ActionGroup}. The animation will take 500ms, and the distance will
-	 * be equal to the ProximityThreshold of the first ancestor that is a
-	 * {@code TouchPane}.
-	 * 
-	 * @param group
-	 *            The {@code ActionGroup} to move away from
-	 * @throws IllegalArgumentException
-	 *             When a negative value is provided for distance
-	 * @throws IllegalStateException
-	 *             When this {@ActionGroup} does not have a
-	 *             {@TouchPane} as ancestor
-	 */
-	public void moveAwayFrom(ActionGroup group) {
-		Parent ancestor = getDraggableGroupParent();
-		while (!(ancestor instanceof TouchPane)) {
-			ancestor = ancestor.getParent();
-		}
-		if (!(ancestor instanceof TouchPane)) {
-			throw new IllegalStateException("This ActionGroup does not have a TouchPane as ancestor!");
-		}
-		
-		double distance = ((TouchPane)ancestor).getProximityThreshold();
-		moveAwayFrom(group, distance, 500);
-	}
 	public Set<ActionGroup> getActionGroupsCollidingUnmodifiable() {
 		return actionGroupsCollidingUnmodifiable;
 	}
