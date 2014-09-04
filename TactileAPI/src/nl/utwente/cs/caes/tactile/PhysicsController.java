@@ -2,7 +2,6 @@ package nl.utwente.cs.caes.tactile;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +15,6 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.shape.Line;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class PhysicsController extends AnimationTimer {
