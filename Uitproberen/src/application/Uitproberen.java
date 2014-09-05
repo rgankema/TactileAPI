@@ -32,7 +32,7 @@ public class Uitproberen extends Application {
 		tp.setBackground(new Background(new BackgroundFill(Color.GREY, null, null)));
 		tp.setBordersCollide(true);
 		tp.setProximityThreshold(30);
-		tp.setPrefSize(800, 800);
+		//tp.setPrefSize(600, 600);
 		
 		for (int i = 0; i < 15; i++) {
 			FlowPane fp = new FlowPane();
@@ -55,7 +55,7 @@ public class Uitproberen extends Application {
 			
 			DraggableGroup dg = new DraggableGroup(fp);
 			tp.getChildren().add(dg);
-			dg.relocate(Math.random()*750, Math.random()*750);
+			dg.relocate(Math.random()*550, Math.random()*550);
 			tp.register(ag);
 			
 			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>() {
