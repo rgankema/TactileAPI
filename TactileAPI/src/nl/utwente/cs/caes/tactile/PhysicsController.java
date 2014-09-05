@@ -116,7 +116,7 @@ public class PhysicsController extends AnimationTimer {
 			}
 		}
 		for (DraggableGroup dg : draggableGroups) {
-			dg.setVector(dg.getVector().multiply(0.9));
+			dg.setVector(dg.getVector().multiply(0.90));
 			if (Math.abs(dg.getVector().getX()) < 0.1 && Math.abs(dg.getVector().getY()) < 0.1) {
 				dg.setVector(Point2D.ZERO);
 				continue;
