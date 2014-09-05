@@ -43,21 +43,26 @@ public class ActionGroup extends Group {
 	
 	/**
 	 * Requests this {@code ActionGroup} to move away from another
-	 * {@code ActionGroup}.
+	 * {@code ActionGroup}. This {@code ActionGroup} will be given
+	 * a vector that will be added to the vector of the first 
+	 * {@code DraggableGroup} that is an ancestor of this {@ActionGroup}.
+	 * The magnitude of this vector depends on how far away this {@ActionGroup}
+	 * is from the other {@ActionGroup}, and the value of {@code force}.
 	 * 
 	 * @param group
 	 *            The {@code ActionGroup} to move away from
-	 * @param distance
-	 *            The maximum value of the resulting horizontal or vertical gap
-	 *            between the two {@code ActionGroups}
-	 * @param duration
-	 *            How long the animation should play
+	 * @param force
+	 *            The higher this number, the greater the magnitude
+	 *            of the vector that will be given to this {@code ActionGroup}
 	 * @throws IllegalArgumentException
-	 *             When a negative value is provided for distance
+	 *             When a negative value is provided for force
 	 */
-	public void moveAwayFrom(ActionGroup group, double distance, double duration){
-		if (distance < 0) {
+	public void moveAwayFrom(ActionGroup group, double force){
+		if (force < 0) {
 			throw new IllegalArgumentException("distance cannot be a negative value!");
+		}
+		if (getDraggableGroupParent() == null) {
+			return;
 		}
 		
 		Bounds thisBounds = this.localToScene(this.getBoundsInLocal());
@@ -89,20 +94,20 @@ public class ActionGroup extends Group {
 		
 		// Only if either the horizontal or vertical distance is smaller than
 		// the desired distance between the ActionGroups we need to actually move.
-		if (gapX < distance || gapY < distance) {
+		if (gapX < force || gapY < force) {
 			double deltaX, deltaY;
-			double maxDeltaX = distance - gapX;
-			double maxDeltaY = distance - gapY;
+			double maxDeltaX = force - gapX;
+			double maxDeltaY = force - gapY;
 			
 			// Calculate the amount of translation needed in X and Y
 			if (gapX < gapY) {
-				deltaX = distance - gapX;
+				deltaX = force - gapX;
 				if (distanceX < 0) {
 					deltaX = -deltaX;
 				}
 				deltaY = deltaX / ratio;
 			} else {
-				deltaY = distance - gapY;
+				deltaY = force - gapY;
 				if (distanceY < 0) {
 					deltaY = -deltaY;
 				}
@@ -128,49 +133,7 @@ public class ActionGroup extends Group {
 			getDraggableGroupParent().setVector(getDraggableGroupParent().getVector().add(deltaX, deltaY));
 		}
 	}
-
-	/**
-	 * Requests this {@code ActionGroup} to move away from another
-	 * {@code ActionGroup}. The animation will take 500ms.
-	 * 
-	 * @param group
-	 *            The {@code ActionGroup} to move away from
-	 * @param distance
-	 *            The maximum value of the resulting horizontal or vertical gap
-	 *            between the two {@code ActionGroups}
-	 * @throws IllegalArgumentException
-	 *             When a negative value is provided for distance
-	 */
-	public void moveAwayFrom(ActionGroup group, double distance) {
-		moveAwayFrom(group, distance, 500);
-	}
 	
-	/**
-	 * Requests this {@code ActionGroup} to move away from another
-	 * {@code ActionGroup}. The animation will take 500ms, and the distance will
-	 * be equal to the ProximityThreshold of the first ancestor that is a
-	 * {@code TouchPane}.
-	 * 
-	 * @param group
-	 *            The {@code ActionGroup} to move away from
-	 * @throws IllegalArgumentException
-	 *             When a negative value is provided for distance
-	 * @throws IllegalStateException
-	 *             When this {@ActionGroup} does not have a
-	 *             {@TouchPane} as ancestor
-	 */
-	public void moveAwayFrom(ActionGroup group) {
-		Parent ancestor = getDraggableGroupParent();
-		while (!(ancestor instanceof TouchPane)) {
-			ancestor = ancestor.getParent();
-		}
-		if (!(ancestor instanceof TouchPane)) {
-			throw new IllegalStateException("This ActionGroup does not have a TouchPane as ancestor!");
-		}
-		
-		double distance = ((TouchPane)ancestor).getProximityThreshold();
-		moveAwayFrom(group, distance, 500);
-	}
 	public Set<ActionGroup> getActionGroupsCollidingUnmodifiable() {
 		return actionGroupsCollidingUnmodifiable;
 	}
