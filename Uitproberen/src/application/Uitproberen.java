@@ -16,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.Slider;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
@@ -24,6 +25,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.ActionGroup;
+import nl.utwente.cs.caes.tactile.DebugParent;
 import nl.utwente.cs.caes.tactile.DraggableGroup;
 import nl.utwente.cs.caes.tactile.TouchPane;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
@@ -76,7 +78,7 @@ public class Uitproberen extends Application {
 				public void handle(ActionGroupEvent event) {
 					
 					String text = event.getEventType()+" "+event.getOtherGroup().getId()+"<->"+event.getTarget().getId();
-					System.out.println(text);
+					//System.out.println(text);
 				}
 			});
 			
@@ -147,11 +149,12 @@ public class Uitproberen extends Application {
 		sp1.setPannable(true);
 		sp1.setCursor(Cursor.DEFAULT);
 		
-
+		BorderPane bp = new BorderPane();
+		bp.setCenter(sp1);
+		bp.setBottom(buttonPane);
 		
-		BorderPane root = new BorderPane();
-		root.setCenter(sp1);
-		root.setBottom(buttonPane);
+		DebugParent root = new DebugParent(bp);
+		
 		Scene scene = new Scene(root);
 		primaryStage.setScene(scene);
 		primaryStage.show();

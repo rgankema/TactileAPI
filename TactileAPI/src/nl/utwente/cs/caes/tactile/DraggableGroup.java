@@ -1,11 +1,11 @@
 package nl.utwente.cs.caes.tactile;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -31,7 +31,7 @@ public class DraggableGroup extends Group {
 	
 	// Called by the constructors
 	private void initialise() {
-		final DragContext dragContext = new DragContext();
+		DragContext dragContext = new DragContext();
 		
 		// Consume any synthesized MouseEvent so that TouchEvents aren't handled twice
 		addEventFilter(MouseEvent.ANY, new EventHandler<MouseEvent>() {
@@ -97,7 +97,7 @@ public class DraggableGroup extends Group {
 		currentTouches++;
 		setActive(true);
 		if (isZeroVectorOnActive()) {
-			vectorPropertyImpl().set(Point2D.ZERO);
+			vectorProperty().set(Point2D.ZERO);
 		}
 		
 		dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
@@ -267,23 +267,19 @@ public class DraggableGroup extends Group {
 	/**
 	 * The 2D velocity vector for this {@DraggableGroup}
 	 */
-	private ReadOnlyObjectWrapper<Point2D> vector;
+	private ObjectProperty<Point2D> vector;
 	
-	void setVector(Point2D value) {
-		vectorPropertyImpl().set(value);
+	public void setVector(Point2D value) {
+		vectorProperty().set(value);
 	}
 	
 	public Point2D getVector() {
-		return vectorPropertyImpl().get();
+		return vectorProperty().get();
 	}
 	
-	public ReadOnlyObjectProperty<Point2D> vectorProperty() {
-		return vectorPropertyImpl().getReadOnlyProperty();
-	}
-	
-	ReadOnlyObjectWrapper<Point2D> vectorPropertyImpl() {
+	public ObjectProperty<Point2D> vectorProperty() {
 		if (vector == null) {
-			vector = new ReadOnlyObjectWrapper<Point2D>(new Point2D(0, 0));
+			vector = new SimpleObjectProperty<Point2D>(new Point2D(0, 0));
 		}
 		return vector;
 	}
