@@ -60,85 +60,72 @@ public class DebugParent extends StackPane {
 		});
 		
 		// Maps mouse events to touch events
-		addEventFilter(MouseEvent.ANY, new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				if (getMapMouseToTouch()) {
-					if (event.getEventType().equals(MouseEvent.MOUSE_PRESSED)) {
-						touchPoints.clear();
-						TouchPoint tp = createTouchPoint(event);
-						touchPoints.add(tp);
-						TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_PRESSED,
-								tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
-								event.isAltDown(), event.isMetaDown());
-						Event.fireEvent(event.getTarget(), tEvent);
-					}
-					else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
-						TouchPoint tp = createTouchPoint(event);
-						touchPoints.add(tp);
-						TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_MOVED,
-								tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
-								event.isAltDown(), event.isMetaDown());
-						Event.fireEvent(event.getTarget(), tEvent);
-					}
-					else if (event.getEventType() == MouseEvent.MOUSE_RELEASED) {
-						TouchPoint tp = createTouchPoint(event);
-						touchPoints.add(tp);
-						TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_RELEASED,
-								tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
-								event.isAltDown(), event.isMetaDown());
-						Event.fireEvent(event.getTarget(), tEvent);
-	
-						touchSetId++;
-					}
-					event.consume();
+		addEventFilter(MouseEvent.ANY, event -> {
+			if (getMapMouseToTouch()) {
+				if (event.getEventType().equals(MouseEvent.MOUSE_PRESSED)) {
+					touchPoints.clear();
+					TouchPoint tp = createTouchPoint(event);
+					touchPoints.add(tp);
+					TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_PRESSED,
+							tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
+							event.isAltDown(), event.isMetaDown());
+					Event.fireEvent(event.getTarget(), tEvent);
 				}
-			}
-		});
-		
-		addEventFilter(TouchEvent.TOUCH_PRESSED, new EventHandler<TouchEvent>() {
-			@Override
-			public void handle(TouchEvent event) {
-				if(!colorByEventId.containsKey(event.getEventSetId())){
-					double r = Math.random();
-					double g = Math.random();
-					double b = Math.random();
-					colorByEventId.put(event.getEventSetId(), 
-							new Color(r, g, b, 0.5));
+				else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
+					TouchPoint tp = createTouchPoint(event);
+					touchPoints.add(tp);
+					TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_MOVED,
+							tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
+							event.isAltDown(), event.isMetaDown());
+					Event.fireEvent(event.getTarget(), tEvent);
 				}
-				
-				double x = event.getTouchPoint().getSceneX();
-				double y = event.getTouchPoint().getSceneY();
-				
-				Circle circle = new Circle(x, y, getTouchCircleRadius());
-				circle.setFill(new Color(0,0,0,0));
-				circle.setStroke(colorByEventId.get(event.getEventSetId()));
-				circle.setStrokeWidth(2);
-				
-				circleByEventId.put(event.getEventSetId(), circle);
-				overlay.getChildren().add(circle);
+				else if (event.getEventType() == MouseEvent.MOUSE_RELEASED) {
+					TouchPoint tp = createTouchPoint(event);
+					touchPoints.add(tp);
+					TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_RELEASED,
+							tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
+							event.isAltDown(), event.isMetaDown());
+					Event.fireEvent(event.getTarget(), tEvent);
+
+					touchSetId++;
+				}
+				event.consume();
 			}
 		});
 		
-		addEventFilter(TouchEvent.TOUCH_MOVED, new EventHandler<TouchEvent>() {
-			@Override
-			public void handle(TouchEvent event) {
-				Circle circle = circleByEventId.get(event.getEventSetId());
-				
-				double x = event.getTouchPoint().getSceneX() - circle.getRadius();
-				double y = event.getTouchPoint().getSceneY() - circle.getRadius();
-				
-				circle.relocate(x, y);
+		addEventFilter(TouchEvent.TOUCH_PRESSED, event -> {
+			if(!colorByEventId.containsKey(event.getEventSetId())){
+				double r = Math.random();
+				double g = Math.random();
+				double b = Math.random();
+				colorByEventId.put(event.getEventSetId(), new Color(r, g, b, 0.5));
 			}
+			
+			double x = event.getTouchPoint().getSceneX();
+			double y = event.getTouchPoint().getSceneY();
+			
+			Circle circle = new Circle(x, y, getTouchCircleRadius());
+			circle.setFill(new Color(0,0,0,0));
+			circle.setStroke(colorByEventId.get(event.getEventSetId()));
+			circle.setStrokeWidth(2);
+			
+			circleByEventId.put(event.getEventSetId(), circle);
+			overlay.getChildren().add(circle);
 		});
 		
-		addEventFilter(TouchEvent.TOUCH_RELEASED, new EventHandler<TouchEvent>() {
-			@Override
-			public void handle(TouchEvent event) {
-				colorByEventId.remove(event.getEventSetId());
-				Circle circle = circleByEventId.get(event.getEventSetId());
-				overlay.getChildren().remove(circle);
-			}
+		addEventFilter(TouchEvent.TOUCH_MOVED, event -> {
+			Circle circle = circleByEventId.get(event.getEventSetId());
+			
+			double x = event.getTouchPoint().getSceneX() - circle.getRadius();
+			double y = event.getTouchPoint().getSceneY() - circle.getRadius();
+			
+			circle.relocate(x, y);
+		});
+		
+		addEventFilter(TouchEvent.TOUCH_RELEASED, event -> {
+			colorByEventId.remove(event.getEventSetId());
+			Circle circle = circleByEventId.get(event.getEventSetId());
+			overlay.getChildren().remove(circle);
 		});
 	}
 	
@@ -198,10 +185,6 @@ public class DebugParent extends StackPane {
 			};
 		}
 		return touchCircleRadius;
-	}
-	
-	public void register(TouchPane touchPane) {
-		
 	}
 	
 	public void register(DraggableGroup draggable) {

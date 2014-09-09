@@ -34,62 +34,41 @@ public class DraggableGroup extends Group {
 		DragContext dragContext = new DragContext();
 		
 		// Consume any synthesized MouseEvent so that TouchEvents aren't handled twice
-		addEventFilter(MouseEvent.ANY, new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				if (event.isSynthesized()) {
-					event.consume();
-				}
-			}
-		});
-		
-		setOnTouchPressed(new EventHandler<TouchEvent>() {
-			@Override
-			public void handle(TouchEvent event) {
-				handleTouchDown(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
-				event.consume();
-			}
-		});
-
-
-		setOnTouchReleased(new EventHandler<TouchEvent>() {
-			@Override
-			public void handle(TouchEvent event) {
-				handleTouchUp(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+		addEventFilter(MouseEvent.ANY, event -> {
+			if (event.isSynthesized()) {
 				event.consume();
 			}
 		});
 		
-		setOnTouchMoved(new EventHandler<TouchEvent>() {
-			@Override
-			public void handle(TouchEvent event) {
-				handleTouchMove(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
-				event.consume();
-			}
+		setOnTouchPressed(event -> {
+			handleTouchDown(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			event.consume();
+		});
+
+
+		setOnTouchReleased(event -> {
+			handleTouchUp(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			event.consume();
 		});
 		
-		setOnMousePressed(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				handleTouchDown(dragContext, event.getSceneX(), event.getSceneY());
-				event.consume();
-			}
+		setOnTouchMoved(event -> {
+			handleTouchMove(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			event.consume();
+		});
+		
+		setOnMousePressed(event -> {
+			handleTouchDown(dragContext, event.getSceneX(), event.getSceneY());
+			event.consume();
 		});
 
-		setOnMouseReleased(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				handleTouchUp(dragContext, event.getSceneX(), event.getSceneY());
-				event.consume();
-			}
+		setOnMouseReleased(event -> {
+			handleTouchUp(dragContext, event.getSceneX(), event.getSceneY());
+			event.consume();
 		});
 
-		setOnMouseDragged(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				handleTouchMove(dragContext, event.getSceneX(), event.getSceneY());
-				event.consume();
-			}
+		setOnMouseDragged(event -> {
+			handleTouchMove(dragContext, event.getSceneX(), event.getSceneY());
+			event.consume();
 		});
 	}
 	

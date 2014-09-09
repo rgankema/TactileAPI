@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -41,24 +40,12 @@ public class PhysicsController extends AnimationTimer {
 		actionGroups = Collections.newSetFromMap(map);
 		
 		// Add resize listeners (needs optimisation)
-		pane.widthProperty().addListener(new ChangeListener<Number>() {
-
-			@Override
-			public void changed(
-					ObservableValue<? extends Number> observableValue,
-					Number oldWidth, Number newWidth) {
-				quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
-			}
+		pane.widthProperty().addListener((observableValue, oldWidth, newWidth) -> {
+			quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
 		});
 
-		pane.heightProperty().addListener(new ChangeListener<Number>() {
-
-			@Override
-			public void changed(
-					ObservableValue<? extends Number> observableValue,
-					Number oldHeight, Number newHeight) {
-				quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
-			}
+		pane.heightProperty().addListener((observableValue, oldHeight, newHeight) -> {
+			quadTree.setBounds(pane.localToScene(pane.getBoundsInLocal()));
 		});
 
 		// Initialise QuadTree
