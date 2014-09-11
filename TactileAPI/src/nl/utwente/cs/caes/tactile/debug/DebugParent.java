@@ -7,6 +7,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.AnimationTimer;
+import javafx.animation.FadeTransition;
+import javafx.animation.ScaleTransition;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
@@ -25,7 +27,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.util.Duration;
+import nl.utwente.cs.caes.tactile.ActionGroup;
 import nl.utwente.cs.caes.tactile.DraggableGroup;
+import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class DebugParent extends StackPane {
 	
@@ -34,7 +39,7 @@ public class DebugParent extends StackPane {
 	Map<Integer, Line> lineByTouchId = new TreeMap<Integer, Line>();
 	
 	Map<DraggableGroup, Vector> vectorByDraggableGroup = new ConcurrentHashMap<DraggableGroup, Vector>();
-	
+	Map<Pair<ActionGroup>, Line> lineByActionGroupPair = new ConcurrentHashMap<Pair<ActionGroup>, Line>();
 
 	List<TouchPoint> touchPoints = new ArrayList<TouchPoint>();
 	int touchSetId = 0;
@@ -113,6 +118,19 @@ public class DebugParent extends StackPane {
 			overlay.getChildren().add(line);
 			
 			circle.relocate(x, y);
+			
+			ScaleTransition st = new ScaleTransition(new Duration(200), circle);
+			st.setFromX(0);
+			st.setFromY(0);
+			st.setToX(1);
+			st.setToY(1);
+			
+			FadeTransition ft = new FadeTransition(new Duration(200), line);
+			ft.setFromValue(0);
+			ft.setToValue(1);
+
+			st.play();
+			ft.play();
 		});
 		
 		addEventFilter(TouchEvent.TOUCH_MOVED, event -> {
@@ -139,8 +157,65 @@ public class DebugParent extends StackPane {
 			TouchCircle circle = circleByTouchId.get(touchId);
 			Line line = lineByTouchId.get(touchId);
 			
-			overlay.getChildren().remove(circle);
-			overlay.getChildren().remove(line);
+			ScaleTransition st = new ScaleTransition(new Duration(200), circle);
+			st.setFromX(1);
+			st.setFromY(1);
+			st.setToX(0);
+			st.setToY(0);
+			st.setOnFinished(e -> {
+				overlay.getChildren().remove(circle);
+			});
+			
+			FadeTransition ft = new FadeTransition(new Duration(100), line);
+			ft.setFromValue(1);
+			ft.setToValue(0);
+			ft.setOnFinished(e -> {
+				overlay.getChildren().remove(line);
+			});
+			
+			st.play();
+			ft.play();
+		});
+		
+		addEventFilter(ActionGroupEvent.PROXIMITY_ENTERED, event -> {
+			ActionGroup ag1 = event.getTarget();
+			ActionGroup ag2 = event.getOtherGroup();
+			Bounds b1 = ag1.localToScene(ag1.getBoundsInLocal());
+			Bounds b2 = ag2.localToScene(ag2.getBoundsInLocal());
+			
+			Pair<ActionGroup> pair = new Pair<ActionGroup>(ag1, ag2);
+			
+			Line line = new Line(b1.getMinX(), b1.getMinY(), b2.getMinX(), b2.getMinY());
+			Line old = lineByActionGroupPair.put(pair, line);
+			overlay.getChildren().add(line);
+			overlay.getChildren().remove(old);
+		});
+		
+		addEventFilter(ActionGroupEvent.PROXIMITY_LEFT, event -> {
+			ActionGroup ag1 = event.getTarget();
+			ActionGroup ag2 = event.getOtherGroup();
+			Pair<ActionGroup> pair = null;
+			Line line = null;
+			
+			for (Pair<ActionGroup> p : lineByActionGroupPair.keySet()) {
+				if (p.left == ag1 && p.right == ag2 || p.left == ag2 && p.right == ag1) {
+					line = lineByActionGroupPair.get(p);
+					pair = p;
+					break;
+				}
+			}
+			
+			lineByActionGroupPair.remove(pair);
+			
+			final Line rLine = line;
+			
+			FadeTransition ft = new FadeTransition(new Duration(100), line);
+			ft.setFromValue(1);
+			ft.setToValue(0);
+			ft.setOnFinished(e -> {
+				overlay.getChildren().remove(rLine);
+			});
+			ft.play();
 		});
 		
 		new AnimationTimer() {
@@ -152,6 +227,16 @@ public class DebugParent extends StackPane {
 					Vector vector = vectorByDraggableGroup.get(dg);
 					
 					vector.relocate(bounds.getMinX(), bounds.getMinY());
+				}
+				for (Pair<ActionGroup> pair : lineByActionGroupPair.keySet()) {
+					Bounds b1 = pair.left.localToScene(pair.left.getBoundsInLocal());
+					Bounds b2 = pair.right.localToScene(pair.right.getBoundsInLocal());
+					
+					Line line = lineByActionGroupPair.get(pair);
+					line.setStartX(b1.getMinX());
+					line.setStartY(b1.getMinY());
+					line.setEndX(b2.getMinX());
+					line.setEndY(b2.getMinY());
 				}
 			}
 		}.start();
@@ -234,5 +319,15 @@ public class DebugParent extends StackPane {
 			overlay.getChildren().remove(vector);
 		}
 		
+	}
+	
+	private class Pair<T> {
+		public T left;
+		public T right;
+		
+		public Pair(T left, T right) {
+			this.left = left;
+			this.right = right;
+		}
 	}
 }
