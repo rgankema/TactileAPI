@@ -8,8 +8,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 
 class Vector extends Pane{
-	static Color COLOR_OPAQUE = new Color(0, 1, 0, 1);
-	static Color COLOR_SEMI_TRANSPARENT = new Color(0, 1, 0, 0.5);
+	static Color COLOR_OPAQUE = new Color(0, 0, 1, 1);
+	static Color COLOR_SEMI_TRANSPARENT = new Color(0, 0, 1, 0.5);
 	private static double OFFSET =  10;
 	
 	private Line line = new Line(0, 0, 0, 0);
@@ -49,8 +49,8 @@ class Vector extends Pane{
 		line.setEndY(y);
 		label.setText(String.format("%1.2f, %1.2f", x, y));
 		
-		labelOffsetX = x > 0 ? OFFSET : -OFFSET;
-		labelOffsetY = y > 0 ? OFFSET : -OFFSET;
+		labelOffsetX = x > 0 ? OFFSET : -OFFSET - label.getWidth();
+		labelOffsetY = y > 0 ? OFFSET : -OFFSET - label.getHeight();
 		
 		label.relocate(x / 2 + labelOffsetX, y / 2 + labelOffsetY);
 	}

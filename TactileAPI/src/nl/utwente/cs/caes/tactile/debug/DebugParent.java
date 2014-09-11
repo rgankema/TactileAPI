@@ -227,4 +227,12 @@ public class DebugParent extends StackPane {
 			overlay.getChildren().add(vector);
 		}
 	}
+	
+	public void deregister(DraggableGroup draggable) {
+		Vector vector = vectorByDraggableGroup.remove(draggable);
+		if (vector != null) {
+			overlay.getChildren().remove(vector);
+		}
+		
+	}
 }

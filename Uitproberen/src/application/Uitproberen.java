@@ -103,6 +103,7 @@ public class Uitproberen extends Application {
 						if (event.getTarget().getDraggableGroupParent().isActive()) {
 							tp.deregister(event.getOtherGroup());
 							tp.getChildren().remove(event.getOtherGroup().getDraggableGroupParent());
+							debugParent.deregister(event.getOtherGroup().getDraggableGroupParent());
 							removedAction.add(event.getOtherGroup());
 							removedDraggable.add(event.getOtherGroup().getDraggableGroupParent());
 						}
@@ -132,6 +133,7 @@ public class Uitproberen extends Application {
 			@Override public void handle(ActionEvent event){
 				for (DraggableGroup d : removedDraggable) {
 					tp.getChildren().add(d);
+					debugParent.register(d);
 				}
 				removedDraggable.clear();
 				for (ActionGroup a : removedAction) {
