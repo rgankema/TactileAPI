@@ -31,6 +31,8 @@ public class TouchPane extends Pane {
 	 * Whether {@code DraggableGroups} will collide with the borders of this TouchPane.
 	 * If set to true the {@code TouchPane} will prevent {@code ActionGroups} that are moving
 	 * because of user input or physics to move outside of the {@code TouchPane's} boundaries.
+	 * 
+	 * @defaultvalue false
 	 */
 	private BooleanProperty bordersCollide;
 	

@@ -1,10 +1,12 @@
-package nl.utwente.cs.caes.tactile;
+package nl.utwente.cs.caes.tactile.debug;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
+import javafx.animation.AnimationTimer;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
@@ -12,7 +14,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.Event;
-import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TouchEvent;
@@ -22,16 +24,21 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
+import nl.utwente.cs.caes.tactile.DraggableGroup;
 
 public class DebugParent extends StackPane {
-	Pane overlay = new Pane();
 	
-	Map<Integer, Color> colorByEventId = new HashMap<Integer, Color>();
-	Map<Integer, Circle> circleByEventId = new HashMap<Integer, Circle>();
+	Pane overlay = new Pane();
+	Map<Integer, TouchCircle> circleByTouchId = new TreeMap<Integer, TouchCircle>();
+	Map<Integer, Line> lineByTouchId = new TreeMap<Integer, Line>();
+	
+	Map<DraggableGroup, Vector> vectorByDraggableGroup = new ConcurrentHashMap<DraggableGroup, Vector>();
+	
 
 	List<TouchPoint> touchPoints = new ArrayList<TouchPoint>();
 	int touchSetId = 0;
+	boolean active = false;
 	
 	public DebugParent() {
 		super();
@@ -61,11 +68,9 @@ public class DebugParent extends StackPane {
 		
 		// Maps mouse events to touch events
 		addEventFilter(MouseEvent.ANY, event -> {
-			if (getMapMouseToTouch()) {
+			if (getMapMouseToTouch() && !event.isSynthesized()) {
 				if (event.getEventType().equals(MouseEvent.MOUSE_PRESSED)) {
-					touchPoints.clear();
 					TouchPoint tp = createTouchPoint(event);
-					touchPoints.add(tp);
 					TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_PRESSED,
 							tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
 							event.isAltDown(), event.isMetaDown());
@@ -73,7 +78,6 @@ public class DebugParent extends StackPane {
 				}
 				else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
 					TouchPoint tp = createTouchPoint(event);
-					touchPoints.add(tp);
 					TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_MOVED,
 							tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
 							event.isAltDown(), event.isMetaDown());
@@ -81,12 +85,11 @@ public class DebugParent extends StackPane {
 				}
 				else if (event.getEventType() == MouseEvent.MOUSE_RELEASED) {
 					TouchPoint tp = createTouchPoint(event);
-					touchPoints.add(tp);
 					TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_RELEASED,
 							tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(), 
 							event.isAltDown(), event.isMetaDown());
 					Event.fireEvent(event.getTarget(), tEvent);
-
+					
 					touchSetId++;
 				}
 				event.consume();
@@ -94,53 +97,80 @@ public class DebugParent extends StackPane {
 		});
 		
 		addEventFilter(TouchEvent.TOUCH_PRESSED, event -> {
-			if(!colorByEventId.containsKey(event.getEventSetId())){
-				double r = Math.random();
-				double g = Math.random();
-				double b = Math.random();
-				colorByEventId.put(event.getEventSetId(), new Color(r, g, b, 0.5));
-			}
+			int touchId = event.getTouchPoint().getId();
+			Node target = (Node) event.getTarget();
+			Bounds bounds = target.localToScene(target.getBoundsInLocal());
 			
 			double x = event.getTouchPoint().getSceneX();
 			double y = event.getTouchPoint().getSceneY();
 			
-			Circle circle = new Circle(x, y, getTouchCircleRadius());
-			circle.setFill(new Color(0,0,0,0));
-			circle.setStroke(colorByEventId.get(event.getEventSetId()));
-			circle.setStrokeWidth(2);
-			
-			circleByEventId.put(event.getEventSetId(), circle);
+			TouchCircle circle = new TouchCircle(x, y, getTouchCircleRadius(), touchId);
+			circleByTouchId.put(touchId, circle);
 			overlay.getChildren().add(circle);
-		});
-		
-		addEventFilter(TouchEvent.TOUCH_MOVED, event -> {
-			Circle circle = circleByEventId.get(event.getEventSetId());
 			
-			double x = event.getTouchPoint().getSceneX() - circle.getRadius();
-			double y = event.getTouchPoint().getSceneY() - circle.getRadius();
+			Line line = new Line(x, y, bounds.getMinX(), bounds.getMinY());
+			lineByTouchId.put(touchId, line);
+			overlay.getChildren().add(line);
 			
 			circle.relocate(x, y);
 		});
 		
-		addEventFilter(TouchEvent.TOUCH_RELEASED, event -> {
-			colorByEventId.remove(event.getEventSetId());
-			Circle circle = circleByEventId.get(event.getEventSetId());
-			overlay.getChildren().remove(circle);
+		addEventFilter(TouchEvent.TOUCH_MOVED, event -> {
+			int touchId = event.getTouchPoint().getId();
+			Node target = (Node) event.getTarget();
+			Bounds bounds = target.localToScene(target.getBoundsInLocal());
+			
+			double x = event.getTouchPoint().getSceneX();
+			double y = event.getTouchPoint().getSceneY();
+			
+			TouchCircle circle = circleByTouchId.get(touchId);
+			circle.relocate(x, y);
+			
+			Line line = lineByTouchId.get(touchId);
+			line.setStartX(x);
+			line.setStartY(y);
+			line.setEndX(bounds.getMinX());
+			line.setEndY(bounds.getMinY());
 		});
+		
+		addEventFilter(TouchEvent.TOUCH_RELEASED, event -> {
+			int touchId = event.getTouchPoint().getId();
+			
+			TouchCircle circle = circleByTouchId.get(touchId);
+			Line line = lineByTouchId.get(touchId);
+			
+			overlay.getChildren().remove(circle);
+			overlay.getChildren().remove(line);
+		});
+		
+		new AnimationTimer() {
+
+			@Override
+			public void handle(long arg0) {
+				for (DraggableGroup dg : vectorByDraggableGroup.keySet()) {
+					Bounds bounds = dg.localToScene(dg.getBoundsInLocal());
+					Vector vector = vectorByDraggableGroup.get(dg);
+					
+					vector.relocate(bounds.getMinX(), bounds.getMinY());
+				}
+			}
+		}.start();
 	}
 	
 	// Returns a TouchPoint for a given MouseEvent
 	private TouchPoint createTouchPoint(MouseEvent event) {
-		TouchPoint tp = new TouchPoint(touchPoints.size(), TouchPoint.State.PRESSED, 
+		TouchPoint tp = new TouchPoint(1, TouchPoint.State.PRESSED, 
 				event.getSceneX(), event.getSceneY(), event.getScreenX(), event.getScreenY(), 
 				event.getTarget(), null);
+		touchPoints.clear();
+		touchPoints.add(tp);
 		return tp;
 	}
 	
 	/**
 	 * Whether {@code MouseEvents} will be replaced with corresponding {@code TouchEvents}
 	 * 
-	 * @defaultvalue true
+	 * @defaultvalue false
 	 */
 	private BooleanProperty mapMouseToTouch;
 	
@@ -154,7 +184,7 @@ public class DebugParent extends StackPane {
 	
 	public BooleanProperty mapMouseToTouchProperty() {
 		if (mapMouseToTouch == null) {
-			mapMouseToTouch = new SimpleBooleanProperty(true);
+			mapMouseToTouch = new SimpleBooleanProperty(false);
 		}
 		return mapMouseToTouch;
 	}
@@ -188,6 +218,13 @@ public class DebugParent extends StackPane {
 	}
 	
 	public void register(DraggableGroup draggable) {
-		
+		if (!vectorByDraggableGroup.containsKey(draggable)) {
+			Vector vector = new Vector(draggable.vectorProperty());
+			vectorByDraggableGroup.put(draggable, vector);
+			
+			Bounds bounds = draggable.localToScene(draggable.getBoundsInLocal());
+			vector.relocate(bounds.getMinX(), bounds.getMinY());
+			overlay.getChildren().add(vector);
+		}
 	}
 }

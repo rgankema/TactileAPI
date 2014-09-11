@@ -25,9 +25,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.ActionGroup;
-import nl.utwente.cs.caes.tactile.DebugParent;
 import nl.utwente.cs.caes.tactile.DraggableGroup;
 import nl.utwente.cs.caes.tactile.TouchPane;
+import nl.utwente.cs.caes.tactile.debug.DebugParent;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class Uitproberen extends Application {
@@ -40,14 +40,28 @@ public class Uitproberen extends Application {
 
 	public void start(Stage primaryStage) throws SocketException {
 		primaryStage.setTitle("Uitproberen");
-		
 
 		TouchPane tp = new TouchPane();
 		tp.setBackground(new Background(new BackgroundFill(Color.GREY, null, null)));
 		tp.setBordersCollide(true);
 		tp.setProximityThreshold(30);
 		tp.setPrefSize(1000, 600);
-
+		
+		FlowPane buttonPane = new FlowPane();
+		
+		ScrollPane sp1 = new ScrollPane(tp);
+		sp1.setVbarPolicy(ScrollBarPolicy.NEVER);
+		sp1.setHbarPolicy(ScrollBarPolicy.NEVER);
+		sp1.setPannable(true);
+		sp1.setCursor(Cursor.DEFAULT);
+		
+		BorderPane bp = new BorderPane();
+		bp.setCenter(sp1);
+		bp.setBottom(buttonPane);
+		
+		DebugParent debugParent = new DebugParent(bp);
+		Scene scene = new Scene(debugParent);
+		//Scene scene = new Scene(bp);
 		
 		for (int i = 0; i < 15; i++) {
 			FlowPane fp = new FlowPane();
@@ -73,15 +87,6 @@ public class Uitproberen extends Application {
 			dg.relocate(Math.random()*950, Math.random()*500);
 			tp.register(ag);
 			
-			ag.addEventHandler(ActionGroupEvent.ANY, new EventHandler<ActionGroupEvent>() {
-				@Override
-				public void handle(ActionGroupEvent event) {
-					
-					String text = event.getEventType()+" "+event.getOtherGroup().getId()+"<->"+event.getTarget().getId();
-					//System.out.println(text);
-				}
-			});
-			
 			ag.addEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, new EventHandler<ActionGroupEvent>() {
 				@Override
 				public void handle(ActionGroupEvent event) {
@@ -105,9 +110,9 @@ public class Uitproberen extends Application {
 					event.consume();
 				}				
 			});
+			debugParent.register(dg);
 		}
 		
-		FlowPane buttonPane = new FlowPane();
 		CheckBox checkSlide = new CheckBox("Slide on release");
 		for (Node child : tp.getChildren()) {
 			if (child instanceof DraggableGroup) {
@@ -142,20 +147,6 @@ public class Uitproberen extends Application {
 		buttonPane.getChildren().add(new Label("Proximity threshold"));
 		buttonPane.getChildren().add(resetButton);
 		
-		
-		ScrollPane sp1 = new ScrollPane(tp);
-		sp1.setVbarPolicy(ScrollBarPolicy.NEVER);
-		sp1.setHbarPolicy(ScrollBarPolicy.NEVER);
-		sp1.setPannable(true);
-		sp1.setCursor(Cursor.DEFAULT);
-		
-		BorderPane bp = new BorderPane();
-		bp.setCenter(sp1);
-		bp.setBottom(buttonPane);
-		
-		DebugParent root = new DebugParent(bp);
-		
-		Scene scene = new Scene(root);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}

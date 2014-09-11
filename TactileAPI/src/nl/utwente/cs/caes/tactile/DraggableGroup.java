@@ -17,7 +17,7 @@ import javafx.scene.input.TouchEvent;
 import javafx.scene.layout.Pane;
 
 public class DraggableGroup extends Group {
-	private int currentTouches = 0;
+	private long touchId = -1;
 	
 	public DraggableGroup(Node... nodes) {
 		super(nodes);
@@ -41,18 +41,26 @@ public class DraggableGroup extends Group {
 		});
 		
 		setOnTouchPressed(event -> {
-			handleTouchDown(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			if (touchId == -1) {
+				touchId = event.getTouchPoint().getId();
+				handleTouchDown(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			}
 			event.consume();
 		});
 
 
 		setOnTouchReleased(event -> {
-			handleTouchUp(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			if (touchId == event.getTouchPoint().getId()) {
+				handleTouchUp(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+				touchId = -1;
+			}
 			event.consume();
 		});
 		
 		setOnTouchMoved(event -> {
-			handleTouchMove(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			if (touchId == event.getTouchPoint().getId()) {
+				handleTouchMove(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+			}
 			event.consume();
 		});
 		
@@ -73,7 +81,6 @@ public class DraggableGroup extends Group {
 	}
 	
 	private void handleTouchDown(DragContext dragContext, double sceneX, double sceneY) {
-		currentTouches++;
 		setActive(true);
 		if (isZeroVectorOnActive()) {
 			vectorProperty().set(Point2D.ZERO);
@@ -97,7 +104,7 @@ public class DraggableGroup extends Group {
 	}
 	
 	private void handleTouchMove(DragContext dragContext, double sceneX, double sceneY) {
-		if (this.getParent() == null || currentTouches > 1)
+		if (this.getParent() == null)
 			return;
 		
 		double x = sceneX + dragContext.deltaX;
@@ -142,7 +149,6 @@ public class DraggableGroup extends Group {
 	
 			setVector(new Point2D(speedX*DragContext.FORCE_MULT,speedY*DragContext.FORCE_MULT));
 		}
-		currentTouches--;
 		setActive(false);
 	}
 
