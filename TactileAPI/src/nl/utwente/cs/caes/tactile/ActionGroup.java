@@ -4,10 +4,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class ActionGroup extends Group {
 	private Set<ActionGroup> actionGroupsColliding = new HashSet<ActionGroup>();
@@ -21,6 +25,114 @@ public class ActionGroup extends Group {
 	
 	public ActionGroup(Node... nodes){
 		super(nodes);
+	}
+	
+	/**
+	 * Defines a function to be called when another {@code ActionGroup} enters the proximity of this {@code ActionGroup}
+	 */
+	ObjectProperty<EventHandler<? super ActionGroupEvent>> onProximityEntered;
+	
+	public void setOnProximityEntered(EventHandler<? super ActionGroupEvent> eventHandler) {
+		onProximityEnteredProperty().set(eventHandler);
+	}
+	
+	public EventHandler<? super ActionGroupEvent> getOnProximityEntered() {
+		return onProximityEnteredProperty().get();
+	}
+	
+	public ObjectProperty<EventHandler<? super ActionGroupEvent>> onProximityEnteredProperty() {
+		if (onProximityEntered == null) {
+			onProximityEntered = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
+				@Override
+				public void set(EventHandler<? super ActionGroupEvent> value) {
+					removeEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, getOnProximityLeft());
+					addEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, value);
+					super.set(value);
+				}
+			};
+		}
+		return onProximityEntered;
+	}
+	
+	/**
+	 * Defines a function to be called when another {@code ActionGroup} leaves the proximity of this {@code ActionGroup}
+	 */
+	ObjectProperty<EventHandler<? super ActionGroupEvent>> onProximityLeft;
+	
+	public void setOnProximityLeft(EventHandler<? super ActionGroupEvent> eventHandler) {
+		onProximityLeftProperty().set(eventHandler);
+	}
+	
+	public EventHandler<? super ActionGroupEvent> getOnProximityLeft() {
+		return onProximityLeftProperty().get();
+	}
+	
+	public ObjectProperty<EventHandler<? super ActionGroupEvent>> onProximityLeftProperty() {
+		if (onProximityLeft == null) {
+			onProximityLeft = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
+				@Override
+				public void set(EventHandler<? super ActionGroupEvent> value) {
+					removeEventHandler(ActionGroupEvent.PROXIMITY_LEFT, getOnProximityLeft());
+					addEventHandler(ActionGroupEvent.PROXIMITY_LEFT, value);
+					super.set(value);
+				}
+			};
+		}
+		return onProximityLeft;
+	}
+	
+	/**
+	 * Defines a function to be called when another {@code ActionGroup} enters the area of this {@code ActionGroup}
+	 */
+	ObjectProperty<EventHandler<? super ActionGroupEvent>> onAreaEntered;
+	
+	public void setOnAreaEntered(EventHandler<? super ActionGroupEvent> eventHandler) {
+		onAreaEnteredProperty().set(eventHandler);
+	}
+	
+	public EventHandler<? super ActionGroupEvent> getOnAreaEntered() {
+		return onAreaEnteredProperty().get();
+	}
+	
+	public ObjectProperty<EventHandler<? super ActionGroupEvent>> onAreaEnteredProperty() {
+		if (onAreaEntered == null) {
+			onAreaEntered = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
+				@Override
+				public void set(EventHandler<? super ActionGroupEvent> value) {
+					removeEventHandler(ActionGroupEvent.AREA_ENTERED, getOnProximityLeft());
+					addEventHandler(ActionGroupEvent.AREA_ENTERED, value);
+					super.set(value);
+				}
+			};
+		}
+		return onAreaEntered;
+	}
+	
+	/**
+	 * Defines a function to be called when another {@code ActionGroup} leaves the area of this {@code ActionGroup}
+	 */
+	ObjectProperty<EventHandler<? super ActionGroupEvent>> onAreaLeft;
+	
+	public void setOnAreaLeft(EventHandler<? super ActionGroupEvent> eventHandler) {
+		onAreaLeftProperty().set(eventHandler);
+	}
+	
+	public EventHandler<? super ActionGroupEvent> getOnAreaLeft() {
+		return onProximityLeftProperty().get();
+	}
+	
+	public ObjectProperty<EventHandler<? super ActionGroupEvent>> onAreaLeftProperty() {
+		if (onAreaLeft == null) {
+			onAreaLeft = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
+				@Override
+				public void set(EventHandler<? super ActionGroupEvent> value) {
+					removeEventHandler(ActionGroupEvent.AREA_LEFT, getOnProximityLeft());
+					addEventHandler(ActionGroupEvent.AREA_LEFT, value);
+					super.set(value);
+				}
+			};
+		}
+		return onAreaLeft;
 	}
 
 

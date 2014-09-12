@@ -6,7 +6,6 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
@@ -40,7 +39,7 @@ public class DraggableGroup extends Group {
 			}
 		});
 		
-		setOnTouchPressed(event -> {
+		addEventHandler(TouchEvent.TOUCH_PRESSED, event -> {
 			if (touchId == -1) {
 				touchId = event.getTouchPoint().getId();
 				handleTouchDown(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
@@ -49,7 +48,7 @@ public class DraggableGroup extends Group {
 		});
 
 
-		setOnTouchReleased(event -> {
+		addEventHandler(TouchEvent.TOUCH_RELEASED, event -> {
 			if (touchId == event.getTouchPoint().getId()) {
 				handleTouchUp(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
 				touchId = -1;
@@ -57,24 +56,24 @@ public class DraggableGroup extends Group {
 			event.consume();
 		});
 		
-		setOnTouchMoved(event -> {
+		addEventHandler(TouchEvent.TOUCH_MOVED, event -> {
 			if (touchId == event.getTouchPoint().getId()) {
 				handleTouchMove(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
 			}
 			event.consume();
 		});
 		
-		setOnMousePressed(event -> {
+		addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
 			handleTouchDown(dragContext, event.getSceneX(), event.getSceneY());
 			event.consume();
 		});
 
-		setOnMouseReleased(event -> {
+		addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
 			handleTouchUp(dragContext, event.getSceneX(), event.getSceneY());
 			event.consume();
 		});
 
-		setOnMouseDragged(event -> {
+		addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
 			handleTouchMove(dragContext, event.getSceneX(), event.getSceneY());
 			event.consume();
 		});
