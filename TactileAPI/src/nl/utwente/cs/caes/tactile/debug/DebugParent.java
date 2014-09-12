@@ -97,6 +97,14 @@ public class DebugParent extends StackPane {
 					
 					touchSetId++;
 				}
+				// Send synthesized MouseEvent
+				MouseEvent mouseEvent = new MouseEvent(event.getSource(), event.getTarget(), event.getEventType(),
+						event.getSceneX(), event.getSceneY(), event.getScreenX(), event.getScreenY(), event.getButton(),
+						event.getClickCount(), event.isShiftDown(), event.isControlDown(), event.isAltDown(), event.isMetaDown(),
+						event.isPrimaryButtonDown(), event.isMiddleButtonDown(), event.isSecondaryButtonDown(), true,
+						event.isPopupTrigger(), event.isStillSincePress(), event.getPickResult());
+				Event.fireEvent(event.getTarget(), mouseEvent);
+				
 				event.consume();
 			}
 		});
