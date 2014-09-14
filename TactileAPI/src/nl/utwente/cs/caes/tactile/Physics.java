@@ -7,30 +7,29 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.AnimationTimer;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.value.ChangeListener;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
-public class PhysicsController extends AnimationTimer {
+public class Physics {
 	private static final double TIME_STEP = 1d/60d;
+	private static final double BOUNCE = 0.50;
 	private static final Point2D LEFT_NORMAL = new Point2D(1, 0);
 	private static final Point2D RIGHT_NORMAL = new Point2D(-1, 0);
 	private static final Point2D TOP_NORMAL = new Point2D(0, 1);
 	private static final Point2D BOTTOM_NORMAL = new Point2D(0, -1);
 	
-	private double accumulatedTime;
-	private long previousTime = 0;
-	
-	private Set<ActionGroup> actionGroups;
-	private QuadTree quadTree;
 	private TouchPane pane;
+	private AnimationTimer timer;
+	Set<ActionGroup> actionGroups;
+	QuadTree quadTree;
 	
-	public PhysicsController(TouchPane pane) {
+	Physics(TouchPane pane) {
 		this.pane = pane;
 		initialise();
 	}
@@ -50,6 +49,61 @@ public class PhysicsController extends AnimationTimer {
 
 		// Initialise QuadTree
 		quadTree = new QuadTree(pane.localToScene(pane.getBoundsInLocal()));
+		
+		timer = new AnimationTimer() {
+			private double accumulatedTime;
+			private long previousTime = 0;
+			
+			@Override
+			public void handle(long currentTime) {
+				if (previousTime == 0) {
+					previousTime = currentTime;
+					return;
+				}
+				
+				double secondsEllapsed = (currentTime - previousTime) / 1e9d;
+				accumulatedTime += secondsEllapsed;
+				previousTime = currentTime;
+				
+				while(accumulatedTime >= TIME_STEP) {
+					updatePositions();
+					checkCollisions();
+					accumulatedTime -= TIME_STEP;
+				}
+			}
+		};
+	}
+	
+	public void start() {
+		timer.start();
+	}
+	
+	public void stop() {
+		timer.stop();
+	}
+	
+	/**
+	 * Whether {@code DraggableGroups} will collide with the borders of this TouchPane.
+	 * If set to true the {@code TouchPane} will prevent {@code ActionGroups} that are moving
+	 * because of user input or physics to move outside of the {@code TouchPane's} boundaries.
+	 * 
+	 * @defaultvalue false
+	 */
+	private BooleanProperty bordersCollide;
+	
+	public final void setBordersCollide(boolean value) {
+		bordersCollideProperty().set(value);
+	}
+	
+	public final boolean isBordersCollide() {
+		return bordersCollideProperty().get();
+	}
+	
+	public final BooleanProperty bordersCollideProperty() {
+		if (bordersCollide == null) {
+			bordersCollide = new SimpleBooleanProperty(false);
+		}
+		return bordersCollide;
 	}
 	
 	public final void setProximityThreshold(double threshold) {
@@ -75,24 +129,6 @@ public class PhysicsController extends AnimationTimer {
 		return quadTree.proximityThresholdProperty();
 	}
 	
-	@Override
-	public void handle(long currentTime) {
-		if (previousTime == 0) {
-			previousTime = currentTime;
-			return;
-		}
-		
-		double secondsEllapsed = (currentTime - previousTime) / 1e9d;
-		accumulatedTime += secondsEllapsed;
-		previousTime = currentTime;
-		
-		while(accumulatedTime >= TIME_STEP) {
-			updatePositions();
-			checkCollisions();
-			accumulatedTime -= TIME_STEP;
-		}
-	}
-	
 	private void updatePositions() {
 		List<DraggableGroup> draggableGroups = new ArrayList<DraggableGroup>();
 		for (Node child : pane.getChildren()) {
@@ -104,17 +140,18 @@ public class PhysicsController extends AnimationTimer {
 		}
 		for (DraggableGroup dg : draggableGroups) {
 			dg.setVector(dg.getVector().multiply(0.95));
-			if (Math.abs(dg.getVector().getX()) < 0.1 && Math.abs(dg.getVector().getY()) < 0.1) {
+			if (Math.abs(dg.getVector().getX()) < 1 && Math.abs(dg.getVector().getY()) < 1) {
 				dg.setVector(Point2D.ZERO);
 				continue;
 			}
-			
-			translate(dg, dg.getVector().getX() * TIME_STEP, dg.getVector().getY() * TIME_STEP);
+			if (!dg.isActive()) {
+				translate(dg, dg.getVector().getX() * TIME_STEP, dg.getVector().getY() * TIME_STEP);
+			}
 		}
 	}
 	
 	private void translate(DraggableGroup draggableGroup, double deltaX, double deltaY) {
-		if (!pane.isBordersCollide()) {
+		if (!isBordersCollide()) {
 			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
 			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
 			return;
@@ -178,7 +215,7 @@ public class PhysicsController extends AnimationTimer {
 			vecReflection = vecRest.subtract(vecNormal.multiply(2*vecRest.dotProduct(vecNormal)));
 			draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
 			draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
-			draggableGroup.setVector(vecReflection);
+			draggableGroup.setVector(vecReflection.multiply(1 / TIME_STEP).multiply(BOUNCE));
 			translate(draggableGroup, vecReflection.getX(), vecReflection.getY());
 			
 		}
@@ -242,42 +279,5 @@ public class PhysicsController extends AnimationTimer {
 				}
 			}
 		}
-	}
-	
-	/**
-	 * Registers an ActionGroup to the {@code PhysicsController}. The TouchPane will track the
-	 * position of the ActionGroup and check for collisions / proximity events.
-	 * The ActionGroup should have the controlled {@code TouchPane} as (indirect) ancestor.
-	 * 
-	 * @param actionGroup
-	 *            The ActionGroup that is to be tracked
-	 * @throws IllegalArgumentException
-	 *             If the ActionGroup does not have this TouchPane as (indirect)
-	 *             ancestor
-	 */
-	public void register(ActionGroup actionGroup) {
-		if (actionGroups.add(actionGroup)) {
-			Parent ancestor = actionGroup.getParent();
-			while (ancestor != pane) {
-				try {
-					ancestor = ancestor.getParent();
-				} catch (NullPointerException e) {
-					throw new IllegalArgumentException(
-							"The provided ActionGroup does not have this TouchPane as ancestor!");
-				}
-			}
-			quadTree.insert(actionGroup);
-		}
-	}
-
-	/**
-	 * Deregisters an ActionGroup from the {@code PhysicsController}.
-	 * 
-	 * @param actionGroup
-	 *            The ActionGroup that shoud be deregistered
-	 */
-	public void deregister(ActionGroup actionGroup) {
-		actionGroups.remove(actionGroup);
-		quadTree.remove(actionGroup);
 	}
 }

@@ -3,17 +3,24 @@ package nl.utwente.cs.caes.tactile;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 public class ActionGroup extends Group {
+	private ConcurrentHashMap<ActionGroup, InvalidationListener> listenerByActionGroup = 
+			new ConcurrentHashMap<ActionGroup, InvalidationListener>();
+	
 	private Set<ActionGroup> actionGroupsColliding = new HashSet<ActionGroup>();
 	private Set<ActionGroup> actionGroupsCollidingUnmodifiable = Collections.unmodifiableSet(actionGroupsColliding);
 	private Set<ActionGroup> actionGroupsInProximity = new HashSet<ActionGroup>();
@@ -21,10 +28,35 @@ public class ActionGroup extends Group {
 	
 	public ActionGroup() {
 		super();
+		initialise();
 	}
 	
 	public ActionGroup(Node... nodes){
 		super(nodes);
+		initialise();
+	}
+	
+	private void initialise() {
+		addEventFilter(ActionGroupEvent.AREA_ENTERED, event -> {
+			if (event.getTarget() == this && getDraggableGroupParent().isActive()) {
+				InvalidationListener listener = observable -> {
+					if (!getDraggableGroupParent().isActive()) {
+						if (event.getTarget().getActionGroupsColliding().contains(event.getOtherGroup())) {
+							fireEvent(new ActionGroupEvent(ActionGroupEvent.DROPPED, event.getTarget(), event.getOtherGroup()));
+						}
+					}
+				};
+				getDraggableGroupParent().activeProperty().addListener(listener);
+				listenerByActionGroup.put(event.getOtherGroup(), listener);
+			}
+		});
+		
+		addEventFilter(ActionGroupEvent.AREA_LEFT, event -> {
+			InvalidationListener listener = listenerByActionGroup.remove(event.getOtherGroup());
+			if (listener != null) {
+				getDraggableGroupParent().activeProperty().removeListener(listener);
+			}
+		});
 	}
 	
 	/**
@@ -45,7 +77,9 @@ public class ActionGroup extends Group {
 			onProximityEntered = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
 				@Override
 				public void set(EventHandler<? super ActionGroupEvent> value) {
-					removeEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, getOnProximityLeft());
+					if (getOnProximityEntered() != null) {
+						removeEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, getOnProximityLeft());
+					}
 					addEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, value);
 					super.set(value);
 				}
@@ -72,7 +106,9 @@ public class ActionGroup extends Group {
 			onProximityLeft = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
 				@Override
 				public void set(EventHandler<? super ActionGroupEvent> value) {
-					removeEventHandler(ActionGroupEvent.PROXIMITY_LEFT, getOnProximityLeft());
+					if (getOnProximityLeft() != null) {
+						removeEventHandler(ActionGroupEvent.PROXIMITY_LEFT, getOnProximityLeft());
+					}
 					addEventHandler(ActionGroupEvent.PROXIMITY_LEFT, value);
 					super.set(value);
 				}
@@ -99,7 +135,9 @@ public class ActionGroup extends Group {
 			onAreaEntered = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
 				@Override
 				public void set(EventHandler<? super ActionGroupEvent> value) {
-					removeEventHandler(ActionGroupEvent.AREA_ENTERED, getOnProximityLeft());
+					if (getOnAreaEntered() != null) {
+						removeEventHandler(ActionGroupEvent.AREA_ENTERED, getOnAreaEntered());
+					}
 					addEventHandler(ActionGroupEvent.AREA_ENTERED, value);
 					super.set(value);
 				}
@@ -126,7 +164,9 @@ public class ActionGroup extends Group {
 			onAreaLeft = new SimpleObjectProperty<EventHandler<? super ActionGroupEvent>>() {
 				@Override
 				public void set(EventHandler<? super ActionGroupEvent> value) {
-					removeEventHandler(ActionGroupEvent.AREA_LEFT, getOnProximityLeft());
+					if (getOnAreaLeft() != null) {
+						removeEventHandler(ActionGroupEvent.AREA_LEFT, getOnAreaLeft());
+					}
 					addEventHandler(ActionGroupEvent.AREA_LEFT, value);
 					super.set(value);
 				}
@@ -153,6 +193,22 @@ public class ActionGroup extends Group {
 		return (DraggableGroup) ancestor;
 	}
 	
+	public Set<ActionGroup> getActionGroupsCollidingUnmodifiable() {
+		return actionGroupsCollidingUnmodifiable;
+	}
+	
+	public Set<ActionGroup> getActionGroupsInProximityUnmodifiable() {
+		return actionGroupsInProximityUnmodifiable;
+	}
+	
+	protected Set<ActionGroup> getActionGroupsColliding(){
+		return actionGroupsColliding;
+	}
+	
+	protected Set<ActionGroup> getActionGroupsInProximity(){
+		return actionGroupsInProximity;
+	}
+
 	/**
 	 * Requests this {@code ActionGroup} to move away from another
 	 * {@code ActionGroup}. This {@code ActionGroup} will be given
@@ -171,7 +227,7 @@ public class ActionGroup extends Group {
 	 */
 	public void moveAwayFrom(ActionGroup group, double force){
 		if (force < 0) {
-			throw new IllegalArgumentException("distance cannot be a negative value!");
+			throw new IllegalArgumentException("Force cannot be a negative value");
 		}
 		if (getDraggableGroupParent() == null) {
 			return;
@@ -242,23 +298,7 @@ public class ActionGroup extends Group {
 				deltaX = deltaY * ratio;
 			}
 			
-			getDraggableGroupParent().setVector(getDraggableGroupParent().getVector().add(deltaX, deltaY));
+			getDraggableGroupParent().setQueuedVector(new Point2D(deltaX, deltaY));
 		}
-	}
-	
-	public Set<ActionGroup> getActionGroupsCollidingUnmodifiable() {
-		return actionGroupsCollidingUnmodifiable;
-	}
-	
-	public Set<ActionGroup> getActionGroupsInProximityUnmodifiable() {
-		return actionGroupsInProximityUnmodifiable;
-	}
-	
-	protected Set<ActionGroup> getActionGroupsColliding(){
-		return actionGroupsColliding;
-	}
-	
-	protected Set<ActionGroup> getActionGroupsInProximity(){
-		return actionGroupsInProximity;
 	}
 }

@@ -14,8 +14,13 @@ class Vector extends Pane{
 	
 	private Line line = new Line(0, 0, 0, 0);
 	private Label label = new Label("");
+	private ObjectProperty<Point2D> vectorProperty;
+	private ObjectProperty<Point2D> queuedVectorProperty;
 	
-	public Vector(ObjectProperty<Point2D> vectorProperty) {
+	public Vector(ObjectProperty<Point2D> vectorProperty, ObjectProperty<Point2D> queuedVectorProperty) {
+		this.vectorProperty = vectorProperty;
+		this.queuedVectorProperty = queuedVectorProperty;
+		
 		line.setStroke(COLOR_OPAQUE);
 		line.setStrokeWidth(2);
 		label.setTextFill(COLOR_OPAQUE);
@@ -24,19 +29,20 @@ class Vector extends Pane{
 		getChildren().add(label);
 		
 		vectorProperty.addListener(observable -> {
-			update(vectorProperty.get());
+			update();
+		});
+		queuedVectorProperty.addListener(observable -> {
+			update();
 		});
 		
-		update(vectorProperty.get());
+		update();
 	}
 	
-	private void update(Point2D vector) {
-		double x = vector.getX();
-		double y = vector.getY();
+	private void update() {
+		double x = vectorProperty.get().getX() + queuedVectorProperty.get().getX();
+		double y = vectorProperty.get().getY() + queuedVectorProperty.get().getY();
 		
-		if (vector.equals(Point2D.ZERO)) {
-			line.setEndX(0);
-			line.setEndY(0);
+		if (x == 0 && y == 0) {
 			line.setVisible(false);
 			label.setText("");
 			return;

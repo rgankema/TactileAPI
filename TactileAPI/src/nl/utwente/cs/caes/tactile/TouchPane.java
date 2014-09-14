@@ -1,13 +1,13 @@
 package nl.utwente.cs.caes.tactile;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 
 public class TouchPane extends Pane {
-	private PhysicsController physics;
 	
 	public TouchPane() {
 		super();
@@ -21,63 +21,38 @@ public class TouchPane extends Pane {
 
 	// Called by all constructors
 	private void initialise() {
-		physics = new PhysicsController(this);
-		physics.start();
+		setPhysics(new Physics(this));
+		getPhysics().start();
 	}
-	
-	
 	
 	/**
-	 * Whether {@code DraggableGroups} will collide with the borders of this TouchPane.
-	 * If set to true the {@code TouchPane} will prevent {@code ActionGroups} that are moving
-	 * because of user input or physics to move outside of the {@code TouchPane's} boundaries.
-	 * 
-	 * @defaultvalue false
+	 * The {@Physics} object for this TouchPane
 	 */
-	private BooleanProperty bordersCollide;
+	private ReadOnlyObjectWrapper<Physics> physics;
 	
-	public final void setBordersCollide(boolean value) {
-		bordersCollideProperty().set(value);
+	protected void setPhysics(Physics value) {
+		physicsProperty().set(value);
 	}
 	
-	public final boolean isBordersCollide() {
-		return bordersCollideProperty().get();
+	public Physics getPhysics() {
+		return physicsProperty().get();
 	}
 	
-	public final BooleanProperty bordersCollideProperty() {
-		if (bordersCollide == null) {
-			bordersCollide = new SimpleBooleanProperty(false);
+	protected ReadOnlyObjectWrapper<Physics> physicsProperty() {
+		if (physics == null) {
+			physics = new ReadOnlyObjectWrapper<Physics>();
 		}
-		return bordersCollide;
+		return physics;
 	}
 	
-	public final void setProximityThreshold(double threshold) {
-		proximityThresholdProperty().set(threshold);
+	public ReadOnlyObjectProperty<Physics> readOnlyPhysicsProperty() {
+		return physicsProperty().getReadOnlyProperty();
 	}
-
-	public final double getProximityThreshold() {
-		return proximityThresholdProperty().get();
-	}
-
-	/**
-	 * Specifies how close two ActionGroups have to be to each other to fire
-	 * {@code CollisionEvent#PROXIMITY_ENTERED} events. When set to 0, the
-	 * TouchPane won't fire {@code CollisionEvent#PROXIMITY_ENTERED} events at
-	 * all. {@code CollisionEvent#PROXIMITY_LEFT} events will still be fired for
-	 * any ActionGroup pair that entered each other's proximity before the
-	 * threshold was set to 0. When set to a negative value, an
-	 * IllegalArgumentException is thrown.
-	 * 
-	 * @defaultvalue 25.0
-	 */
-	public final DoubleProperty proximityThresholdProperty() {
-		return physics.proximityThresholdProperty();
-	}
-
+	
 	/**
 	 * Registers an ActionGroup to the {@code TouchPane}. The TouchPane will track the
 	 * position of the ActionGroup and check for collisions / proximity events.
-	 * The ActionGroup should have the {@code TouchPane} as (indirect) ancestor.
+	 * The ActionGroup should have the controlled {@code TouchPane} as (indirect) ancestor.
 	 * 
 	 * @param actionGroup
 	 *            The ActionGroup that is to be tracked
@@ -86,16 +61,37 @@ public class TouchPane extends Pane {
 	 *             ancestor
 	 */
 	public void register(ActionGroup actionGroup) {
-		physics.register(actionGroup);
+		if (getPhysics().actionGroups.add(actionGroup)) {
+			Parent ancestor = actionGroup.getParent();
+			while (ancestor != this) {
+				try {
+					ancestor = ancestor.getParent();
+				} catch (NullPointerException e) {
+					throw new IllegalArgumentException(
+							"The provided ActionGroup does not have this TouchPane as ancestor!");
+				}
+			}
+			getPhysics().quadTree.insert(actionGroup);
+		}
 	}
-	
+
 	/**
 	 * Deregisters an ActionGroup from the {@code TouchPane}.
 	 * 
 	 * @param actionGroup
-	 *            The ActionGroup that should be deregistered
+	 *            The ActionGroup that shoud be deregistered
 	 */
 	public void deregister(ActionGroup actionGroup) {
-		physics.deregister(actionGroup);
+		for (ActionGroup ag : actionGroup.getActionGroupsColliding()) {
+			ag.getActionGroupsColliding().remove(actionGroup);
+		}
+		actionGroup.getActionGroupsColliding().clear();
+		for (ActionGroup ag : actionGroup.getActionGroupsInProximity()) {
+			ag.getActionGroupsInProximity().remove(actionGroup);
+		}
+		actionGroup.getActionGroupsInProximity().clear();
+		
+		getPhysics().actionGroups.remove(actionGroup);
+		getPhysics().quadTree.remove(actionGroup);
 	}
 }

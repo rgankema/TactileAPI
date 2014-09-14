@@ -112,7 +112,7 @@ public class DraggableGroup extends Group {
 		Parent parent = getParent();
 		if (parent instanceof TouchPane) {
 			TouchPane pane = (TouchPane) parent;
-			if (pane.isBordersCollide()) {
+			if (pane.getPhysics().isBordersCollide()) {
 				Bounds paneBounds = pane.getBoundsInLocal();
 				Bounds thisBounds = this.getBoundsInLocal();
 				
@@ -157,7 +157,7 @@ public class DraggableGroup extends Group {
 	 * mouse down, and becomes inactive when the touch is released, or on mouse
 	 * up.
 	 */
-	private ReadOnlyBooleanWrapper active = new ReadOnlyBooleanWrapper();
+	private ReadOnlyBooleanWrapper active;
 	
 	private void setActive(boolean value) {
 		activePropertyImpl().set(value);
@@ -173,9 +173,62 @@ public class DraggableGroup extends Group {
 	
 	private ReadOnlyBooleanWrapper activePropertyImpl() {
 		if (active == null) {
-			active = new ReadOnlyBooleanWrapper();
+			active = new ReadOnlyBooleanWrapper() {
+				@Override
+				public void set(boolean value) {
+					if (!value) {
+						setVector(getVector().add(getQueuedVector()));
+						setQueuedVector(Point2D.ZERO);
+					}
+					super.set(value);
+				}
+			};
 		}
 		return active;
+	}
+	
+	/**
+	 * Whether this {@code DraggableGroup} ignores physics.
+	 * 
+	 * @defaultvalue false
+	 */
+	private BooleanProperty ignorePhysics;
+	
+	public void setIgnorePhysics(boolean value) {
+		ignorePhysicsProperty().set(value);
+	}
+	
+	public boolean isIgnorePhysics() {
+		return ignorePhysicsProperty().get();
+	}
+	
+	public BooleanProperty ignorePhysicsProperty() {
+		if (ignorePhysics == null) {
+			ignorePhysics = new SimpleBooleanProperty(false);
+		}
+		return ignorePhysics;
+	}
+	
+	/**
+	 * Whether this {@code DraggableGroup} ignores touch or mouse input.
+	 * 
+	 * @defaultvalue false
+	 */
+	private BooleanProperty ignoreUserInput;
+	
+	public void setIgnoreUserInput(boolean value) {
+		ignoreUserInputProperty().set(value);
+	}
+	
+	public boolean getIgnoreUserInput() {
+		return ignoreUserInputProperty().get();
+	}
+	
+	public BooleanProperty ignoreUserInputProperty() {
+		if (ignoreUserInput == null) {
+			ignoreUserInput = new SimpleBooleanProperty(false);
+		}
+		return ignoreUserInput;
 	}
 	
 	/**
@@ -266,6 +319,36 @@ public class DraggableGroup extends Group {
 			vector = new SimpleObjectProperty<Point2D>(new Point2D(0, 0));
 		}
 		return vector;
+	}
+	
+	/**
+	 * The queued 2D velocity vector for this {@DraggableGroup}
+	 */
+	private ObjectProperty<Point2D> queuedVector;
+	
+	public void setQueuedVector(Point2D value) {
+		queuedVectorProperty().set(value);
+	}
+	
+	public Point2D getQueuedVector() {
+		return queuedVectorProperty().get();
+	}
+	
+	public ObjectProperty<Point2D> queuedVectorProperty() {
+		if (queuedVector == null) {
+			queuedVector = new SimpleObjectProperty<Point2D>(new Point2D(0, 0)) {
+				@Override
+				public void set(Point2D value) {
+					if (!isActive()) {
+						setVector(getVector().add(value));
+					}
+					else {
+						super.set(value);
+					}
+				}
+			};
+		}
+		return queuedVector;
 	}
 	
 	/**

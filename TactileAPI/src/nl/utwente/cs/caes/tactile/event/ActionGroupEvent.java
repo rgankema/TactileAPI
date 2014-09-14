@@ -19,6 +19,8 @@ public class ActionGroupEvent extends Event {
 			ANY, "PROXIMITY_ENTERED");
 	public static final EventType<ActionGroupEvent> PROXIMITY_LEFT = new EventType<ActionGroupEvent>(
 			ANY, "PROXIMITY_LEFT");
+	public static final EventType<ActionGroupEvent> DROPPED = new EventType<ActionGroupEvent>(
+			ANY, "DROPPED");
 	
 	private ActionGroup otherGroup;
 		

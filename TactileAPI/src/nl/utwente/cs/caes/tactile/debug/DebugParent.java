@@ -312,7 +312,7 @@ public class DebugParent extends StackPane {
 	
 	public void register(DraggableGroup draggable) {
 		if (!vectorByDraggableGroup.containsKey(draggable)) {
-			Vector vector = new Vector(draggable.vectorProperty());
+			Vector vector = new Vector(draggable.vectorProperty(), draggable.queuedVectorProperty());
 			vectorByDraggableGroup.put(draggable, vector);
 			
 			Bounds bounds = draggable.localToScene(draggable.getBoundsInLocal());

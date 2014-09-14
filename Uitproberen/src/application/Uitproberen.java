@@ -42,8 +42,8 @@ public class Uitproberen extends Application {
 
 		TouchPane tp = new TouchPane();
 		tp.setBackground(new Background(new BackgroundFill(Color.GREY, null, null)));
-		tp.setBordersCollide(true);
-		tp.setProximityThreshold(30);
+		tp.getPhysics().setBordersCollide(true);
+		tp.getPhysics().setProximityThreshold(30);
 		tp.setPrefSize(1000, 600);
 		
 		FlowPane buttonPane = new FlowPane();
@@ -86,26 +86,28 @@ public class Uitproberen extends Application {
 			dg.relocate(Math.random()*950, Math.random()*500);
 			tp.register(ag);
 			
+			ag.addEventFilter(ActionGroupEvent.ANY, event -> {
+				System.out.println(event.getEventType() + ": " + event.getTarget() + "->" + event.getOtherGroup());
+			});
+			
 			ag.addEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, new EventHandler<ActionGroupEvent>() {
 				@Override
 				public void handle(ActionGroupEvent event) {
-					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
-						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
+					if (Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
+						event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getPhysics().getProximityThreshold() * 10);
 					}
 				}				
 			});
 			
-			ag.addEventHandler(ActionGroupEvent.AREA_ENTERED, new EventHandler<ActionGroupEvent>() {
+			ag.addEventHandler(ActionGroupEvent.DROPPED, new EventHandler<ActionGroupEvent>() {
 				@Override
 				public void handle(ActionGroupEvent event) {
-					if (!event.getOtherGroup().getDraggableGroupParent().isActive() && Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
-						if (event.getTarget().getDraggableGroupParent().isActive()) {
-							tp.deregister(event.getOtherGroup());
-							tp.getChildren().remove(event.getOtherGroup().getDraggableGroupParent());
-							debugParent.deregister(event.getOtherGroup().getDraggableGroupParent());
-							removedAction.add(event.getOtherGroup());
-							removedDraggable.add(event.getOtherGroup().getDraggableGroupParent());
-						}
+					if (Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
+						tp.deregister(event.getOtherGroup());
+						tp.getChildren().remove(event.getOtherGroup().getDraggableGroupParent());
+						debugParent.deregister(event.getOtherGroup().getDraggableGroupParent());
+						removedAction.add(event.getOtherGroup());
+						removedDraggable.add(event.getOtherGroup().getDraggableGroupParent());
 					}
 					event.consume();
 				}				
@@ -122,10 +124,10 @@ public class Uitproberen extends Application {
 		checkSlide.setSelected(true);
 		
 		CheckBox checkCollision = new CheckBox("Walls collide");
-		checkCollision.selectedProperty().bindBidirectional(tp.bordersCollideProperty());
+		checkCollision.selectedProperty().bindBidirectional(tp.getPhysics().bordersCollideProperty());
 		
 		Slider proximitySlider = new Slider(0, 200, 30);
-		proximitySlider.valueProperty().bindBidirectional(tp.proximityThresholdProperty());
+		proximitySlider.valueProperty().bindBidirectional(tp.getPhysics().proximityThresholdProperty());
 		
 		Button resetButton = new Button("Reset");
 		resetButton.setOnAction(new EventHandler<ActionEvent>() {
