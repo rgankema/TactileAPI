@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.paint.*?>
+<?import nl.utwente.cs.caes.tactile.*?>
+<?import tactiledemo.*?>
+
+<TouchPane xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" id="root" 
+           prefHeight="600" prefWidth="800" fx:controller="tactiledemo.Main"
+           proximityThreshold="40" >
+    <children>
+        <DraggableGroup layoutX="0">
+            <ColorItem color="#ff0000"/>
+        </DraggableGroup>
+        <DraggableGroup layoutX="100">
+            <ColorItem color="#ff0000"/>
+        </DraggableGroup>
+        <DraggableGroup layoutX="200">
+            <ColorItem color="#00ff00"/>
+        </DraggableGroup>
+        <DraggableGroup layoutX="300">
+            <ColorItem color="#00ff00"/>
+        </DraggableGroup>
+        <DraggableGroup layoutY="200">
+            <ColorSlotPane/>
+        </DraggableGroup>
+    </children>
+</TouchPane>

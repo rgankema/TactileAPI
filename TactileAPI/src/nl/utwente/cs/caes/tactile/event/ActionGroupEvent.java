@@ -9,17 +9,17 @@ public class ActionGroupEvent extends Event {
 	
 	private static final long serialVersionUID = -3088628728530387241L;
 	
-	public static final EventType<ActionGroupEvent> ANY = new EventType<ActionGroupEvent>(
+	public static final EventType<ActionGroupEvent> ANY = new EventType<>(
 			Event.ANY, "ANY");
-	public static final EventType<ActionGroupEvent> AREA_ENTERED = new EventType<ActionGroupEvent>(
+	public static final EventType<ActionGroupEvent> AREA_ENTERED = new EventType<>(
 			ANY, "AREA_ENTERED");
-	public static final EventType<ActionGroupEvent> AREA_LEFT = new EventType<ActionGroupEvent>(
+	public static final EventType<ActionGroupEvent> AREA_LEFT = new EventType<>(
 			ANY, "AREA_LEFT");
-	public static final EventType<ActionGroupEvent> PROXIMITY_ENTERED = new EventType<ActionGroupEvent>(
+	public static final EventType<ActionGroupEvent> PROXIMITY_ENTERED = new EventType<>(
 			ANY, "PROXIMITY_ENTERED");
-	public static final EventType<ActionGroupEvent> PROXIMITY_LEFT = new EventType<ActionGroupEvent>(
+	public static final EventType<ActionGroupEvent> PROXIMITY_LEFT = new EventType<>(
 			ANY, "PROXIMITY_LEFT");
-	public static final EventType<ActionGroupEvent> DROPPED = new EventType<ActionGroupEvent>(
+	public static final EventType<ActionGroupEvent> DROPPED = new EventType<>(
 			ANY, "DROPPED");
 	
 	private ActionGroup otherGroup;

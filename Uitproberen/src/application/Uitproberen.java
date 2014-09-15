@@ -98,11 +98,11 @@ public class Uitproberen extends Application {
 			
 			ag.addEventHandler(ActionGroupEvent.DROPPED, (ActionGroupEvent event) -> {
                             if (Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
-                                tp.deregister(event.getOtherGroup());
-                                tp.getChildren().remove(event.getOtherGroup().getDraggableGroupParent());
-                                debugParent.deregister(event.getOtherGroup().getDraggableGroupParent());
-                                removedAction.add(event.getOtherGroup());
-                                removedDraggable.add(event.getOtherGroup().getDraggableGroupParent());
+                                tp.deregister(event.getTarget());
+                                tp.getChildren().remove(event.getTarget().getDraggableGroupParent());
+                                debugParent.deregister(event.getTarget().getDraggableGroupParent());
+                                removedAction.add(event.getTarget());
+                                removedDraggable.add(event.getTarget().getDraggableGroupParent());
                             }
                             event.consume();
                         });

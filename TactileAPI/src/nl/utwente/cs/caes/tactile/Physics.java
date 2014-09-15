@@ -7,9 +7,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.AnimationTimer;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -107,19 +104,24 @@ class Physics {
         List<DraggableGroup> draggableGroups = new ArrayList<>();
         for (Node child : pane.getChildren()) {
             if (child instanceof DraggableGroup) {
-                if (!((DraggableGroup) child).getVector().equals(Point2D.ZERO)) {
-                    draggableGroups.add((DraggableGroup) child);
-                }
+                draggableGroups.add((DraggableGroup) child);
             }
         }
         for (DraggableGroup dg : draggableGroups) {
             dg.setVector(dg.getVector().multiply(0.95));
             if (Math.abs(dg.getVector().getX()) < 1 && Math.abs(dg.getVector().getY()) < 1) {
                 dg.setVector(Point2D.ZERO);
-                continue;
             }
-            if (!dg.isActive()) {
+            if (!dg.isActive() && !dg.getVector().equals(Point2D.ZERO)) {
                 translate(dg, dg.getVector().getX() * TIME_STEP, dg.getVector().getY() * TIME_STEP);
+            } else {
+                Node anchor = dg.getAnchor();
+                if (anchor != null) {
+                    Bounds bounds = anchor.localToScene(anchor.getBoundsInLocal());
+                    Bounds boundsInPane = pane.sceneToLocal(bounds);
+                    dg.relocate(boundsInPane.getMinX(), boundsInPane.getMinY());
+                    dg.toFront();
+                }
             }
         }
     }

@@ -35,13 +35,13 @@ import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 public class DebugParent extends StackPane {
 	
 	Pane overlay = new Pane();
-	Map<Integer, TouchCircle> circleByTouchId = new TreeMap<Integer, TouchCircle>();
-	Map<Integer, Line> lineByTouchId = new TreeMap<Integer, Line>();
+	Map<Integer, TouchCircle> circleByTouchId = new TreeMap<>();
+	Map<Integer, Line> lineByTouchId = new TreeMap<>();
 	
-	Map<DraggableGroup, Vector> vectorByDraggableGroup = new ConcurrentHashMap<DraggableGroup, Vector>();
-	Map<Pair<ActionGroup>, Line> lineByActionGroupPair = new ConcurrentHashMap<Pair<ActionGroup>, Line>();
+	Map<DraggableGroup, Vector> vectorByDraggableGroup = new ConcurrentHashMap<>();
+	Map<Pair<ActionGroup>, Line> lineByActionGroupPair = new ConcurrentHashMap<>();
 
-	List<TouchPoint> touchPoints = new ArrayList<TouchPoint>();
+	List<TouchPoint> touchPoints = new ArrayList<>();
 	int touchSetId = 0;
 	boolean active = false;
 	
@@ -63,13 +63,10 @@ public class DebugParent extends StackPane {
 		
 		// Makes sure the overlay is always drawn on top of the other child
 		getChildren().add(overlay);
-		getChildren().addListener(new InvalidationListener() {
-			@Override
-			public void invalidated(Observable value) {
-				getChildren().remove(overlay);
-				getChildren().add(overlay);
-			}
-		});
+		getChildren().addListener((Observable value) -> {
+                    getChildren().remove(overlay);
+                    getChildren().add(overlay);
+                });
 		
 		// Maps mouse events to touch events
 		addEventFilter(MouseEvent.ANY, event -> {
@@ -191,7 +188,7 @@ public class DebugParent extends StackPane {
 			Bounds b1 = ag1.localToScene(ag1.getBoundsInLocal());
 			Bounds b2 = ag2.localToScene(ag2.getBoundsInLocal());
 			
-			Pair<ActionGroup> pair = new Pair<ActionGroup>(ag1, ag2);
+			Pair<ActionGroup> pair = new Pair<>(ag1, ag2);
 			
 			Line line = new Line(b1.getMinX(), b1.getMinY(), b2.getMinX(), b2.getMinY());
 			Line old = lineByActionGroupPair.put(pair, line);

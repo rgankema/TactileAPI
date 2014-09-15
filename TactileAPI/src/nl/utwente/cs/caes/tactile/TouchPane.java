@@ -5,7 +5,6 @@ import javafx.beans.property.DoubleProperty;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 
 public class TouchPane extends Pane {
@@ -79,22 +78,11 @@ public class TouchPane extends Pane {
      * Registers an ActionGroup to the {@code TouchPane}. The TouchPane will
      * track the position of the ActionGroup and check for collisions /
      * proximity events. The ActionGroup should have the controlled
-     * {@code TouchPane} as (indirect) ancestor.
+     * {@code TouchPane} as indirect ancestor, but this is not enforced.
      *
      * @param actionGroup The ActionGroup that is to be tracked
-     * @throws IllegalArgumentException If the ActionGroup does not have this
-     * TouchPane as (indirect) ancestor
      */
     public void register(ActionGroup actionGroup) {
-        Parent ancestor = actionGroup.getParent();
-        while (ancestor != this) {
-            try {
-                ancestor = ancestor.getParent();
-            } catch (NullPointerException e) {
-                throw new IllegalArgumentException(
-                        "The provided ActionGroup does not have this TouchPane as ancestor!");
-            }
-        }
         physics.track(actionGroup);
     }
 
