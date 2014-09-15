@@ -112,7 +112,7 @@ public class DraggableGroup extends Group {
 		Parent parent = getParent();
 		if (parent instanceof TouchPane) {
 			TouchPane pane = (TouchPane) parent;
-			if (pane.getPhysics().isBordersCollide()) {
+			if (pane.isBordersCollide()) {
 				Bounds paneBounds = pane.getBoundsInLocal();
 				Bounds thisBounds = this.getBoundsInLocal();
 				
