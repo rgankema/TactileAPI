@@ -235,7 +235,36 @@ public class DraggableGroup extends Group {
         }
         return anchor;
     }
+    
+    /**
+     * 
+     */
+    private ObjectProperty<Point2D> anchorOffset;
 
+    public void setAnchorOffset(Point2D offset) {
+        anchorOffsetProperty().set(offset);
+    }
+    
+    public Point2D getAnchorOffset() {
+        return anchorOffsetProperty().get();
+    }
+    
+    public ObjectProperty<Point2D> anchorOffsetProperty() {
+        if (anchorOffset == null) {
+            anchorOffset = new SimpleObjectProperty<Point2D>(Point2D.ZERO) {
+                @Override
+                public void set(Point2D value) {
+                    if (value == null) {
+                        super.set(Point2D.ZERO);
+                    } else {
+                        super.set(value);
+                    }
+                }
+            };
+        }
+        return anchorOffset;
+    }
+    
     /**
      * Whether this {@code DraggableGroup} ignores physics.
      *

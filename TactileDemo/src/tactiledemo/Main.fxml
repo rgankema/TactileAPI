@@ -11,7 +11,7 @@
 <?import tactiledemo.*?>
 
 <TouchPane xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" id="root" 
-           prefHeight="600" prefWidth="800" fx:controller="tactiledemo.Main"
+           prefHeight="600" prefWidth="800" fx:controller="tactiledemo.MainController"
            proximityThreshold="40" >
     <children>
         <DraggableGroup layoutX="0">

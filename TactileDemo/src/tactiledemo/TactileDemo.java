@@ -7,6 +7,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.ActionGroup;
+import nl.utwente.cs.caes.tactile.DraggableGroup;
 import nl.utwente.cs.caes.tactile.TouchPane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
 
@@ -19,6 +20,11 @@ public class TactileDemo extends Application {
         registerActionGroups(root, root);
         
         DebugParent debug = new DebugParent(root);
+        for (Node child : root.getChildren()) {
+            if (child instanceof DraggableGroup) {
+                debug.register((DraggableGroup)child);
+            }
+        }
         debug.setMapMouseToTouch(true);
         
         Scene scene = new Scene(debug);

@@ -119,7 +119,8 @@ class Physics {
                 if (anchor != null) {
                     Bounds bounds = anchor.localToScene(anchor.getBoundsInLocal());
                     Bounds boundsInPane = pane.sceneToLocal(bounds);
-                    dg.relocate(boundsInPane.getMinX(), boundsInPane.getMinY());
+                    Point2D offset = dg.getAnchorOffset();
+                    dg.relocate(boundsInPane.getMinX() + offset.getX(), boundsInPane.getMinY() + offset.getY());
                     dg.toFront();
                 }
             }
