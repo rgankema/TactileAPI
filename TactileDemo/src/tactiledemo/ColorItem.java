@@ -7,6 +7,9 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import nl.utwente.cs.caes.tactile.ActionGroup;
 
+/**
+ * An ActionGroup that contains a colored square. Interacts with ColorSlots.
+ */
 public class ColorItem extends ActionGroup {
     Rectangle rectangle;
     

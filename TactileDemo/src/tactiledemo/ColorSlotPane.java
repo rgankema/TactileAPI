@@ -7,6 +7,14 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 
+/**
+ * A Pane that has two ColorSlots. The background color depends on the ColorItems
+ * that are hosted by the ColorSlots. If both ColorSlots don't have ColorItems,
+ * the ColorSlotPane will be grey. If one ColorSlot has a ColorItem, the ColorSlotPane
+ * will have that color as background. If the remaining ColorSlot is filled with
+ * a ColorItem that has a different color than the ColorSlotPane, the first ColorItem
+ * will be pushed out.
+ */
 public class ColorSlotPane extends Pane {
     Rectangle background;
     ColorSlot leftSlot;
@@ -22,10 +30,16 @@ public class ColorSlotPane extends Pane {
         leftSlot.relocate(20, 20);
         leftSlot.colorItemProperty().addListener((ObservableValue<? extends ColorItem> observable, ColorItem oldValue, ColorItem newValue) -> {
             if (newValue == null) {
+                // If both slots don't host a ColorItem, the ColorSlotPane will be grey
                 if (rightSlot.getColorItem() == null) {
                     setBackgroundColor(Color.GREY);
                 }
             } else {
+                // If the left slot hosts a ColorItem, but the right does not, ColorSlotPane
+                // will get the color of the ColorItem hosted by the left slot.
+                // If both slots host a ColorItem, and the right slot has a different color
+                // than the left slot, then the right ColorItem will be pushed away from
+                // its slot.
                 if (rightSlot.getColorItem() == null) {
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
