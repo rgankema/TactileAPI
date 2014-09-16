@@ -13,7 +13,6 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TouchEvent;
-import javafx.scene.layout.Pane;
 
 public class DraggableGroup extends Group {
 
@@ -85,7 +84,7 @@ public class DraggableGroup extends Group {
             
             setActive(true);
             
-            vectorProperty().set(Point2D.ZERO);
+            setVector(Point2D.ZERO);
 
             dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
             dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
@@ -199,7 +198,9 @@ public class DraggableGroup extends Group {
      * The {@code Node} this {@code DraggableGroup} is anchored to. When a 
      * {@code DraggableGroup} is anchored to another {@code Node}, it will move
      * wherever the {@code anchor} moves to, provided that both the {@code DraggableGroup}
-     * and the {@code anchor} have the same {@code TouchPane} as ancestor.
+     * and the {@code anchor} have the same {@code TouchPane} as ancestor. The actual
+     * position the anchored {@DraggableGroup} will move to is the sum of the position of the
+     * {@code anchor} and the {@code anchorOffset}.
      * 
      * When anchored, the {@code DraggableGroup} is considered {@code active},
      * and so it will not respond to physics. It will however still respond to user
@@ -237,7 +238,7 @@ public class DraggableGroup extends Group {
     }
     
     /**
-     * 
+     * Defines the position of this {@code DraggableGroup} relative to its {@anchor}.
      */
     private ObjectProperty<Point2D> anchorOffset;
 
@@ -358,9 +359,7 @@ public class DraggableGroup extends Group {
     }
 
     /**
-     * The 2D velocity vector for this {
-     *
-     * @DraggableGroup}
+     * The 2D velocity vector for this {@code DraggableGroup}
      */
     private ObjectProperty<Point2D> vector;
 
@@ -380,9 +379,7 @@ public class DraggableGroup extends Group {
     }
 
     /**
-     * The queued 2D velocity vector for this {
-     *
-     * @DraggableGroup}
+     * The queued 2D velocity vector for this {@code DraggableGroup}
      */
     private ObjectProperty<Point2D> queuedVector;
 
