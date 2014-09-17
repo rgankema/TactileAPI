@@ -101,8 +101,7 @@ public class DebugParent extends StackPane {
 						event.isPrimaryButtonDown(), event.isMiddleButtonDown(), event.isSecondaryButtonDown(), true,
 						event.isPopupTrigger(), event.isStillSincePress(), event.getPickResult());
 				Event.fireEvent(event.getTarget(), mouseEvent);
-				
-				event.consume();
+                                event.consume();
 			}
 		});
 		

@@ -112,7 +112,7 @@ class Physics {
             if (Math.abs(dg.getVector().getX()) < 1 && Math.abs(dg.getVector().getY()) < 1) {
                 dg.setVector(Point2D.ZERO);
             }
-            if (!dg.isActive() && !dg.getVector().equals(Point2D.ZERO)) {
+            if (!dg.isInUse() && !dg.isAnchored() && !dg.getVector().equals(Point2D.ZERO)) {
                 translate(dg, dg.getVector().getX() * TIME_STEP, dg.getVector().getY() * TIME_STEP);
             } else {
                 Node anchor = dg.getAnchor();

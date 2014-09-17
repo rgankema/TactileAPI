@@ -82,7 +82,7 @@ public class DraggableGroup extends Group {
         if (!isIgnoreUserInput()) {
             setAnchor(null);
             
-            setActive(true);
+            setInUse(true);
             
             setVector(Point2D.ZERO);
 
@@ -98,7 +98,7 @@ public class DraggableGroup extends Group {
             dragContext.deltaX = getLayoutX() - sceneX;
             dragContext.deltaY = getLayoutY() - sceneY;
 
-            if (isGoToForegroundOnActive()) {
+            if (isGoToForegroundOnInUse()) {
                 this.toFront();
             }
         }
@@ -154,44 +154,44 @@ public class DraggableGroup extends Group {
 
                 setVector(new Point2D(speedX * DragContext.FORCE_MULT, speedY * DragContext.FORCE_MULT));
             }
-            setActive(false);
+            setInUse(false);
         }
     }
 
     /**
      * Whether this {@code DraggableGroup} is currently being controlled by a
-     * user, or anchored to another Node.
+     * user.
      */
-    private ReadOnlyBooleanWrapper active;
+    private ReadOnlyBooleanWrapper inUse;
 
-    private void setActive(boolean value) {
-        activePropertyImpl().set(value);
+    private void setInUse(boolean value) {
+        inUsePropertyImpl().set(value);
     }
 
-    public boolean isActive() {
-        return active == null ? false : activeProperty().get();
+    public boolean isInUse() {
+        return inUse == null ? false : inUseProperty().get();
     }
 
-    public ReadOnlyBooleanProperty activeProperty() {
-        return activePropertyImpl().getReadOnlyProperty();
+    public ReadOnlyBooleanProperty inUseProperty() {
+        return inUsePropertyImpl().getReadOnlyProperty();
     }
 
-    private ReadOnlyBooleanWrapper activePropertyImpl() {
-        if (active == null) {
-            active = new ReadOnlyBooleanWrapper() {
+    private ReadOnlyBooleanWrapper inUsePropertyImpl() {
+        if (inUse == null) {
+            inUse = new ReadOnlyBooleanWrapper() {
                 @Override
-                public void set(boolean value) {
-                    if (value) {
+                public void set(boolean inUse) {
+                    if (inUse) {
                         setVector(Point2D.ZERO);
                     } else {
                         setVector(getVector().add(getQueuedVector()));
                         setQueuedVector(Point2D.ZERO);
                     }
-                    super.set(value);
+                    super.set(inUse);
                 }
             };
         }
-        return active;
+        return inUse;
     }
     
     /**
@@ -202,9 +202,8 @@ public class DraggableGroup extends Group {
      * position the anchored {@DraggableGroup} will move to is the sum of the position of the
      * {@code anchor} and the {@code anchorOffset}.
      * 
-     * When anchored, the {@code DraggableGroup} is considered {@code active},
-     * and so it will not respond to physics. It will however still respond to user
-     * input. When a user tries to drag an anchored {@code DraggableGroup}, its {@anchor}
+     * When anchored, the {@code DraggableGroup} will not respond to physics. It will however 
+     * still respond to user input. When a user tries to drag an anchored {@code DraggableGroup}, its {@anchor}
      * will automatically be set to {@code null}. To prevent this from happening,
      * set {@code ignoreUserInput} to {@code true}.
      */
@@ -223,18 +222,39 @@ public class DraggableGroup extends Group {
             anchor = new SimpleObjectProperty<Node>() {
                 @Override
                 public void set(Node value) {
-                    if (value == null) {
-                        super.set(value);
-                        setActive(false);
-                    }
-                    else if (!isActive()) {
-                        super.set(value);
-                        setActive(true);
-                    }
+                    super.set(value);
+                    setAnchored(value != null);
                 }
             };
         }
         return anchor;
+    }
+    
+    /**
+     * Whether {@code anchor} has been set. When {@code true}, the {@code DraggableGroup}
+     * will not respond to physics.
+     * 
+     * @defaultvalue false
+     */
+    private ReadOnlyBooleanWrapper anchored;
+    
+    public boolean isAnchored() {
+        return anchoredPropertyImpl().get();
+    }
+    
+    private void setAnchored(boolean value) {
+        anchoredPropertyImpl().set(value);
+    }
+    
+    public ReadOnlyBooleanProperty anchoredProperty() {
+        return anchoredPropertyImpl().getReadOnlyProperty();
+    }
+    
+    private ReadOnlyBooleanWrapper anchoredPropertyImpl() {
+        if (anchored == null) {
+            anchored = new ReadOnlyBooleanWrapper(getAnchor() != null);
+        }
+        return anchored;
     }
     
     /**
@@ -312,25 +332,25 @@ public class DraggableGroup extends Group {
 
     /**
      * Whether this {@code DraggableGroup} will go to the foreground when
-     * {@link #activeProperty() active} is set to true. If set to true,
-     * {@link #goToForeground()} is called whenever {@link #activeProperty() is
+     * {@link #inUseProperty() active} is set to true. If set to true,
+     * {@link #goToForeground()} is called whenever {@link #inUseProperty() is
      * set to true.
      */
-    private BooleanProperty goToForegroundOnActive;
+    private BooleanProperty goToForegroundOnInUse;
 
-    public final void setGoToForegroundOnActive(boolean value) {
-        goToForegroundOnActiveProperty().set(value);
+    public final void setGoToForegroundOnInUse(boolean value) {
+        goToForegroundOnInUseProperty().set(value);
     }
 
-    public final boolean isGoToForegroundOnActive() {
-        return goToForegroundOnActive == null ? true : goToForegroundOnActive.get();
+    public final boolean isGoToForegroundOnInUse() {
+        return goToForegroundOnInUse == null ? true : goToForegroundOnInUse.get();
     }
 
-    public final BooleanProperty goToForegroundOnActiveProperty() {
-        if (goToForegroundOnActive == null) {
-            goToForegroundOnActive = new SimpleBooleanProperty(true);
+    public final BooleanProperty goToForegroundOnInUseProperty() {
+        if (goToForegroundOnInUse == null) {
+            goToForegroundOnInUse = new SimpleBooleanProperty(true);
         }
-        return goToForegroundOnActive;
+        return goToForegroundOnInUse;
     }
 
     /**
@@ -343,7 +363,7 @@ public class DraggableGroup extends Group {
      */
     private BooleanProperty slideOnRelease;
 
-    public final void setSlideOnRelase(boolean value) {
+    public final void setSlideOnRelease(boolean value) {
         slideOnReleaseProperty().set(value);
     }
 
@@ -396,7 +416,7 @@ public class DraggableGroup extends Group {
             queuedVector = new SimpleObjectProperty<Point2D>(new Point2D(0, 0)) {
                 @Override
                 public void set(Point2D value) {
-                    if (!isActive()) {
+                    if (!isInUse()) {
                         setVector(getVector().add(value));
                     } else {
                         super.set(value);

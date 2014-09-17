@@ -39,15 +39,15 @@ public class ActionGroup extends Group {
     private void initialise() {
         // Fire Drop Events
         addEventFilter(ActionGroupEvent.AREA_ENTERED, event -> {
-            if (event.getTarget() == this && event.getOtherGroup().getDraggableGroupParent().isActive()) {
+            if (event.getTarget() == this && event.getOtherGroup().getDraggableGroupParent().isInUse()) {
                 InvalidationListener listener = observable -> {
-                    if (!event.getOtherGroup().getDraggableGroupParent().isActive()) {
+                    if (!event.getOtherGroup().getDraggableGroupParent().isInUse()) {
                         if (event.getTarget().getActionGroupsColliding().contains(event.getOtherGroup())) {
                             fireEvent(new ActionGroupEvent(ActionGroupEvent.DROPPED, event.getTarget(), event.getOtherGroup()));
                         }
                     }
                 };
-                event.getOtherGroup().getDraggableGroupParent().activeProperty().addListener(listener);
+                event.getOtherGroup().getDraggableGroupParent().inUseProperty().addListener(listener);
                 listenerByActionGroup.put(event.getOtherGroup(), listener);
             }
         });
@@ -55,7 +55,7 @@ public class ActionGroup extends Group {
         addEventFilter(ActionGroupEvent.AREA_LEFT, event -> {
             InvalidationListener listener = listenerByActionGroup.remove(event.getOtherGroup());
             if (listener != null) {
-                event.getOtherGroup().getDraggableGroupParent().activeProperty().removeListener(listener);
+                event.getOtherGroup().getDraggableGroupParent().inUseProperty().removeListener(listener);
             }
         });
     }
