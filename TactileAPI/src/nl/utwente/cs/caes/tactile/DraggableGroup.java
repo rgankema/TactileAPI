@@ -34,7 +34,7 @@ public class DraggableGroup extends Group {
 
         // Consume any synthesized MouseEvent so that TouchEvents aren't handled twice
         addEventFilter(MouseEvent.ANY, event -> {
-            if (event.isSynthesized()) {
+            if (event.isSynthesized() && event.getTarget() == DraggableGroup.this) {
                 event.consume();
             }
         });
