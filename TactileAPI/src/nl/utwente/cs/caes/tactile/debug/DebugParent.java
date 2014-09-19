@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -28,9 +27,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.util.Duration;
-import nl.utwente.cs.caes.tactile.ActionGroup;
-import nl.utwente.cs.caes.tactile.DraggableGroup;
-import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
+import nl.utwente.cs.caes.tactile.ActivePane;
+import nl.utwente.cs.caes.tactile.DragPane;
+import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 public class DebugParent extends StackPane {
 	
@@ -38,8 +37,8 @@ public class DebugParent extends StackPane {
 	Map<Integer, TouchCircle> circleByTouchId = new TreeMap<>();
 	Map<Integer, Line> lineByTouchId = new TreeMap<>();
 	
-	Map<DraggableGroup, Vector> vectorByDraggableGroup = new ConcurrentHashMap<>();
-	Map<Pair<ActionGroup>, Line> lineByActionGroupPair = new ConcurrentHashMap<>();
+	Map<DragPane, Vector> vectorByDragPane = new ConcurrentHashMap<>();
+	Map<Pair<ActivePane>, Line> lineByActivePanePair = new ConcurrentHashMap<>();
 
 	List<TouchPoint> touchPoints = new ArrayList<>();
 	int touchSetId = 0;
@@ -181,35 +180,35 @@ public class DebugParent extends StackPane {
 			ft.play();
 		});
 		
-		addEventFilter(ActionGroupEvent.PROXIMITY_ENTERED, event -> {
-			ActionGroup ag1 = event.getTarget();
-			ActionGroup ag2 = event.getOtherGroup();
-			Bounds b1 = ag1.localToScene(ag1.getBoundsInLocal());
-			Bounds b2 = ag2.localToScene(ag2.getBoundsInLocal());
+		addEventFilter(ActivePaneEvent.PROXIMITY_ENTERED, event -> {
+			ActivePane ap1 = event.getTarget();
+			ActivePane ap2 = event.getOtherGroup();
+			Bounds b1 = ap1.localToScene(ap1.getBoundsInLocal());
+			Bounds b2 = ap2.localToScene(ap2.getBoundsInLocal());
 			
-			Pair<ActionGroup> pair = new Pair<>(ag1, ag2);
+			Pair<ActivePane> pair = new Pair<>(ap1, ap2);
 			
 			Line line = new Line(b1.getMinX(), b1.getMinY(), b2.getMinX(), b2.getMinY());
-			Line old = lineByActionGroupPair.put(pair, line);
+			Line old = lineByActivePanePair.put(pair, line);
 			overlay.getChildren().add(line);
 			overlay.getChildren().remove(old);
 		});
 		
-		addEventFilter(ActionGroupEvent.PROXIMITY_LEFT, event -> {
-			ActionGroup ag1 = event.getTarget();
-			ActionGroup ag2 = event.getOtherGroup();
-			Pair<ActionGroup> pair = null;
+		addEventFilter(ActivePaneEvent.PROXIMITY_LEFT, event -> {
+			ActivePane ap1 = event.getTarget();
+			ActivePane ap2 = event.getOtherGroup();
+			Pair<ActivePane> pair = null;
 			Line line = null;
 			
-			for (Pair<ActionGroup> p : lineByActionGroupPair.keySet()) {
-				if (p.left == ag1 && p.right == ag2 || p.left == ag2 && p.right == ag1) {
-					line = lineByActionGroupPair.get(p);
+			for (Pair<ActivePane> p : lineByActivePanePair.keySet()) {
+				if (p.left == ap1 && p.right == ap2 || p.left == ap2 && p.right == ap1) {
+					line = lineByActivePanePair.get(p);
 					pair = p;
 					break;
 				}
 			}
 			
-			lineByActionGroupPair.remove(pair);
+			lineByActivePanePair.remove(pair);
 			
 			final Line rLine = line;
 			
@@ -226,17 +225,17 @@ public class DebugParent extends StackPane {
 
 			@Override
 			public void handle(long arg0) {
-				for (DraggableGroup dg : vectorByDraggableGroup.keySet()) {
-					Bounds bounds = dg.localToScene(dg.getBoundsInLocal());
-					Vector vector = vectorByDraggableGroup.get(dg);
+				for (DragPane dp : vectorByDragPane.keySet()) {
+					Bounds bounds = dp.localToScene(dp.getBoundsInLocal());
+					Vector vector = vectorByDragPane.get(dp);
 					
 					vector.relocate(bounds.getMinX(), bounds.getMinY());
 				}
-				for (Pair<ActionGroup> pair : lineByActionGroupPair.keySet()) {
+				for (Pair<ActivePane> pair : lineByActivePanePair.keySet()) {
 					Bounds b1 = pair.left.localToScene(pair.left.getBoundsInLocal());
 					Bounds b2 = pair.right.localToScene(pair.right.getBoundsInLocal());
 					
-					Line line = lineByActionGroupPair.get(pair);
+					Line line = lineByActivePanePair.get(pair);
 					line.setStartX(b1.getMinX());
 					line.setStartY(b1.getMinY());
 					line.setEndX(b2.getMinX());
@@ -306,19 +305,19 @@ public class DebugParent extends StackPane {
 		return touchCircleRadius;
 	}
 	
-	public void register(DraggableGroup draggable) {
-		if (!vectorByDraggableGroup.containsKey(draggable)) {
-			Vector vector = new Vector(draggable.vectorProperty(), draggable.queuedVectorProperty());
-			vectorByDraggableGroup.put(draggable, vector);
+	public void register(DragPane dp) {
+		if (!vectorByDragPane.containsKey(dp)) {
+			Vector vector = new Vector(dp.vectorProperty(), dp.queuedVectorProperty());
+			vectorByDragPane.put(dp, vector);
 			
-			Bounds bounds = draggable.localToScene(draggable.getBoundsInLocal());
+			Bounds bounds = dp.localToScene(dp.getBoundsInLocal());
 			vector.relocate(bounds.getMinX(), bounds.getMinY());
 			overlay.getChildren().add(vector);
 		}
 	}
 	
-	public void deregister(DraggableGroup draggable) {
-		Vector vector = vectorByDraggableGroup.remove(draggable);
+	public void deregister(DragPane dp) {
+		Vector vector = vectorByDragPane.remove(dp);
 		if (vector != null) {
 			overlay.getChildren().remove(vector);
 		}

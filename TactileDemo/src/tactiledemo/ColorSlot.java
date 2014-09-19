@@ -6,13 +6,15 @@ import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import nl.utwente.cs.caes.tactile.ActionGroup;
+import nl.utwente.cs.caes.tactile.ActivePane;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
+import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 /**
  * An ActionGroup that reacts on ColorItems. ColorItems can be dropped on
  * a ColorSlot, and will then be anchored to it.
  */
-public class ColorSlot extends ActionGroup {
+public class ColorSlot extends ActivePane {
     Rectangle background;
     ColorSlotPane parent;
     
@@ -23,7 +25,7 @@ public class ColorSlot extends ActionGroup {
         background.setFill(Color.DARKGREY);
         background.setStroke(Color.DARKGREY);
         background.setStrokeWidth(4);
-        getChildren().add(background);
+        setContent(background);
         
         setOnProximityEntered(event -> onProximityEntered(event));
         setOnProximityLeft(event -> onProximityLeft(event));
@@ -51,9 +53,9 @@ public class ColorSlot extends ActionGroup {
         return colorItem;
     }
     
-    private void onProximityEntered(ActionGroupEvent event) {
-        ActionGroup slot = event.getTarget();
-        ActionGroup otherAG = event.getOtherGroup();
+    private void onProximityEntered(ActivePaneEvent event) {
+        ActivePane slot = event.getTarget();
+        ActivePane otherAG = event.getOtherGroup();
         
         if (otherAG instanceof ColorItem) {
             ColorItem colorItem = (ColorItem) otherAG;
@@ -70,8 +72,8 @@ public class ColorSlot extends ActionGroup {
         }
     }
     
-    private void onProximityLeft(ActionGroupEvent event) {
-        ActionGroup otherAG = event.getOtherGroup();
+    private void onProximityLeft(ActivePaneEvent event) {
+        ActivePane otherAG = event.getOtherGroup();
         
         if (otherAG instanceof ColorItem) {
             ColorItem colorItem = (ColorItem) otherAG;
@@ -84,22 +86,22 @@ public class ColorSlot extends ActionGroup {
         }
     }
     
-    private void onDropped(ActionGroupEvent event) {
-        ActionGroup otherAG = event.getOtherGroup();
+    private void onDropped(ActivePaneEvent event) {
+        ActivePane otherAG = event.getOtherGroup();
         
         if (otherAG instanceof ColorItem) {
             // If the ColorSlot has room for a ColorItem, then that ColorItem
             // will be anchored to that ColorSlot
             if (getColorItem() == null) {
                 setColorItem((ColorItem) otherAG);
-                otherAG.getDraggableGroupParent().setAnchor(this);
-                otherAG.getDraggableGroupParent().setAnchorOffset(new Point2D(2, 2));
+                otherAG.getDragPaneParent().setAnchor(this);
+                otherAG.getDragPaneParent().setAnchorOffset(new Point2D(2, 2));
             }
         }
     }
     
-    private void onAreaLeft(ActionGroupEvent event) {
-        ActionGroup otherAG = event.getOtherGroup();
+    private void onAreaLeft(ActivePaneEvent event) {
+        ActivePane otherAG = event.getOtherGroup();
         
         // If the ActionGroup that has left the area of the ColorSlot is the
         // ColorItem that is anchored to it, then ColorItem will be set to null

@@ -44,7 +44,7 @@ public class ColorSlotPane extends Pane {
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(rightSlot.getColorItem().getColor())) {
-                    rightSlot.getColorItem().getDraggableGroupParent().setAnchor(null);
+                    rightSlot.getColorItem().getDragPaneParent().setAnchor(null);
                     rightSlot.getColorItem().moveAwayFrom(newValue, 500);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
@@ -64,7 +64,7 @@ public class ColorSlotPane extends Pane {
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(leftSlot.getColorItem().getColor())) {
-                    leftSlot.getColorItem().getDraggableGroupParent().setAnchor(null);
+                    leftSlot.getColorItem().getDragPaneParent().setAnchor(null);
                     leftSlot.getColorItem().moveAwayFrom(newValue, 1000);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());

@@ -14,20 +14,20 @@
            prefHeight="600" prefWidth="800" fx:controller="tactiledemo.MainController"
            proximityThreshold="40" >
     <children>
-        <DraggableGroup layoutX="0" slideOnRelease="true">
+        <DragPane layoutX="0" slideOnRelease="true">
             <ColorItem color="#ff0000"/>
-        </DraggableGroup>
-        <DraggableGroup layoutX="100" slideOnRelease="true">
+        </DragPane>
+        <DragPane layoutX="100" slideOnRelease="true">
             <ColorItem color="#ff0000"/>
-        </DraggableGroup>
-        <DraggableGroup layoutX="200" slideOnRelease="true">
+        </DragPane>
+        <DragPane layoutX="200" slideOnRelease="true">
             <ColorItem color="#00ff00"/>
-        </DraggableGroup>
-        <DraggableGroup layoutX="300" slideOnRelease="true" >
+        </DragPane>
+        <DragPane layoutX="300" slideOnRelease="true" >
             <ColorItem color="#00ff00"/>
-        </DraggableGroup>
-        <DraggableGroup layoutY="200" slideOnRelease="true">
+        </DragPane>
+        <DragPane layoutY="200" slideOnRelease="true">
             <ColorSlotPane/>
-        </DraggableGroup>
+        </DragPane>
     </children>
 </TouchPane>

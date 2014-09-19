@@ -5,6 +5,8 @@ import javafx.event.EventTarget;
 import javafx.event.EventType;
 import nl.utwente.cs.caes.tactile.ActionGroup;
 
+@Deprecated
+//TODO: alles overzetten naar ActivePaneEvent
 public class ActionGroupEvent extends Event {
 	
 	private static final long serialVersionUID = -3088628728530387241L;

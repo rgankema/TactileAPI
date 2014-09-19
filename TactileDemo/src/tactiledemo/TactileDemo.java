@@ -6,8 +6,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import nl.utwente.cs.caes.tactile.ActionGroup;
-import nl.utwente.cs.caes.tactile.DraggableGroup;
+import nl.utwente.cs.caes.tactile.ActivePane;
+import nl.utwente.cs.caes.tactile.DragPane;
 import nl.utwente.cs.caes.tactile.TouchPane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
 
@@ -17,28 +17,28 @@ public class TactileDemo extends Application {
     public void start(Stage stage) throws Exception {
         TouchPane root = (TouchPane) FXMLLoader.load(getClass().getResource("Main.fxml"));
         
-        registerActionGroups(root, root);
+        registerActivePanes(root, root);
         
         DebugParent debug = new DebugParent(root);
         for (Node child : root.getChildren()) {
-            if (child instanceof DraggableGroup) {
-                debug.register((DraggableGroup)child);
+            if (child instanceof DragPane) {
+                debug.register((DragPane)child);
             }
         }
-        debug.setMapMouseToTouch(true);
+        debug.setMapMouseToTouch(false);
         
         Scene scene = new Scene(debug);
         stage.setScene(scene);
         stage.show();
     }
     
-    private void registerActionGroups(TouchPane touchPane, Parent parent) {
+    private void registerActivePanes(TouchPane touchPane, Parent parent) {
         for (Node node: parent.getChildrenUnmodifiable()) {
             if (node instanceof Parent) {
-                registerActionGroups(touchPane, (Parent) node);
+                registerActivePanes(touchPane, (Parent) node);
             }
-            if (node instanceof ActionGroup) {
-                touchPane.register((ActionGroup) node);
+            if (node instanceof ActivePane) {
+                touchPane.register((ActivePane) node);
             }
         }
     }
