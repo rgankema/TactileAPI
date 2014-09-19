@@ -103,4 +103,14 @@ public class TouchPane extends Pane {
 
         physics.stopTracking(activePane);
     }
+    
+    /* Kan gebruikt worden om een willekeurige node te tracken in FXML
+    public static void setTracker(Node node, TouchPane touchPane) {
+        touchPane.register(activePane);
+    }
+    
+    public static TouchPane getTracker(Node node) {
+        return null;
+    }
+    */
 }

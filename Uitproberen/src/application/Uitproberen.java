@@ -87,17 +87,17 @@ public class Uitproberen extends Application {
 			tp.register(ap);
 			
 			ap.addEventFilter(ActivePaneEvent.ANY, event -> {
-				System.out.println(event.getEventType() + ": " + event.getTarget() + "->" + event.getOtherGroup());
+				System.out.println(event.getEventType() + ": " + event.getTarget() + "->" + event.getOther());
 			});
 			
 			ap.addEventHandler(ActivePaneEvent.PROXIMITY_ENTERED, (ActivePaneEvent event) -> {
-                            if (Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
-                                event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
+                            if (Integer.parseInt(event.getOther().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
+                                event.getOther().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
                             }
                         });
 			
-			ap.addEventHandler(ActivePaneEvent.DROPPED, (ActivePaneEvent event) -> {
-                            if (Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
+			ap.addEventHandler(ActivePaneEvent.AREA_ENTERED, (ActivePaneEvent event) -> {
+                            if (!event.getTarget().getDragPaneParent().isInUse() && Integer.parseInt(event.getOther().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
                                 tp.deregister(event.getTarget());
                                 tp.getChildren().remove(event.getTarget().getDragPaneParent());
                                 debugParent.deregister(event.getTarget().getDragPaneParent());

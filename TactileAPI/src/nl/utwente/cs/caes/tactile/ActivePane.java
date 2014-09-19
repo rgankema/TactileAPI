@@ -39,38 +39,11 @@ public class ActivePane extends Control {
         getStyleClass().setAll(DEFAULT_STYLE_CLASS);
         // TODO Not sure if focusTraversable really should be set to false for ActivePane
         ((StyleableProperty<Boolean>)focusTraversableProperty()).applyStyle(null, false); 
-        
-        initialize();
     }
 
     public ActivePane(Node content) {
         this();
         setContent(content);
-    }
-    
-    // TODO dit moet eruit, achteraf gezien toch niet logisch om dit er in te doen
-    private void initialize() {
-        // Fire Drop Events
-        addEventFilter(ActivePaneEvent.AREA_ENTERED, event -> {
-            if (event.getTarget() == this && event.getOtherGroup().getDragPaneParent().isInUse()) {
-                InvalidationListener listener = observable -> {
-                    if (!event.getOtherGroup().getDragPaneParent().isInUse()) {
-                        if (event.getTarget().getActivePanesColliding().contains(event.getOtherGroup())) {
-                            fireEvent(new ActivePaneEvent(ActivePaneEvent.DROPPED, event.getTarget(), event.getOtherGroup()));
-                        }
-                    }
-                };
-                event.getOtherGroup().getDragPaneParent().inUseProperty().addListener(listener);
-                listenerByActionPane.put(event.getOtherGroup(), listener);
-            }
-        });
-
-        addEventFilter(ActivePaneEvent.AREA_LEFT, event -> {
-            InvalidationListener listener = listenerByActionPane.remove(event.getOtherGroup());
-            if (listener != null) {
-                event.getOtherGroup().getDragPaneParent().inUseProperty().removeListener(listener);
-            }
-        });
     }
 
     // PROPERTIES
@@ -224,40 +197,6 @@ public class ActivePane extends Control {
             };
         }
         return onAreaLeft;
-    }
-    
-    /**
-     * Defines a function to be called when another {@code ActionGroup} is dropped
-     * in the area of this {@code ActionGroup}
-     */
-    @Deprecated
-    ObjectProperty<EventHandler<? super ActivePaneEvent>> onDropped;
-
-    @Deprecated
-    public void setOnDropped(EventHandler<? super ActivePaneEvent> eventHandler) {
-        onDroppedPropperty().set(eventHandler);
-    }
-
-    @Deprecated
-    public EventHandler<? super ActivePaneEvent> getOnDropped() {
-        return onDroppedPropperty().get();
-    }
-
-    @Deprecated
-    public ObjectProperty<EventHandler<? super ActivePaneEvent>> onDroppedPropperty() {
-        if (onDropped == null) {
-            onDropped = new SimpleObjectProperty<EventHandler<? super ActivePaneEvent>>() {
-                @Override
-                public void set(EventHandler<? super ActivePaneEvent> value) {
-                    if (getOnDropped() != null) {
-                        removeEventHandler(ActivePaneEvent.DROPPED, getOnDropped());
-                    }
-                    addEventHandler(ActivePaneEvent.DROPPED, value);
-                    super.set(value);
-                }
-            };
-        }
-        return onDropped;
     }
     
     // METHODS

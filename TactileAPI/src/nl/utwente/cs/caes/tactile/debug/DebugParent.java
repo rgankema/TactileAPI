@@ -182,7 +182,7 @@ public class DebugParent extends StackPane {
 		
 		addEventFilter(ActivePaneEvent.PROXIMITY_ENTERED, event -> {
 			ActivePane ap1 = event.getTarget();
-			ActivePane ap2 = event.getOtherGroup();
+			ActivePane ap2 = event.getOther();
 			Bounds b1 = ap1.localToScene(ap1.getBoundsInLocal());
 			Bounds b2 = ap2.localToScene(ap2.getBoundsInLocal());
 			
@@ -196,7 +196,7 @@ public class DebugParent extends StackPane {
 		
 		addEventFilter(ActivePaneEvent.PROXIMITY_LEFT, event -> {
 			ActivePane ap1 = event.getTarget();
-			ActivePane ap2 = event.getOtherGroup();
+			ActivePane ap2 = event.getOther();
 			Pair<ActivePane> pair = null;
 			Line line = null;
 			

@@ -10,7 +10,6 @@ import nl.utwente.cs.caes.tactile.TouchPane;
 public class MainController implements Initializable {
     @FXML TouchPane root;
     
-    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         

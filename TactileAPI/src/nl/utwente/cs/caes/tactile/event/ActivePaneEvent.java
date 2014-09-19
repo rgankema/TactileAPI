@@ -19,15 +19,13 @@ public class ActivePaneEvent extends Event {
 			ANY, "PROXIMITY_ENTERED");
 	public static final EventType<ActivePaneEvent> PROXIMITY_LEFT = new EventType<>(
 			ANY, "PROXIMITY_LEFT");
-	public static final EventType<ActivePaneEvent> DROPPED = new EventType<>(
-			ANY, "DROPPED");
 	
-	private ActivePane otherGroup;
+	private ActivePane other;
 		
 	public ActivePaneEvent(EventType<ActivePaneEvent> eventType, EventTarget target, ActivePane otherGroup) {
 		super(eventType);
 		this.target = target;
-		this.otherGroup = otherGroup;
+		this.other = otherGroup;
 	}
 	
 	/**
@@ -40,7 +38,7 @@ public class ActivePaneEvent extends Event {
 	/**
 	 * Returns the other ActivePane that entered/left the target's proximity, or collided with it.
 	 */
-	public ActivePane getOtherGroup() {
-		return otherGroup;
+	public ActivePane getOther() {
+		return other;
 	}
 }

@@ -10,7 +10,7 @@
 <?import nl.utwente.cs.caes.tactile.*?>
 <?import tactiledemo.*?>
 
-<TouchPane xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" id="root" 
+<TouchPane xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" fx:id="root" 
            prefHeight="600" prefWidth="800" fx:controller="tactiledemo.MainController"
            proximityThreshold="40" >
     <children>
