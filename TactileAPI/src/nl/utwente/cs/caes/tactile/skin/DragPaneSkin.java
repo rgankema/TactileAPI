@@ -5,11 +5,6 @@
  */
 package nl.utwente.cs.caes.tactile.skin;
 
-
-import javafx.beans.InvalidationListener;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import nl.utwente.cs.caes.tactile.DragPane;

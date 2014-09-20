@@ -5,25 +5,22 @@ import javafx.beans.property.DoubleProperty;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 public class TouchPane extends Pane {
     Physics physics;
     
     public TouchPane() {
         super();
-        initialise();
+        physics = new Physics(this);
+        physics.start();
     }
 
     public TouchPane(Node... children) {
-        super(children);
-        initialise();
-    }
-
-    // Called by all constructors
-    private void initialise() {
-        physics = new Physics(this);
-        physics.start();
+        this();
+        getChildren().addAll(children);
     }
 
     /**
