@@ -22,15 +22,15 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import nl.utwente.cs.caes.tactile.ActionGroup;
-import nl.utwente.cs.caes.tactile.DraggableGroup;
+import nl.utwente.cs.caes.tactile.ActivePane;
+import nl.utwente.cs.caes.tactile.DragPane;
 import nl.utwente.cs.caes.tactile.TouchPane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
-import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
+import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 public class Uitproberen extends Application {
-	List<ActionGroup> removedAction = new ArrayList<>();
-	List<DraggableGroup> removedDraggable = new ArrayList<>();
+	List<ActivePane> removedActivePanes = new ArrayList<>();
+	List<DragPane> removedDragPanes = new ArrayList<>();
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -75,44 +75,44 @@ public class Uitproberen extends Application {
 			else
 				rect.setFill(Color.GREEN);
 			
-			ActionGroup ag = new ActionGroup(rect);
-			ag.setId(Integer.toString(i));
+			ActivePane ap = new ActivePane(rect);
+			ap.setId(Integer.toString(i));
 			
-			fp.getChildren().add(ag);
+			fp.getChildren().add(ap);
 			fp.getChildren().add(new Label(Integer.toString(i)));
 			
-			DraggableGroup dg = new DraggableGroup(fp);
-			tp.getChildren().add(dg);
-			dg.relocate(Math.random()*950, Math.random()*500);
-			tp.register(ag);
+			DragPane dp = new DragPane(fp);
+			tp.getChildren().add(dp);
+			dp.relocate(Math.random()*950, Math.random()*500);
+			tp.register(ap);
 			
-			ag.addEventFilter(ActionGroupEvent.ANY, event -> {
-				System.out.println(event.getEventType() + ": " + event.getTarget() + "->" + event.getOtherGroup());
+			ap.addEventFilter(ActivePaneEvent.ANY, event -> {
+				System.out.println(event.getEventType() + ": " + event.getTarget() + "->" + event.getOther());
 			});
 			
-			ag.addEventHandler(ActionGroupEvent.PROXIMITY_ENTERED, (ActionGroupEvent event) -> {
-                            if (Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
-                                event.getOtherGroup().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
+			ap.addEventHandler(ActivePaneEvent.PROXIMITY_ENTERED, (ActivePaneEvent event) -> {
+                            if (Integer.parseInt(event.getOther().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
+                                event.getOther().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
                             }
                         });
 			
-			ag.addEventHandler(ActionGroupEvent.DROPPED, (ActionGroupEvent event) -> {
-                            if (Integer.parseInt(event.getOtherGroup().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
+			ap.addEventHandler(ActivePaneEvent.AREA_ENTERED, (ActivePaneEvent event) -> {
+                            if (!event.getTarget().getDragPaneParent().isInUse() && Integer.parseInt(event.getOther().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
                                 tp.deregister(event.getTarget());
-                                tp.getChildren().remove(event.getTarget().getDraggableGroupParent());
-                                debugParent.deregister(event.getTarget().getDraggableGroupParent());
-                                removedAction.add(event.getTarget());
-                                removedDraggable.add(event.getTarget().getDraggableGroupParent());
+                                tp.getChildren().remove(event.getTarget().getDragPaneParent());
+                                debugParent.deregister(event.getTarget().getDragPaneParent());
+                                removedActivePanes.add(event.getTarget());
+                                removedDragPanes.add(event.getTarget().getDragPaneParent());
                             }
                             event.consume();
                         });
-			debugParent.register(dg);
+			debugParent.register(dp);
 		}
 		
 		CheckBox checkSlide = new CheckBox("Slide on release");
 		for (Node child : tp.getChildren()) {
-			if (child instanceof DraggableGroup) {
-				checkSlide.selectedProperty().bindBidirectional(((DraggableGroup) child).slideOnReleaseProperty());
+			if (child instanceof DragPane) {
+				checkSlide.selectedProperty().bindBidirectional(((DragPane) child).slideOnReleaseProperty());
 			}
 		}
 		checkSlide.setSelected(true);
@@ -123,19 +123,21 @@ public class Uitproberen extends Application {
 		Slider proximitySlider = new Slider(0, 200, 30);
 		proximitySlider.valueProperty().bindBidirectional(tp.proximityThresholdProperty());
 		
+                
 		Button resetButton = new Button("Reset");
 		resetButton.setOnAction((ActionEvent event) -> {
-                    for (DraggableGroup d : removedDraggable) {
+                    for (DragPane d : removedDragPanes) {
                         tp.getChildren().add(d);
                         debugParent.register(d);
                     }
-                    removedDraggable.clear();
-                    for (ActionGroup a : removedAction) {
+                    removedDragPanes.clear();
+                    for (ActivePane a : removedActivePanes) {
                         tp.register(a);
                     }
-                    removedAction.clear();
+                    removedActivePanes.clear();
                 });
 		
+                
 		buttonPane.getChildren().add(checkSlide);
 		buttonPane.getChildren().add(checkCollision);
 		buttonPane.getChildren().add(proximitySlider);

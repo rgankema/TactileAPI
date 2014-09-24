@@ -5,25 +5,22 @@ import javafx.beans.property.DoubleProperty;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 public class TouchPane extends Pane {
     Physics physics;
     
     public TouchPane() {
         super();
-        initialise();
+        physics = new Physics(this);
+        physics.start();
     }
 
     public TouchPane(Node... children) {
-        super(children);
-        initialise();
-    }
-
-    // Called by all constructors
-    private void initialise() {
-        physics = new Physics(this);
-        physics.start();
+        this();
+        getChildren().addAll(children);
     }
 
     /**
@@ -60,13 +57,13 @@ public class TouchPane extends Pane {
     }
 
     /**
-     * Specifies how close two ActionGroups have to be to each other to fire
+     * Specifies how close two ActivePanes have to be to each other to fire
      * {@code CollisionEvent#PROXIMITY_ENTERED} events. When set to 0, the
      * TouchPane won't fire {@code CollisionEvent#PROXIMITY_ENTERED} events at
      * all. {@code CollisionEvent#PROXIMITY_LEFT} events will still be fired for
-     * any ActionGroup pair that entered each other's proximity before the
-     * threshold was set to 0. When set to a negative value, an
-     * IllegalArgumentException is thrown.
+ any ActionGroup pair that entered each other's proximity before the
+ threshold was set to 0. When set to a negative value, an
+ IllegalArgumentException is thrown.
      *
      * @defaultvalue 25.0
      */
@@ -75,32 +72,42 @@ public class TouchPane extends Pane {
     }
 
     /**
-     * Registers an ActionGroup to the {@code TouchPane}. The TouchPane will
-     * track the position of the ActionGroup and check for collisions /
-     * proximity events. The ActionGroup should have the controlled
-     * {@code TouchPane} as indirect ancestor, but this is not enforced.
+     * Registers an ActivePane to the {@code TouchPane}. The TouchPane will
+ track the position of the ActivePane and check for collisions /
+ proximity events. The ActivePane should have the controlled
+ {@code TouchPane} as indirect ancestor, but this is not enforced.
      *
-     * @param actionGroup The ActionGroup that is to be tracked
+     * @param activePane The ActivePane that is to be tracked
      */
-    public void register(ActionGroup actionGroup) {
-        physics.track(actionGroup);
+    public void register(ActivePane activePane) {
+        physics.track(activePane);
     }
 
     /**
-     * Deregisters an ActionGroup from the {@code TouchPane}.
+     * Deregisters an ActivePane from the {@code TouchPane}.
      *
-     * @param actionGroup The ActionGroup that shoud be deregistered
+     * @param activePane The ActivePane that shoud be deregistered
      */
-    public void deregister(ActionGroup actionGroup) {
-        for (ActionGroup ag : actionGroup.getActionGroupsColliding()) {
-            ag.getActionGroupsColliding().remove(actionGroup);
+    public void deregister(ActivePane activePane) {
+        for (ActivePane ag : activePane.getActivePanesColliding()) {
+            ag.getActivePanesColliding().remove(activePane);
         }
-        actionGroup.getActionGroupsColliding().clear();
-        for (ActionGroup ag : actionGroup.getActionGroupsInProximity()) {
-            ag.getActionGroupsInProximity().remove(actionGroup);
+        activePane.getActivePanesColliding().clear();
+        for (ActivePane ag : activePane.getActivePanesInProximity()) {
+            ag.getActivePanesInProximity().remove(activePane);
         }
-        actionGroup.getActionGroupsInProximity().clear();
+        activePane.getActivePanesInProximity().clear();
 
-        physics.stopTracking(actionGroup);
+        physics.stopTracking(activePane);
     }
+    
+    /* Kan gebruikt worden om een willekeurige node te tracken in FXML
+    public static void setTracker(Node node, TouchPane touchPane) {
+        touchPane.register(activePane);
+    }
+    
+    public static TouchPane getTracker(Node node) {
+        return null;
+    }
+    */
 }

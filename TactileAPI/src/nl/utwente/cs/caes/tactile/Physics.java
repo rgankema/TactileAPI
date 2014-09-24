@@ -12,6 +12,7 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
+import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 class Physics {
 
@@ -24,7 +25,7 @@ class Physics {
 
     private TouchPane pane;
     private AnimationTimer timer;
-    Set<ActionGroup> actionGroups;
+    Set<ActivePane> activePanes;
     QuadTree quadTree;
 
     Physics(TouchPane pane) {
@@ -33,8 +34,8 @@ class Physics {
     }
 
     private void initialise() {
-        ConcurrentHashMap<ActionGroup, Boolean> map = new ConcurrentHashMap<>();
-        actionGroups = Collections.newSetFromMap(map);
+        ConcurrentHashMap<ActivePane, Boolean> map = new ConcurrentHashMap<>();
+        activePanes = Collections.newSetFromMap(map);
 
          // Initialise quadTree
         quadTree = new QuadTree(pane.localToScene(pane.getBoundsInLocal()));
@@ -84,68 +85,68 @@ class Physics {
         return quadTree;
     }
     
-    public boolean track(ActionGroup actionGroup) {
-        if (actionGroups.add(actionGroup)) {
-            quadTree.insert(actionGroup);
+    public boolean track(ActivePane activePane) {
+        if (activePanes.add(activePane)) {
+            quadTree.insert(activePane);
             return true;
         }
         return false;
     }
     
-    public boolean stopTracking(ActionGroup actionGroup) {
-        if (actionGroups.remove(actionGroup)) {
-            quadTree.remove(actionGroup);
+    public boolean stopTracking(ActivePane activePane) {
+        if (activePanes.remove(activePane)) {
+            quadTree.remove(activePane);
             return true;
         }
         return false;
     }
 
     private void updatePositions() {
-        List<DraggableGroup> draggableGroups = new ArrayList<>();
+        List<DragPane> dragPanes = new ArrayList<>();
         for (Node child : pane.getChildren()) {
-            if (child instanceof DraggableGroup) {
-                draggableGroups.add((DraggableGroup) child);
+            if (child instanceof DragPane) {
+                dragPanes.add((DragPane) child);
             }
         }
-        for (DraggableGroup dg : draggableGroups) {
-            dg.setVector(dg.getVector().multiply(0.95));
-            if (Math.abs(dg.getVector().getX()) < 1 && Math.abs(dg.getVector().getY()) < 1) {
-                dg.setVector(Point2D.ZERO);
+        for (DragPane dp : dragPanes) {
+            dp.setVector(dp.getVector().multiply(0.95));
+            if (Math.abs(dp.getVector().getX()) < 1 && Math.abs(dp.getVector().getY()) < 1) {
+                dp.setVector(Point2D.ZERO);
             }
-            if (!dg.isInUse() && !dg.isAnchored() && !dg.getVector().equals(Point2D.ZERO)) {
-                translate(dg, dg.getVector().getX() * TIME_STEP, dg.getVector().getY() * TIME_STEP);
+            if (!dp.isInUse() && !dp.isAnchored() && !dp.getVector().equals(Point2D.ZERO)) {
+                translate(dp, dp.getVector().getX() * TIME_STEP, dp.getVector().getY() * TIME_STEP);
             } else {
-                Node anchor = dg.getAnchor();
+                Node anchor = dp.getAnchor();
                 if (anchor != null) {
                     Bounds bounds = anchor.localToScene(anchor.getBoundsInLocal());
                     Bounds boundsInPane = pane.sceneToLocal(bounds);
-                    Point2D offset = dg.getAnchorOffset();
-                    dg.relocate(boundsInPane.getMinX() + offset.getX(), boundsInPane.getMinY() + offset.getY());
-                    dg.toFront();
+                    Point2D offset = dp.getAnchorOffset();
+                    dp.relocate(boundsInPane.getMinX() + offset.getX(), boundsInPane.getMinY() + offset.getY());
+                    dp.toFront();
                 }
             }
         }
     }
 
-    private void translate(DraggableGroup draggableGroup, double deltaX, double deltaY) {
+    private void translate(DragPane dragPane, double deltaX, double deltaY) {
         if (!pane.isBordersCollide()) {
-            draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
-            draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
+            dragPane.setLayoutX(dragPane.getLayoutX() + deltaX);
+            dragPane.setLayoutY(dragPane.getLayoutY() + deltaY);
             return;
         }
 
         Bounds tpBounds = pane.getBoundsInLocal();
-        Bounds dgBounds = draggableGroup.getBoundsInParent();
+        Bounds dgBounds = dragPane.getBoundsInParent();
 
-        double destX = draggableGroup.getLayoutX() + deltaX;
-        double destY = draggableGroup.getLayoutY() + deltaY;
+        double destX = dragPane.getLayoutX() + deltaX;
+        double destY = dragPane.getLayoutY() + deltaY;
         double ratio = deltaX / deltaY;
 
         Bounds dgDestinationBounds = new BoundingBox(destX, destY, dgBounds.getWidth(), dgBounds.getHeight());
 
         if (tpBounds.contains(dgDestinationBounds)) {
-            draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
-            draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
+            dragPane.setLayoutX(dragPane.getLayoutX() + deltaX);
+            dragPane.setLayoutY(dragPane.getLayoutY() + deltaY);
         } else {
             Point2D vecOriginal = new Point2D(deltaX, deltaY);
             Point2D vecNew = null, vecNew1 = null, vecNew2 = null, vecRest, vecNormal = null, vecReflection;
@@ -175,8 +176,8 @@ class Physics {
             }
 
             if (vecNew1 == null && vecNew2 == null) {
-                draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
-                draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
+                dragPane.setLayoutX(dragPane.getLayoutX() + deltaX);
+                dragPane.setLayoutY(dragPane.getLayoutY() + deltaY);
                 return;
             } else if (vecNew1 == null || (vecNew2 != null && vecNew1.magnitude() > vecNew2.magnitude())) {
                 // Would hit top/bottom boundary before left/right
@@ -190,10 +191,10 @@ class Physics {
 
             vecRest = vecOriginal.subtract(vecNew);
             vecReflection = vecRest.subtract(vecNormal.multiply(2 * vecRest.dotProduct(vecNormal)));
-            draggableGroup.setLayoutX(draggableGroup.getLayoutX() + deltaX);
-            draggableGroup.setLayoutY(draggableGroup.getLayoutY() + deltaY);
-            draggableGroup.setVector(vecReflection.multiply(1 / TIME_STEP).multiply(BOUNCE));
-            translate(draggableGroup, vecReflection.getX(), vecReflection.getY());
+            dragPane.setLayoutX(dragPane.getLayoutX() + deltaX);
+            dragPane.setLayoutY(dragPane.getLayoutY() + deltaY);
+            dragPane.setVector(vecReflection.multiply(1 / TIME_STEP).multiply(BOUNCE));
+            translate(dragPane, vecReflection.getX(), vecReflection.getY());
 
         }
     }
@@ -202,7 +203,7 @@ class Physics {
         // Update QuadTree
         quadTree.update();
 
-        for (ActionGroup thisObject : actionGroups) {
+        for (ActivePane thisObject : activePanes) {
             Bounds thisBounds = thisObject.localToScene(thisObject.getBoundsInLocal());
             Bounds proximityBounds = null;
             double proximityThreshold = pane.getProximityThreshold();
@@ -216,7 +217,7 @@ class Physics {
 
             List<Node> otherObjects = quadTree.retrieve(thisObject);
             for (Node otherNode : otherObjects) {
-                ActionGroup otherObject = (ActionGroup) otherNode;
+                ActivePane otherObject = (ActivePane) otherNode;
 
                 if (thisObject == otherObject) {
                     continue;
@@ -225,32 +226,32 @@ class Physics {
                 Bounds otherBounds = otherObject.localToScene(otherObject.getBoundsInLocal());
 
                 if (thisBounds.intersects(otherBounds)) {
-                    if (thisObject.getActionGroupsColliding().add(otherObject)) {
-                        otherObject.getActionGroupsColliding().add(thisObject);
+                    if (thisObject.getActivePanesColliding().add(otherObject)) {
+                        otherObject.getActivePanesColliding().add(thisObject);
 
-                        thisObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.AREA_ENTERED, thisObject, otherObject));
-                        otherObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.AREA_ENTERED, otherObject, thisObject));
+                        thisObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.AREA_ENTERED, thisObject, otherObject));
+                        otherObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.AREA_ENTERED, otherObject, thisObject));
                     }
                 } else {
-                    if (thisObject.getActionGroupsColliding().remove(otherObject)) {
-                        otherObject.getActionGroupsColliding().remove(thisObject);
+                    if (thisObject.getActivePanesColliding().remove(otherObject)) {
+                        otherObject.getActivePanesColliding().remove(thisObject);
 
-                        thisObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.AREA_LEFT, thisObject, otherObject));
-                        otherObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.AREA_LEFT, otherObject, thisObject));
+                        thisObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.AREA_LEFT, thisObject, otherObject));
+                        otherObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.AREA_LEFT, otherObject, thisObject));
                     }
                     if (proximityBounds != null && proximityBounds.intersects(otherBounds)) {
-                        if (thisObject.getActionGroupsInProximity().add(otherObject)) {
-                            otherObject.getActionGroupsInProximity().add(thisObject);
+                        if (thisObject.getActivePanesInProximity().add(otherObject)) {
+                            otherObject.getActivePanesInProximity().add(thisObject);
 
-                            thisObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.PROXIMITY_ENTERED, thisObject, otherObject));
-                            otherObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.PROXIMITY_ENTERED, otherObject, thisObject));
+                            thisObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.PROXIMITY_ENTERED, thisObject, otherObject));
+                            otherObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.PROXIMITY_ENTERED, otherObject, thisObject));
                         }
                     } else {
-                        if (thisObject.getActionGroupsInProximity().remove(otherObject)) {
-                            otherObject.getActionGroupsInProximity().remove(thisObject);
+                        if (thisObject.getActivePanesInProximity().remove(otherObject)) {
+                            otherObject.getActivePanesInProximity().remove(thisObject);
 
-                            thisObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.PROXIMITY_LEFT, thisObject, otherObject));
-                            otherObject.fireEvent(new ActionGroupEvent(ActionGroupEvent.PROXIMITY_LEFT, otherObject, thisObject));
+                            thisObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.PROXIMITY_LEFT, thisObject, otherObject));
+                            otherObject.fireEvent(new ActivePaneEvent(ActivePaneEvent.PROXIMITY_LEFT, otherObject, thisObject));
                         }
                     }
                 }

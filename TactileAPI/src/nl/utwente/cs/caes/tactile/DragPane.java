@@ -1,44 +1,51 @@
 package nl.utwente.cs.caes.tactile;
 
-import javafx.animation.AnimationTimer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableProperty;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TouchEvent;
+import nl.utwente.cs.caes.tactile.skin.DragPaneSkin;
 
-@Deprecated
-//TODO class verwijderen en alle functionaliteit overzetten naar DragPane
-public class DraggableGroup extends Group {
-
-    private long touchId = -1;
-    private AnimationTimer timer;
-
-    public DraggableGroup(Node... nodes) {
-        super(nodes);
-        initialise();
+@DefaultProperty("content")
+public class DragPane extends Control {
+    
+    // CONSTRUCTORS
+    
+    public DragPane() {
+        getStyleClass().setAll(DEFAULT_STYLE_CLASS);
+        ((StyleableProperty<Boolean>)focusTraversableProperty()).applyStyle(null, false); 
+        addEventHandlers();
     }
-
-    public DraggableGroup() {
-        super();
-        initialise();
+    
+    public DragPane(Node content) {
+        this();
+        setContent(content);
     }
-
-    // Called by the constructors
-    private void initialise() {
+    
+    private int touchId = -1;
+    private void addEventHandlers() {
         DragContext dragContext = new DragContext();
 
         // Consume any synthesized MouseEvent so that TouchEvents aren't handled twice
         addEventFilter(MouseEvent.ANY, event -> {
-            if (event.isSynthesized() && event.getTarget() == DraggableGroup.this) {
+            if (event.isSynthesized() && event.getTarget() == DragPane.this) {
                 event.consume();
             }
         });
@@ -80,75 +87,6 @@ public class DraggableGroup extends Group {
             handleTouchMove(dragContext, event.getSceneX(), event.getSceneY());
             event.consume();
         });
-        
-        //Initialise locations
-        dragContext.prevX = getLayoutX();
-        dragContext.prevY = getLayoutY();
-        //timer to update vector for dragging
-        //TODO: put logic into handle method for updating vector while dragging
-        //TODO: code copied largely from physics, better solution?
-        timer = new AnimationTimer() {
-            private double accumulatedTime;
-            private long previousTime = 0;
-
-            @Override
-            public void handle(long currentTime) {
-                if (previousTime == 0) {
-                    previousTime = currentTime;
-                    return;
-                }
-
-                double secondsEllapsed = (currentTime - previousTime) / 1e9d;
-                accumulatedTime += secondsEllapsed;
-                previousTime = currentTime;
-                
-                //effectively called every new frame
-                while (accumulatedTime >= Physics.TIME_STEP) {
-                	if(isSlideOnRelease() && isInUse()){
-                		updateSlide(dragContext);
-                	}
-                    accumulatedTime -= Physics.TIME_STEP;
-                }
-            }
-        };
-        
-        timer.start();
-    }
-    
-    //TODO: don't seem necessary, check if removable
-    public void start() {
-        timer.start();
-    }
-
-    public void stop() {
-        timer.stop();
-    }
-
-    /**
-     * Updates the vector for sliding on release
-     */
-    private void updateSlide(DragContext dragContext){
-    	//Calculate change in position
-    	dragContext.deltaX = getLayoutX() - dragContext.prevX;
-    	dragContext.deltaY = getLayoutY() - dragContext.prevY;
-    	
-    	System.out.println("DeltaX: " + dragContext.deltaX);
-    	System.out.println("Delta›: " + dragContext.deltaY);
-    	
-    	
-    	Point2D deltavec = new Point2D(dragContext.deltaX , dragContext.deltaY);
-    	double factor = 1.0 / (double) DragContext.PAST_FRAMES;
-    	System.out.println("Mult factor: " + factor);
-    	deltavec = deltavec.multiply(factor);
-    	deltavec = deltavec.add(getVector());
-    	
-    	System.out.println("Vector: " + deltavec);
-    	
-    	setVector(deltavec);
-    	
-    	// record a delta distance for the drag and drop operation.
-        dragContext.prevX = getLayoutX();
-        dragContext.prevY = getLayoutY();
     }
     
     private void handleTouchDown(DragContext dragContext, double sceneX, double sceneY) {
@@ -159,17 +97,17 @@ public class DraggableGroup extends Group {
             
             setVector(Point2D.ZERO);
 
-           // dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
-            //dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
-            //dragContext.pastIndex = 0;
+            dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
+            dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
+            dragContext.pastIndex = 0;
 
             if (this.getParent() == null) {
                 return;
             }
 
             // record a delta distance for the drag and drop operation.
-//            dragContext.deltaX = getLayoutX() - sceneX;
-//            dragContext.deltaY = getLayoutY() - sceneY;
+            dragContext.deltaX = getLayoutX() - sceneX;
+            dragContext.deltaY = getLayoutY() - sceneY;
 
             if (isGoToForegroundOnInUse()) {
                 this.toFront();
@@ -206,9 +144,9 @@ public class DraggableGroup extends Group {
                 }
             }
 
-//            dragContext.pastSpeedsX[dragContext.pastIndex] = x - getLayoutX();
-//            dragContext.pastSpeedsY[dragContext.pastIndex] = y - getLayoutY();
-//            dragContext.pastIndex = (dragContext.pastIndex + 1) % DragContext.PAST_FRAMES;
+            dragContext.pastSpeedsX[dragContext.pastIndex] = x - getLayoutX();
+            dragContext.pastSpeedsY[dragContext.pastIndex] = y - getLayoutY();
+            dragContext.pastIndex = (dragContext.pastIndex + 1) % DragContext.PAST_FRAMES;
 
             relocate(x, y);
         }
@@ -216,21 +154,65 @@ public class DraggableGroup extends Group {
 
     private void handleTouchUp(DragContext dragContext, double sceneX, double sceneY) {
         if (!isIgnoreUserInput()) {
-//            if (isSlideOnRelease()) {
-//                double speedX = 0, speedY = 0;
-//                for (int i = 0; i < DragContext.PAST_FRAMES && i <= dragContext.pastSpeedsX.length; i++) {
-//                    speedX += dragContext.pastSpeedsX[i];
-//                    speedY += dragContext.pastSpeedsY[i];
-//                }
-//                speedX = speedX / (double) dragContext.pastSpeedsX.length;
-//                speedY = speedY / (double) dragContext.pastSpeedsY.length;
-//
-//                setVector(new Point2D(speedX * DragContext.FORCE_MULT, speedY * DragContext.FORCE_MULT));
-//            }
+            if (isSlideOnRelease()) {
+                double speedX = 0, speedY = 0;
+                for (int i = 0; i < DragContext.PAST_FRAMES && i <= dragContext.pastSpeedsX.length; i++) {
+                    speedX += dragContext.pastSpeedsX[i];
+                    speedY += dragContext.pastSpeedsY[i];
+                }
+                speedX = speedX / (double) dragContext.pastSpeedsX.length;
+                speedY = speedY / (double) dragContext.pastSpeedsY.length;
+
+                setVector(new Point2D(speedX * DragContext.FORCE_MULT, speedY * DragContext.FORCE_MULT));
+            }
             setInUse(false);
         }
     }
+    
+    // Help class used for moving
+    private class DragContext {
 
+        static final int PAST_FRAMES = 20;
+        static final int FORCE_MULT = 50;
+
+        double deltaX, deltaY;
+        double[] pastSpeedsX, pastSpeedsY; //Keep record of past translation amounts
+        int pastIndex;
+    }
+    
+    // PROPERTIES
+    
+    /**
+     * The node used as the content of this ContentControl.
+     */
+    private ObjectProperty<Node> content;
+
+    public final void setContent(Node value) {
+        contentProperty().set(value);
+    }
+
+    public final Node getContent() {
+        return content == null ? null : content.get();
+    }
+
+    public final ObjectProperty<Node> contentProperty() {
+        if (content == null) {
+            content = new SimpleObjectProperty<Node>(this, "content") {
+                @Override
+                public void set(Node content) {
+                    Node oldContent = get();
+                    if (oldContent != null) {
+                        DragPane.this.getChildren().remove(oldContent);
+                    }
+                    if (content != null) {
+                        DragPane.this.getChildren().add(content);
+                    }
+                }
+            };
+        }
+        return content;
+    }
+    
     /**
      * Whether this {@code DraggableGroup} is currently being controlled by a
      * user.
@@ -499,19 +481,42 @@ public class DraggableGroup extends Group {
         }
         return queuedVector;
     }
+    
+    // STYLESHEET HANDLING
+    
+    // The selector class
+    private static String DEFAULT_STYLE_CLASS = "drag-pane";
+    // TODO PseudoClasses maken
+    
+    private static final class StyleableProperties {
+        // TODO CSSMetaData maken voor properties
 
-    // Help class used for moving
-    private class DragContext {
+        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+        static {
+                final List<CssMetaData<? extends Styleable, ?>> styleables = 
+                    new ArrayList<>(Control.getClassCssMetaData());
 
-        static final int PAST_FRAMES = 20;
-        static final int FORCE_MULT = 50;
-
-        /**
-         * Previous X and Y position of this group.
-         */
-        double prevX, prevY;
-        double deltaX, deltaY;
-        double[] pastSpeedsX, pastSpeedsY; //Keep record of past translation amounts
-        int pastIndex;
+                STYLEABLES = Collections.unmodifiableList(styleables);
+        }
+    }
+    
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.STYLEABLES;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Skin<DragPane> createDefaultSkin() {
+        return new DragPaneSkin(this);
     }
 }

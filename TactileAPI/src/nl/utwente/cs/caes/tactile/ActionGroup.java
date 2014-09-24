@@ -16,6 +16,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
+@Deprecated
+//TODO class verwijderen en alle functionaliteit overzetten naar ActivePane
 public class ActionGroup extends Group {
 
     private final ConcurrentHashMap<ActionGroup, InvalidationListener> listenerByActionGroup
@@ -215,7 +217,7 @@ public class ActionGroup extends Group {
      * Finds the first ancestor of this ActionGroup that is a DraggableGroup
      *
      * @return A DraggableGroup that is the first ancestor of this ActionGroup,
-     * null if there is no such ancestor
+ null if there is no such ancestor
      */
     public final DraggableGroup getDraggableGroupParent() {
         Parent ancestor = getParent();
