@@ -15,7 +15,7 @@ import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 
 class Physics {
 
-    private static final double TIME_STEP = 1d / 60d;
+    protected static final double TIME_STEP = 1d / 60d;
     private static final double BOUNCE = 0.50;
     private static final Point2D LEFT_NORMAL = new Point2D(1, 0);
     private static final Point2D RIGHT_NORMAL = new Point2D(-1, 0);
