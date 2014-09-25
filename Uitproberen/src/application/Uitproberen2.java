@@ -28,7 +28,7 @@ import nl.utwente.cs.caes.tactile.TouchPane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
 import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
-public class Uitproberen extends Application {
+public class Uitproberen2 extends Application {
 	List<ActivePane> removedActivePanes = new ArrayList<>();
 	List<DragPane> removedDragPanes = new ArrayList<>();
 	
@@ -62,7 +62,7 @@ public class Uitproberen extends Application {
 		Scene scene = new Scene(debugParent);
 		//Scene scene = new Scene(bp);
 		
-		for (int i = 0; i < 15; i++) {
+		for (int i = 0; i < 100; i++) {
 			FlowPane fp = new FlowPane();
 			fp.setPrefWidth(60);
 			fp.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));

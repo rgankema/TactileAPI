@@ -28,6 +28,7 @@ public class TactileDemo extends Application {
         debug.setMapMouseToTouch(false);
         
         Scene scene = new Scene(debug);
+        stage.setFullScreen(true);
         stage.setScene(scene);
         stage.show();
     }

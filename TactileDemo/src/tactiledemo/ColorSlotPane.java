@@ -45,12 +45,13 @@ public class ColorSlotPane extends Pane {
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(rightSlot.getColorItem().getColor())) {
                     rightSlot.getColorItem().getDragPaneParent().setAnchor(null);
-                    rightSlot.getColorItem().moveAwayFrom(newValue, 500);
+                    rightSlot.getColorItem().getDragPaneParent().moveAwayFrom(newValue, 500);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 }
             }
         });
+        
         
         rightSlot = new ColorSlot(this);
         rightSlot.relocate(120, 20);
@@ -65,7 +66,7 @@ public class ColorSlotPane extends Pane {
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(leftSlot.getColorItem().getColor())) {
                     leftSlot.getColorItem().getDragPaneParent().setAnchor(null);
-                    leftSlot.getColorItem().moveAwayFrom(newValue, 1000);
+                    leftSlot.getColorItem().getDragPaneParent().moveAwayFrom(newValue, 1000);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 }

@@ -1,5 +1,6 @@
 package nl.utwente.cs.caes.tactile;
 
+import javafx.animation.AnimationTimer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -19,6 +20,7 @@ import javafx.scene.input.TouchEvent;
 public class DraggableGroup extends Group {
 
     private long touchId = -1;
+    private AnimationTimer timer;
 
     public DraggableGroup(Node... nodes) {
         super(nodes);
@@ -78,8 +80,78 @@ public class DraggableGroup extends Group {
             handleTouchMove(dragContext, event.getSceneX(), event.getSceneY());
             event.consume();
         });
+        
+        //Initialise locations
+        dragContext.prevX = getLayoutX();
+        dragContext.prevY = getLayoutY();
+        //timer to update vector for dragging
+        //TODO: put logic into handle method for updating vector while dragging
+        //TODO: code copied largely from physics, better solution?
+        timer = new AnimationTimer() {
+            private double accumulatedTime;
+            private long previousTime = 0;
+
+            @Override
+            public void handle(long currentTime) {
+                if (previousTime == 0) {
+                    previousTime = currentTime;
+                    return;
+                }
+
+                double secondsEllapsed = (currentTime - previousTime) / 1e9d;
+                accumulatedTime += secondsEllapsed;
+                previousTime = currentTime;
+                
+                System.out.println("slide: " + isSlideOnRelease());
+                System.out.println("inuse: " + isInUse());
+                //effectively called every new frame
+                while (accumulatedTime >= Physics.TIME_STEP) {
+                	if(isSlideOnRelease() && isInUse()){
+                		updateSlide(dragContext);
+                	}
+                    accumulatedTime -= Physics.TIME_STEP;
+                }
+            }
+        };
+        
+        timer.start();
+    }
+    
+    //TODO: don't seem necessary, check if removable
+    public void start() {
+        timer.start();
     }
 
+    public void stop() {
+        timer.stop();
+    }
+
+    /**
+     * Updates the vector for sliding on release
+     */
+    private void updateSlide(DragContext dragContext){
+    	//Calculate change in position
+    	dragContext.deltaX = getLayoutX() - dragContext.prevX;
+    	dragContext.deltaY = getLayoutY() - dragContext.prevY;
+    	
+    	System.out.println("DeltaX: " + dragContext.deltaX);
+    	System.out.println("Delta›: " + dragContext.deltaY);
+    	
+    	
+    	Point2D deltavec = new Point2D(dragContext.deltaX , dragContext.deltaY);
+    	//double factor = 1.0 / (double) DragContext.PAST_FRAMES;
+    	//deltavec = deltavec.multiply(factor);
+    	deltavec = deltavec.add(getVector());
+    	
+    	System.out.println("Vector: " + deltavec);
+    	
+    	setVector(deltavec);
+    	
+    	// record a delta distance for the drag and drop operation.
+        dragContext.prevX = getLayoutX();
+        dragContext.prevY = getLayoutY();
+    }
+    
     private void handleTouchDown(DragContext dragContext, double sceneX, double sceneY) {
         if (!isIgnoreUserInput()) {
             setAnchor(null);
@@ -88,17 +160,17 @@ public class DraggableGroup extends Group {
             
             setVector(Point2D.ZERO);
 
-            dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
-            dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
-            dragContext.pastIndex = 0;
+           // dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
+            //dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
+            //dragContext.pastIndex = 0;
 
             if (this.getParent() == null) {
                 return;
             }
 
             // record a delta distance for the drag and drop operation.
-            dragContext.deltaX = getLayoutX() - sceneX;
-            dragContext.deltaY = getLayoutY() - sceneY;
+//            dragContext.deltaX = getLayoutX() - sceneX;
+//            dragContext.deltaY = getLayoutY() - sceneY;
 
             if (isGoToForegroundOnInUse()) {
                 this.toFront();
@@ -135,9 +207,9 @@ public class DraggableGroup extends Group {
                 }
             }
 
-            dragContext.pastSpeedsX[dragContext.pastIndex] = x - getLayoutX();
-            dragContext.pastSpeedsY[dragContext.pastIndex] = y - getLayoutY();
-            dragContext.pastIndex = (dragContext.pastIndex + 1) % DragContext.PAST_FRAMES;
+//            dragContext.pastSpeedsX[dragContext.pastIndex] = x - getLayoutX();
+//            dragContext.pastSpeedsY[dragContext.pastIndex] = y - getLayoutY();
+//            dragContext.pastIndex = (dragContext.pastIndex + 1) % DragContext.PAST_FRAMES;
 
             relocate(x, y);
         }
@@ -145,17 +217,17 @@ public class DraggableGroup extends Group {
 
     private void handleTouchUp(DragContext dragContext, double sceneX, double sceneY) {
         if (!isIgnoreUserInput()) {
-            if (isSlideOnRelease()) {
-                double speedX = 0, speedY = 0;
-                for (int i = 0; i < DragContext.PAST_FRAMES && i <= dragContext.pastSpeedsX.length; i++) {
-                    speedX += dragContext.pastSpeedsX[i];
-                    speedY += dragContext.pastSpeedsY[i];
-                }
-                speedX = speedX / (double) dragContext.pastSpeedsX.length;
-                speedY = speedY / (double) dragContext.pastSpeedsY.length;
-
-                setVector(new Point2D(speedX * DragContext.FORCE_MULT, speedY * DragContext.FORCE_MULT));
-            }
+//            if (isSlideOnRelease()) {
+//                double speedX = 0, speedY = 0;
+//                for (int i = 0; i < DragContext.PAST_FRAMES && i <= dragContext.pastSpeedsX.length; i++) {
+//                    speedX += dragContext.pastSpeedsX[i];
+//                    speedY += dragContext.pastSpeedsY[i];
+//                }
+//                speedX = speedX / (double) dragContext.pastSpeedsX.length;
+//                speedY = speedY / (double) dragContext.pastSpeedsY.length;
+//
+//                setVector(new Point2D(speedX * DragContext.FORCE_MULT, speedY * DragContext.FORCE_MULT));
+//            }
             setInUse(false);
         }
     }
@@ -435,6 +507,10 @@ public class DraggableGroup extends Group {
         static final int PAST_FRAMES = 20;
         static final int FORCE_MULT = 50;
 
+        /**
+         * Previous X and Y position of this group.
+         */
+        double prevX, prevY;
         double deltaX, deltaY;
         double[] pastSpeedsX, pastSpeedsY; //Keep record of past translation amounts
         int pastIndex;
