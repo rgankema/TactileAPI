@@ -92,7 +92,7 @@ public class Uitproberen extends Application {
 			
 			ap.addEventHandler(ActivePaneEvent.PROXIMITY_ENTERED, (ActivePaneEvent event) -> {
                             if (Integer.parseInt(event.getOther().getId()) % 3 != Integer.parseInt(event.getTarget().getId()) % 3){
-                                event.getOther().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
+                                event.getOther().getDragPaneParent().moveAwayFrom(event.getTarget(), tp.getProximityThreshold() * 10);
                             }
                         });
 			

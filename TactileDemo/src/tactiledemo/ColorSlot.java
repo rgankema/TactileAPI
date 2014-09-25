@@ -71,7 +71,7 @@ public class ColorSlot extends ActivePane {
             if (parent.getBackgroundColor() == Color.GREY) {
                 parent.setBorderColor(colorItem.getColor());
             } else if (!parent.getBorderColor().equals(colorItem.getColor())) {
-                slot.moveAwayFrom(otherAP, 500);
+                slot.getDragPaneParent().moveAwayFrom(otherAP, 500);
             }
         }
     }

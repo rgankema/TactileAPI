@@ -91,9 +91,11 @@ public class DragPane extends Control {
             event.consume();
         });
         
-      //Initialise locations
+        
+        //Initialise locations
         dragContext.prevX = getLayoutX();
         dragContext.prevY = getLayoutY();
+        
         //timer to update vector for dragging
         //TODO: code copied largely from physics, better solution for timer declaration
         timer = new AnimationTimer() {
@@ -153,7 +155,7 @@ public class DragPane extends Control {
             setInUse(true);
             setVector(Point2D.ZERO);
             
-            // record a delta distance for the drag and drop operation.
+            // record the difference between the touch event and the center of the object.
             dragContext.deltaX = getLayoutX() - sceneX;
             dragContext.deltaY = getLayoutY() - sceneY;
 
@@ -210,6 +212,99 @@ public class DragPane extends Control {
         }
     }
     
+    /**
+     * Requests this {@code ActionGroup} to move away from another
+     * {@code ActionGroup}. This {@code ActionGroup} will be given a vector that
+     * will be added to the vector of the first {@code DraggableGroup} that is
+     * an ancestor of this {
+     *
+     * @ActionGroup}. The magnitude of this vector depends on how far away this {
+     * @ActionGroup} is from the other {
+     * @ActionGroup}, and the value of {@code force}.
+     *
+     * @param group The {@code ActionGroup} to move away from
+     * @param force The higher this number, the greater the magnitude of the
+     * vector that will be given to this {@code ActionGroup}
+     * @throws IllegalArgumentException When a negative value is provided for
+     * force
+     */
+    public void moveAwayFrom(ActivePane group, double force) {
+        if (force < 0) {
+            throw new IllegalArgumentException("Force cannot be a negative value");
+        }
+        if (this.getParent() == null) {
+            return;
+        }
+
+        Bounds thisBounds = this.localToScene(this.getBoundsInLocal());
+        Bounds otherBounds = group.localToScene(group.getBoundsInLocal());
+
+        double thisX = thisBounds.getMinX() + thisBounds.getWidth() / 2;
+        double thisY = thisBounds.getMinY() + thisBounds.getHeight() / 2;
+        double otherX = otherBounds.getMinX() + thisBounds.getWidth() / 2;
+        double otherY = otherBounds.getMinY() + thisBounds.getHeight() / 2;
+
+        double distanceX = thisX - otherX;
+        double distanceY = thisY - otherY;
+        double ratio = distanceX / distanceY;
+
+        double gapX, gapY;
+
+        if (distanceX < 0) {
+            // If this ActionGroup is to the left of the other
+            gapX = otherBounds.getMinX() - thisBounds.getMaxX();
+        } else {
+            gapX = thisBounds.getMinX() - otherBounds.getMaxX();
+        }
+        if (distanceY < 0) {
+            // If this ActionGroup is above the other
+            gapY = otherBounds.getMinY() - thisBounds.getMaxY();
+        } else {
+            gapY = thisBounds.getMinY() - otherBounds.getMaxY();
+        }
+
+        // Only if either the horizontal or vertical distance is smaller than
+        // the desired distance between the ActionGroups we need to actually move.
+        if (gapX < force || gapY < force) {
+            double deltaX, deltaY;
+            double maxDeltaX = force - gapX;
+            double maxDeltaY = force - gapY;
+
+            // Calculate the amount of translation needed in X and Y
+            if (gapX < gapY) {
+                deltaX = force - gapX;
+                if (distanceX < 0) {
+                    deltaX = -deltaX;
+                }
+                deltaY = deltaX / ratio;
+            } else {
+                deltaY = force - gapY;
+                if (distanceY < 0) {
+                    deltaY = -deltaY;
+                }
+                deltaX = deltaY * ratio;
+            }
+
+            // Make sure we don't overshoot
+            if (Math.abs(deltaX) > maxDeltaX) {
+                deltaX = maxDeltaX;
+                if (distanceX < 0) {
+                    deltaX = -deltaX;
+                }
+                deltaY = deltaX / ratio;
+            }
+            if (Math.abs(deltaY) > maxDeltaY) {
+                deltaY = maxDeltaY;
+                if (distanceY < 0) {
+                    deltaY = -deltaY;
+                }
+                deltaX = deltaY * ratio;
+            }
+
+             setQueuedVector(new Point2D(deltaX, deltaY));
+        }
+    }
+    
     // Help class used for moving
     private class DragContext {
 
@@ -218,8 +313,6 @@ public class DragPane extends Control {
 
         double prevX, prevY;
         double deltaX, deltaY;
-//        double[] pastSpeedsX, pastSpeedsY; //Keep record of past translation amounts
-//        int pastIndex;
     }
     
     // PROPERTIES
@@ -498,6 +591,9 @@ public class DragPane extends Control {
     /**
      * The queued 2D velocity vector for this {@code DraggableGroup}
      */
+    //current problems
+    //Does not add 2 queue'd vectors, for example when bouncing off multiple objects
+    //Does not change vector whilst in contact area (problem in pushawayfrom specific)
     private ObjectProperty<Point2D> queuedVector;
 
     public void setQueuedVector(Point2D value) {
