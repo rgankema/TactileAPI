@@ -9,6 +9,7 @@
 <?import javafx.scene.paint.*?>
 <?import nl.utwente.cs.caes.tactile.*?>
 <?import tactiledemo.*?>
+<?import java.net.*?>
 
 <TouchPane xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" fx:id="root" 
            prefHeight="600" prefWidth="800" fx:controller="tactiledemo.MainController"
@@ -26,8 +27,49 @@
         <DragPane layoutX="300" slideOnRelease="true" >
             <ColorItem color="#00ff00"/>
         </DragPane>
-        <DragPane layoutY="200" slideOnRelease="true">
+        <DragPane layoutX="400" slideOnRelease="true">
+            <ColorItem color="#0000ff"/>
+        </DragPane>
+        <DragPane layoutX="500" slideOnRelease="true">
+            <ColorItem color="#0000ff"/>
+        </DragPane>
+        <DragPane layoutX="600" slideOnRelease="true">
+            <ColorItem color="#ffff00"/>
+        </DragPane>
+        <DragPane layoutX="700" slideOnRelease="true" >
+            <ColorItem color="#ffff00"/>
+        </DragPane>
+        
+        <DragPane layoutY="100" layoutX="0" slideOnRelease="true">
+            <ColorItem color="#ff0000"/>
+        </DragPane>
+        <DragPane layoutY="100" layoutX="100" slideOnRelease="true">
+            <ColorItem color="#ff0000"/>
+        </DragPane>
+        <DragPane layoutY="100" layoutX="200" slideOnRelease="true">
+            <ColorItem color="#00ff00"/>
+        </DragPane>
+        <DragPane layoutY="100" layoutX="300" slideOnRelease="true" >
+            <ColorItem color="#00ff00"/>
+        </DragPane>
+        <DragPane layoutY="100" layoutX="400" slideOnRelease="true">
+            <ColorItem color="#0000ff"/>
+        </DragPane>
+        <DragPane layoutY="100" layoutX="500" slideOnRelease="true">
+            <ColorItem color="#0000ff"/>
+        </DragPane>
+        <DragPane layoutY="100" layoutX="600" slideOnRelease="true">
+            <ColorItem color="#ffff00"/>
+        </DragPane>
+        <DragPane layoutY="100" layoutX="700" slideOnRelease="true" >
+            <ColorItem color="#ffff00"/>
+        </DragPane>
+        
+        <DragPane layoutY="400" slideOnRelease="true">
             <ColorSlotPane/>
         </DragPane>
     </children>
+    <stylesheets>
+        <URL value="@main.css"/>
+    </stylesheets>
 </TouchPane>
