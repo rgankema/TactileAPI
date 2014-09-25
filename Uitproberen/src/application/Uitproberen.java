@@ -138,11 +138,8 @@ public class Uitproberen extends Application {
                 });
 		
                 
-		buttonPane.getChildren().add(checkSlide);
-		buttonPane.getChildren().add(checkCollision);
-		buttonPane.getChildren().add(proximitySlider);
-		buttonPane.getChildren().add(new Label("Proximity threshold"));
-		buttonPane.getChildren().add(resetButton);
+		buttonPane.getChildren().addAll(checkSlide, checkCollision, proximitySlider,
+                        new Label("Proximity threshold"), resetButton);
 		
 		debugParent.setMapMouseToTouch(true);
 		
