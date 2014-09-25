@@ -3,6 +3,8 @@ package nl.utwente.cs.caes.tactile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import javafx.animation.AnimationTimer;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -40,6 +42,7 @@ public class DragPane extends Control {
     }
     
     private int touchId = -1;
+    private AnimationTimer timer;
     private void addEventHandlers() {
         DragContext dragContext = new DragContext();
 
@@ -87,27 +90,76 @@ public class DragPane extends Control {
             handleTouchMove(dragContext, event.getSceneX(), event.getSceneY());
             event.consume();
         });
+        
+      //Initialise locations
+        dragContext.prevX = getLayoutX();
+        dragContext.prevY = getLayoutY();
+        //timer to update vector for dragging
+        //TODO: code copied largely from physics, better solution for timer declaration
+        timer = new AnimationTimer() {
+            private double accumulatedTime;
+            private long previousTime = 0;
+
+            @Override
+            public void handle(long currentTime) {
+                if (previousTime == 0) {
+                    previousTime = currentTime;
+                    return;
+                }
+
+                double secondsEllapsed = (currentTime - previousTime) / 1e9d;
+                accumulatedTime += secondsEllapsed;
+                previousTime = currentTime;
+                
+                //effectively called every new frame
+                while (accumulatedTime >= Physics.TIME_STEP) {
+                	if(isSlideOnRelease() && isInUse()){
+                		updateSlide(dragContext);
+                	}
+                    accumulatedTime -= Physics.TIME_STEP;
+                }
+            }
+        };
+        
+        timer.start();
     }
+    
+    private void updateSlide(DragContext dragContext) {
+    	//Calculate change in position
+    	double diffX = getLayoutX() - dragContext.prevX;
+    	double diffY = getLayoutY() - dragContext.prevY;
+    	
+    	
+    	
+    	
+    	Point2D deltavec = new Point2D(diffX , diffY);
+//    	double factor = 1.0 / (double) DragContext.PAST_FRAMES;
+//    	System.out.println("Mult factor: " + factor);
+//    	deltavec = deltavec.multiply(factor);
+    	deltavec = deltavec.add(getVector());
+    	
+    	
+    	setVector(deltavec);
+    	
+    	// record a delta distance for the drag and drop operation.
+        dragContext.prevX = getLayoutX();
+        dragContext.prevY = getLayoutY();
+		
+	}
     
     private void handleTouchDown(DragContext dragContext, double sceneX, double sceneY) {
         if (!isIgnoreUserInput()) {
             setAnchor(null);
-            
             setInUse(true);
-            
             setVector(Point2D.ZERO);
-
-            dragContext.pastSpeedsX = new double[DragContext.PAST_FRAMES];
-            dragContext.pastSpeedsY = new double[DragContext.PAST_FRAMES];
-            dragContext.pastIndex = 0;
+            
+            // record a delta distance for the drag and drop operation.
+            dragContext.deltaX = getLayoutX() - sceneX;
+            dragContext.deltaY = getLayoutY() - sceneY;
 
             if (this.getParent() == null) {
                 return;
             }
-
-            // record a delta distance for the drag and drop operation.
-            dragContext.deltaX = getLayoutX() - sceneX;
-            dragContext.deltaY = getLayoutY() - sceneY;
 
             if (isGoToForegroundOnInUse()) {
                 this.toFront();
@@ -123,6 +175,9 @@ public class DragPane extends Control {
 
             double x = sceneX + dragContext.deltaX;
             double y = sceneY + dragContext.deltaY;
+            
+            System.out.println("DeltaX: " + dragContext.deltaX);
+        	System.out.println("DeltaY: " + dragContext.deltaY);
 
             Parent parent = getParent();
             if (parent instanceof TouchPane) {
@@ -144,9 +199,6 @@ public class DragPane extends Control {
                 }
             }
 
-            dragContext.pastSpeedsX[dragContext.pastIndex] = x - getLayoutX();
-            dragContext.pastSpeedsY[dragContext.pastIndex] = y - getLayoutY();
-            dragContext.pastIndex = (dragContext.pastIndex + 1) % DragContext.PAST_FRAMES;
 
             relocate(x, y);
         }
@@ -154,17 +206,6 @@ public class DragPane extends Control {
 
     private void handleTouchUp(DragContext dragContext, double sceneX, double sceneY) {
         if (!isIgnoreUserInput()) {
-            if (isSlideOnRelease()) {
-                double speedX = 0, speedY = 0;
-                for (int i = 0; i < DragContext.PAST_FRAMES && i <= dragContext.pastSpeedsX.length; i++) {
-                    speedX += dragContext.pastSpeedsX[i];
-                    speedY += dragContext.pastSpeedsY[i];
-                }
-                speedX = speedX / (double) dragContext.pastSpeedsX.length;
-                speedY = speedY / (double) dragContext.pastSpeedsY.length;
-
-                setVector(new Point2D(speedX * DragContext.FORCE_MULT, speedY * DragContext.FORCE_MULT));
-            }
             setInUse(false);
         }
     }
@@ -175,9 +216,10 @@ public class DragPane extends Control {
         static final int PAST_FRAMES = 20;
         static final int FORCE_MULT = 50;
 
+        double prevX, prevY;
         double deltaX, deltaY;
-        double[] pastSpeedsX, pastSpeedsY; //Keep record of past translation amounts
-        int pastIndex;
+//        double[] pastSpeedsX, pastSpeedsY; //Keep record of past translation amounts
+//        int pastIndex;
     }
     
     // PROPERTIES

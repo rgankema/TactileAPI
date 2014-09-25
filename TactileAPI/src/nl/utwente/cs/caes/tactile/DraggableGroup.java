@@ -102,6 +102,8 @@ public class DraggableGroup extends Group {
                 accumulatedTime += secondsEllapsed;
                 previousTime = currentTime;
                 
+                System.out.println("slide: " + isSlideOnRelease());
+                System.out.println("inuse: " + isInUse());
                 //effectively called every new frame
                 while (accumulatedTime >= Physics.TIME_STEP) {
                 	if(isSlideOnRelease() && isInUse()){
@@ -137,9 +139,8 @@ public class DraggableGroup extends Group {
     	
     	
     	Point2D deltavec = new Point2D(dragContext.deltaX , dragContext.deltaY);
-    	double factor = 1.0 / (double) DragContext.PAST_FRAMES;
-    	System.out.println("Mult factor: " + factor);
-    	deltavec = deltavec.multiply(factor);
+    	//double factor = 1.0 / (double) DragContext.PAST_FRAMES;
+    	//deltavec = deltavec.multiply(factor);
     	deltavec = deltavec.add(getVector());
     	
     	System.out.println("Vector: " + deltavec);
