@@ -143,7 +143,7 @@ public class Uitproberen extends Application {
 		buttonPane.getChildren().add(proximitySlider);
 		buttonPane.getChildren().add(new Label("Proximity threshold"));
 		buttonPane.getChildren().add(resetButton);
-		
+                
 		debugParent.setMapMouseToTouch(true);
 		
 		primaryStage.setScene(scene);
