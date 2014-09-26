@@ -9,7 +9,7 @@ import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import nl.utwente.cs.caes.tactile.DragPane;
 
-
+@Deprecated
 public class DragPaneSkin extends SkinBase<DragPane> {
     
     public DragPaneSkin(final DragPane dragPane) {

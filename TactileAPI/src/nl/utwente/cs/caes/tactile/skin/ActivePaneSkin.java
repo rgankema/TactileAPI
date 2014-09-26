@@ -4,7 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import nl.utwente.cs.caes.tactile.ActivePane;
 
-
+@Deprecated
 public class ActivePaneSkin extends SkinBase<ActivePane> {
     
     public ActivePaneSkin(final ActivePane activePane) {
