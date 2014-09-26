@@ -25,6 +25,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TouchEvent;
 import nl.utwente.cs.caes.tactile.skin.DragPaneSkin;
 
+@Deprecated
 @DefaultProperty("content")
 public class DragPane extends Control {
     

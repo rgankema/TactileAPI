@@ -9,6 +9,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
+@Deprecated
 public class TouchPane extends Pane {
     Physics physics;
     

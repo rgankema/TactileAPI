@@ -5,6 +5,7 @@ import javafx.event.EventTarget;
 import javafx.event.EventType;
 import nl.utwente.cs.caes.tactile.ActivePane;
 
+@Deprecated
 public class ActivePaneEvent extends Event {
 	
 	private static final long serialVersionUID = -3088628728530387241L;

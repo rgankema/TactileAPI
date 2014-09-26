@@ -11,7 +11,6 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
-import nl.utwente.cs.caes.tactile.event.ActionGroupEvent;
 import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 class Physics {

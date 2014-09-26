@@ -23,6 +23,7 @@ import javafx.scene.control.Skin;
 import nl.utwente.cs.caes.tactile.skin.ActivePaneSkin;
 import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
+@Deprecated
 @DefaultProperty("content")
 public class ActivePane extends Control {
     private final ConcurrentHashMap<ActivePane, InvalidationListener> listenerByActionPane
