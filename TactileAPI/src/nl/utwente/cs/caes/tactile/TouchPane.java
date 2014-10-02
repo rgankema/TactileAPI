@@ -5,9 +5,7 @@ import javafx.beans.property.DoubleProperty;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
-import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
 
 @Deprecated
 public class TouchPane extends Pane {

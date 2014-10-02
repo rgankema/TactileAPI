@@ -7,18 +7,17 @@ package application;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import nl.utwente.cs.caes.tactile.TactilePane;
+import nl.utwente.cs.caes.tactile.control.TactilePane;
+import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 /**
  *
@@ -45,7 +44,11 @@ public class Uitproberen3 extends Application {
         Label label = new Label("ASDASDASD");
         
         root.getChildren().addAll(c1, c2, c3, r1, label);
-                
+        root.register(c1, c2, c3, r1);
+        root.addEventFilter(TactilePaneEvent.ANY, event -> {
+            System.out.println(event.getEventType());
+        });
+        
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.show();

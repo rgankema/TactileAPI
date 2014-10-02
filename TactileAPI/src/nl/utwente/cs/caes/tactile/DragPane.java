@@ -308,10 +308,6 @@ public class DragPane extends Control {
     
     // Help class used for moving
     private class DragContext {
-
-        static final int PAST_FRAMES = 20;
-        static final int FORCE_MULT = 50;
-
         double prevX, prevY;
         double deltaX, deltaY;
     }

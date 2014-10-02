@@ -7,7 +7,7 @@ package nl.utwente.cs.caes.tactile.skin;
 
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
-import nl.utwente.cs.caes.tactile.TactilePane;
+import nl.utwente.cs.caes.tactile.control.TactilePane;
 
 public class TactilePaneSkin extends SkinBase<TactilePane> {
     TactilePane pane;
