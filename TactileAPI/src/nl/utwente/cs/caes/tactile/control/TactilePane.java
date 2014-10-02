@@ -62,8 +62,8 @@ public class TactilePane extends Control {
     
     /**
      * Anchors the {@code node} to the {@code anchor}. If {@code anchor} is not {@code null}, and
-     * {@code node} is a child of a {@code TactilePane}, then {@code node} will 
-     * to whatever location {@code anchor} moves to.
+     * {@code node} is a child of a {@code TactilePane}, then {@code node} will be relocated
+     * to whatever location {@code anchor} moves to, with an offset defined by the {@code anchorOffset}.
      * 
      * An anchored {@code Node} will not respond to physics. When a user tries to drag
      * an anchored {@code Node}, its {@code anchor} will automatically be set to {@code null}.
@@ -79,10 +79,16 @@ public class TactilePane extends Control {
         return (Node) getConstraint(node, ANCHOR);
     }
     
+    /**
+     * Sets the offset relative to the {@code anchor} by which the given {@code node} will be relocated.
+     */
     public static void setAnchorOffset(Node node, Point2D offset) {
         setConstraint(node, ANCHOR_OFFSET, offset);
     }
     
+    /**
+     * Gets the offset relative to the {@code anchor} by which the given {@code node} will be relocated.
+     */
     public static Point2D getAnchorOffset(Node node) {
         Point2D result = (Point2D) getConstraint(node, ANCHOR_OFFSET);
         return result == null ? Point2D.ZERO : result;
@@ -233,13 +239,13 @@ public class TactilePane extends Control {
     private void addDragEventHandlers(Node node) {
         final DragContext dragContext = new DragContext(node);
         
-        EventHandler<MouseEvent> mouseFilter = (MouseEvent event) -> {
+        EventHandler<MouseEvent> mouseFilter = event -> {
             if (isDraggable(node) && event.isSynthesized() && event.getTarget() == node) {
                 event.consume();
             }
         };
         
-        EventHandler<TouchEvent> touchHandler = (TouchEvent event) -> {
+        EventHandler<TouchEvent> touchHandler = event -> {
             EventType type = event.getEventType();
             
             if (type == TouchEvent.TOUCH_PRESSED) {
@@ -261,7 +267,7 @@ public class TactilePane extends Control {
             event.consume();
         };
         
-        EventHandler<MouseEvent> mouseHandler = (MouseEvent event) -> {
+        EventHandler<MouseEvent> mouseHandler = event -> {
             EventType type = event.getEventType();
             
             if (type == MouseEvent.MOUSE_PRESSED) {

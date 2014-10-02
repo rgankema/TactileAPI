@@ -253,14 +253,13 @@ class Physics {
                 Bounds otherBounds = otherNode.localToScene(otherNode.getBoundsInLocal());
 
                 if (thisBounds.intersects(otherBounds)) {
-                    thisNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.IN_AREA, thisNode, otherNode));
-                    
                     if (TactilePane.getNodesColliding(thisNode).add(otherNode)) {
                         TactilePane.getNodesColliding(otherNode).add(thisNode);
 
                         thisNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.AREA_ENTERED, thisNode, otherNode));
                         otherNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.AREA_ENTERED, otherNode, thisNode));
                     }
+                    thisNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.IN_AREA, thisNode, otherNode));
                 } else {
                     if (TactilePane.getNodesColliding(thisNode).remove(otherNode)) {
                         TactilePane.getNodesColliding(otherNode).remove(thisNode);
@@ -269,14 +268,13 @@ class Physics {
                         otherNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.AREA_LEFT, otherNode, thisNode));
                     }
                     if (proximityBounds != null && proximityBounds.intersects(otherBounds)) {
-                        thisNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.IN_PROXIMITY, thisNode, otherNode));
-                        
                         if (TactilePane.getNodesInProximity(thisNode).add(otherNode)) {
                             TactilePane.getNodesInProximity(otherNode).add(thisNode);
 
                             thisNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.PROXIMITY_ENTERED, thisNode, otherNode));
                             otherNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.PROXIMITY_ENTERED, otherNode, thisNode));
                         }
+                        thisNode.fireEvent(new TactilePaneEvent(TactilePaneEvent.IN_PROXIMITY, thisNode, otherNode));
                     } else {
                         if (TactilePane.getNodesInProximity(thisNode).remove(otherNode)) {
                             TactilePane.getNodesInProximity(otherNode).remove(thisNode);

@@ -41,10 +41,12 @@ public class Uitproberen3 extends Application {
         c3.relocate(60, 60);
         r1.relocate(120, 150);
         
-        Label label = new Label("ASDASDASD");
+        Label label = new Label("Niet Draggable");
+        TactilePane.setDraggable(label, false);
         
         root.getChildren().addAll(c1, c2, c3, r1, label);
-        root.register(c1, c2, c3, r1);
+        root.register(c1, c2, c3, r1, label);
+        
         root.addEventFilter(TactilePaneEvent.ANY, event -> {
             System.out.println(event.getEventType());
         });
