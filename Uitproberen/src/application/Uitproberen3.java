@@ -36,10 +36,10 @@ public class Uitproberen3 extends Application {
         Circle c2 = new Circle(50);
         Circle c3 = new Circle(50);
         Rectangle r1 = new Rectangle(70, 120);
-        c1.relocate(0, 0);
-        c2.relocate(100, 70);
-        c3.relocate(60, 60);
-        r1.relocate(120, 150);
+        c1.relocate(0, 80);
+        c2.relocate(200, 140);
+        c3.relocate(140, 0);
+        r1.relocate(240, 300);
         
         Label label = new Label("Niet Draggable");
         TactilePane.setDraggable(label, false);

@@ -7,7 +7,10 @@ import java.util.List;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -48,83 +51,159 @@ public class TactilePane extends Control {
     // STATIC METHODS
     
     static void setInUse(Node node, boolean inUse) {
-        setConstraint(node, IN_USE, inUse);
+        inUsePropertyImpl(node).set(inUse);
+    }
+    
+    public static boolean isInUse(Node node) {
+        return inUsePropertyImpl(node).get();
+    }
+    
+    static BooleanProperty inUsePropertyImpl(Node node) {
+        BooleanProperty property = (BooleanProperty) getConstraint(node, IN_USE);
+        if (property == null) {
+            property = new SimpleBooleanProperty(false);
+            setConstraint(node, IN_USE, property);
+        }
+        return property;
     }
     
     /**
-     * Returns whether this {@code Node} is being dragged by the user. If the {@code Node}
+     * Whether this {@code Node} is being dragged by the user. If the {@code Node}
      * is not a child of a {@code TactilePane}, it will always return {@code false}.
      */
-    public static boolean isInUse(Node node) {
-        Boolean result = (Boolean) getConstraint(node, IN_USE);
-        return result == null ? false : result;
+    public static ReadOnlyBooleanProperty inUseProperty(Node node) {
+        return inUsePropertyImpl(node);
     }
     
-    /**
-     * Anchors the {@code node} to the {@code anchor}. If {@code anchor} is not {@code null}, and
-     * {@code node} is a child of a {@code TactilePane}, then {@code node} will be relocated
-     * to whatever location {@code anchor} moves to, with an offset defined by the {@code anchorOffset}.
-     * 
-     * An anchored {@code Node} will not respond to physics. When a user tries to drag
-     * an anchored {@code Node}, its {@code anchor} will automatically be set to {@code null}.
-     */
     public static void setAnchor(Node node, Node anchor) {
-        setConstraint(node, ANCHOR, anchor);
+        anchorProperty(node).set(anchor);
     }
     
-    /**
-     * Returns the {@code Node} {@node} is anchored to.
-     */
     public static Node getAnchor(Node node) {
-        return (Node) getConstraint(node, ANCHOR);
+        return anchorProperty(node).get();
     }
     
     /**
-     * Sets the offset relative to the {@code anchor} by which the given {@code node} will be relocated.
+     * The {@code Node} the given {@code node} is anchored to. When a 
+     * {@code Node} is anchored to another {@code Node} (called {@code anchor}), it will move
+     * wherever the {@code anchor} moves to, provided that both the {@code node}
+     * and the {@code anchor} have the same {@code TactilePane} as ancestor. The actual
+     * position the anchored {@code Node} will move to is the sum of the position of the
+     * {@code anchor} and the {@code anchorOffset}.
+     * 
+     * When anchored, the {@code node} will not respond to physics. It will however 
+     * still respond to user input. When a user tries to drag an anchored {@code Node}, its {@anchor}
+     * will automatically be set to {@code null}.
      */
+    public static ObjectProperty<Node> anchorProperty(Node node) {
+        ObjectProperty<Node> property = (ObjectProperty<Node>) getConstraint(node, ANCHOR);
+        if (property == null) {
+            property = new SimpleObjectProperty<>(null);
+            setConstraint(node, ANCHOR, property);
+        }
+        return property;
+    }
+    
     public static void setAnchorOffset(Node node, Point2D offset) {
-        setConstraint(node, ANCHOR_OFFSET, offset);
+        anchorOffsetProperty(node).set(offset);
+    }
+    
+    public static Point2D getAnchorOffset(Node node) {
+        return anchorOffsetProperty(node).get();
     }
     
     /**
-     * Gets the offset relative to the {@code anchor} by which the given {@code node} will be relocated.
+     * Defines the position of this {@code node} relative to its {@anchor}, if it
+     * has one.
      */
-    public static Point2D getAnchorOffset(Node node) {
-        Point2D result = (Point2D) getConstraint(node, ANCHOR_OFFSET);
-        return result == null ? Point2D.ZERO : result;
+    public static ObjectProperty<Point2D> anchorOffsetProperty(Node node) {
+        ObjectProperty<Point2D> property = (ObjectProperty<Point2D>) getConstraint(node, ANCHOR_OFFSET);
+        if (property == null) {
+            property = new SimpleObjectProperty<>(Point2D.ZERO);
+            setConstraint(node, ANCHOR_OFFSET, property);
+        }
+        return property;
     }
     
     public static void setVector(Node node, Point2D vector) {
-        setConstraint(node, VECTOR, vector);
+        vectorProperty(node).set(vector);
     }
     
     public static Point2D getVector(Node node) {
-        Point2D result = (Point2D) getConstraint(node, VECTOR);
-        return result == null ? Point2D.ZERO : result;
+        return vectorProperty(node).get();
+    }
+    
+    /**
+     * The 2D velocity vector for this {@code node}. Primarily intended for physics.
+     */
+    public static ObjectProperty<Point2D> vectorProperty(Node node) {
+        ObjectProperty<Point2D> property = (ObjectProperty<Point2D>) getConstraint(node, VECTOR);
+        if (property == null) {
+            property = new SimpleObjectProperty<>(Point2D.ZERO);
+            setConstraint(node, VECTOR, property);
+        }
+        return property;
     }
     
     public static void setGoToForegroundOnContact(Node node, boolean goToForegroundOnContact) {
-        setConstraint(node, GO_TO_FOREGROUND_ON_CONTACT, goToForegroundOnContact);
+        goToForegroundOnContactProperty(node).set(goToForegroundOnContact);
     }
     
     public static boolean isGoToForegroundOnContact(Node node) {
-        Boolean result = (Boolean) getConstraint(node, GO_TO_FOREGROUND_ON_CONTACT);
-        return result == null ? true : result;
+        return goToForegroundOnContactProperty(node).get();
+    }
+    
+    /**
+     * Whether this {@code node} will go to the foreground when the user starts
+     * a drag gesture with it.
+     * 
+     * @defaultvalue true
+     */
+    public static BooleanProperty goToForegroundOnContactProperty(Node node) {
+        BooleanProperty property = (BooleanProperty) getConstraint(node, GO_TO_FOREGROUND_ON_CONTACT);
+        if (property == null) {
+            property = new SimpleBooleanProperty(true);
+            setConstraint(node, GO_TO_FOREGROUND_ON_CONTACT, property);
+        }
+        return property;
     }
     
     public static void setDraggable(Node node, boolean draggable) {
-        // If the Node is set to not draggable, then it cannot be in use.
-        if (!draggable) {
-            setInUse(node, false);
-        }
-        setConstraint(node, DRAGGABLE, draggable);
+        draggableProperty(node).set(draggable);
     }
     
     public static boolean isDraggable(Node node) {
-        Boolean result = (Boolean) getConstraint(node, DRAGGABLE);
-        return result == null ? true : result;
+        return draggableProperty(node).get();
     }
     
+    /**
+     * Whether the given node can be dragged by the user. Only nodes that are a direct child of
+     * a {@code TactilePane} can be dragged.
+     * 
+     * @defaultvalue true
+     */
+    public static BooleanProperty draggableProperty(Node node) {
+        BooleanProperty property = (BooleanProperty) getConstraint(node, DRAGGABLE);
+        if (property == null) {
+            property = new SimpleBooleanProperty(true) {
+                @Override
+                public void set(boolean draggable) {
+                    if (!draggable) {
+                        // A node that is not draggable cannot be in use
+                        setInUse(node, false);
+                    }
+                    super.set(draggable);
+                }
+            };
+            setConstraint(node, DRAGGABLE, property);
+        }
+        return property;
+    }
+    
+    /**
+     * Returns the set of {@code Nodes} that are registered to the same {@code TactilePane}
+     * as the given {@code node}, and are currently colliding with that {@code node}
+     */
     public static ObservableSet<Node> getNodesColliding(Node node) {
         ObservableSet<Node> result = (ObservableSet<Node>) getConstraint(node, NODES_COLLIDING);
         if (result == null) {
@@ -134,6 +213,10 @@ public class TactilePane extends Control {
         return result;
     }
     
+    /**
+     * Returns the set of {@code Nodes} that are registered to the same {@code TactilePane}
+     * as the given {@code node}, and are currently in the proximity of that {@code node}
+     */
     public static ObservableSet<Node> getNodesInProximity(Node node) {
         ObservableSet<Node> result = (ObservableSet<Node>) getConstraint(node, NODES_PROXIMITY);
         if (result == null) {

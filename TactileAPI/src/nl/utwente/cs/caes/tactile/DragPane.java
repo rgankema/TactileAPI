@@ -519,9 +519,7 @@ public class DragPane extends Control {
 
     /**
      * Whether this {@code DraggableGroup} will go to the foreground when
-     * {@link #inUseProperty() active} is set to true. If set to true,
-     * {@link #goToForeground()} is called whenever {@link #inUseProperty() is
-     * set to true.
+     * {@link #inUseProperty() active} is set to true.
      */
     private BooleanProperty goToForegroundOnInUse;
 
