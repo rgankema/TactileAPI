@@ -2,39 +2,36 @@ package tactiledemo;
 
 import java.util.HashMap;
 import java.util.Map;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import nl.utwente.cs.caes.tactile.ActivePane;
-import nl.utwente.cs.caes.tactile.DragPane;
-import nl.utwente.cs.caes.tactile.event.ActivePaneEvent;
+import nl.utwente.cs.caes.tactile.control.TactilePane;
+import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 /**
- * An ActivePane that reacts on ColorItems. ColorItems can be dropped on
+ * A Node that reacts on ColorItems. ColorItems can be dropped on
  * a ColorSlot, and will then be anchored to it.
  */
-public class ColorSlot extends ActivePane {
-    Rectangle background;
+public class ColorSlot extends Rectangle {
     ColorSlotPane parent;
     Map<ColorItem, ChangeListener<Boolean>> dropListenerByColorItem = new HashMap<>();
     
     public ColorSlot(ColorSlotPane parent) {
+        super(50, 50);
+        
         this.parent = parent;
+        setFill(Color.DARKGREY);
+        setStroke(Color.DARKGREY);
+        setStrokeWidth(4);
         
-        background = new Rectangle(50, 50);
-        background.setFill(Color.DARKGREY);
-        background.setStroke(Color.DARKGREY);
-        background.setStrokeWidth(4);
-        setContent(background);
-        
-        setOnProximityEntered(event -> onProximityEntered(event));
-        setOnProximityLeft(event -> onProximityLeft(event));
-        setOnAreaEntered(event -> onAreaEntered(event));
-        setOnAreaLeft(event -> onAreaLeft(event));
+        TactilePane.setOnProximityEntered(this, event -> onProximityEntered(event));
+        TactilePane.setOnProximityLeft(this, event -> onProximityLeft(event));
+        TactilePane.setOnAreaEntered(this, event -> onAreaEntered(event));
+        TactilePane.setOnAreaLeft(this, event -> onAreaLeft(event));
     }
     
     /**
@@ -57,12 +54,11 @@ public class ColorSlot extends ActivePane {
         return colorItem;
     }
     
-    private void onProximityEntered(ActivePaneEvent event) {
-        ActivePane slot = event.getTarget();
-        ActivePane otherAP = event.getOther();
+    private void onProximityEntered(TactilePaneEvent event) {
+        Node other = event.getOther();
         
-        if (otherAP instanceof ColorItem) {
-            ColorItem colorItem = (ColorItem) otherAP;
+        if (other instanceof ColorItem) {
+            ColorItem colorItem = (ColorItem) other;
             
             // If the ColorSlotPane this slot belongs to is grey, then
             // its border will be set to the approaching ColorItem's color
@@ -71,16 +67,16 @@ public class ColorSlot extends ActivePane {
             if (parent.getBackgroundColor() == Color.GREY) {
                 parent.setBorderColor(colorItem.getColor());
             } else if (!parent.getBorderColor().equals(colorItem.getColor())) {
-                slot.getDragPaneParent().moveAwayFrom(otherAP, 500);
+                TactilePane.moveAwayFrom(this, other, 200);
             }
         }
     }
     
-    private void onProximityLeft(ActivePaneEvent event) {
-        ActivePane otherAP = event.getOther();
+    private void onProximityLeft(TactilePaneEvent event) {
+        Node other = event.getOther();
         
-        if (otherAP instanceof ColorItem) {
-            ColorItem colorItem = (ColorItem) otherAP;
+        if (other instanceof ColorItem) {
+            ColorItem colorItem = (ColorItem) other;
             
             // Set the ColorSlotPane's border back to grey if it's not hosting
             // another ColorItem
@@ -90,12 +86,11 @@ public class ColorSlot extends ActivePane {
         }
     }
     
-    private void onAreaEntered(ActivePaneEvent event) {
-        ActivePane otherAP = event.getOther();
+    private void onAreaEntered(TactilePaneEvent event) {
+        Node other = event.getOther();
         
-        if (otherAP instanceof ColorItem) {
-            ColorItem colorItem = (ColorItem) otherAP;
-            DragPane dragParent = colorItem.getDragPaneParent();
+        if (other instanceof ColorItem) {
+            ColorItem colorItem = (ColorItem) other;
             
             // When a ColorItem enters the area, call onDropped when its DragPane
             // is not in use anymore. That way only ColorItems that are actively
@@ -106,22 +101,22 @@ public class ColorSlot extends ActivePane {
                     onDropped(colorItem);
                 }
             };
-            dragParent.inUseProperty().addListener(listener);
+            TactilePane.inUseProperty(colorItem).addListener(listener);
             dropListenerByColorItem.put(colorItem, listener);
         }
     }
     
-    private void onAreaLeft(ActivePaneEvent event) {
-        ActivePane otherAP = event.getOther();
+    private void onAreaLeft(TactilePaneEvent event) {
+        Node other = event.getOther();
         
-        if (otherAP instanceof ColorItem) {
-            ColorItem colorItem = (ColorItem) otherAP;
+        if (other instanceof ColorItem) {
+            ColorItem colorItem = (ColorItem) other;
             
             //Stop listening for drag and drop operation
             ChangeListener<Boolean> listener = dropListenerByColorItem.remove(colorItem);
-            colorItem.getDragPaneParent().inUseProperty().removeListener(listener);
+            TactilePane.inUseProperty(colorItem).removeListener(listener);
             
-            // If the ActionPane that has left the area of the ColorSlot is the
+            // If the Node that has left the area of the ColorSlot is the
             // ColorItem that is anchored to it, then ColorItem will be set to null
             if (colorItem == getColorItem()) {
                 setColorItem(null);
@@ -134,8 +129,8 @@ public class ColorSlot extends ActivePane {
         // will be anchored to that ColorSlot
         if (getColorItem() == null) {
             setColorItem((ColorItem) colorItem);
-            colorItem.getDragPaneParent().setAnchor(this);
-            colorItem.getDragPaneParent().setAnchorOffset(new Point2D(2, 2));
+            TactilePane.setAnchor(colorItem, this);
+            TactilePane.setAnchorOffset(colorItem, new Point2D(2, 2));
         }
     }
 }

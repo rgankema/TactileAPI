@@ -15,7 +15,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ListChangeListener;
-import javafx.collections.SetChangeListener;
 import javafx.event.Event;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
@@ -35,10 +34,10 @@ import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 public class DebugParent extends StackPane {
 
     Pane overlay = new Pane();
-    Map<Integer, TouchCircle> circleByTouchId = new TreeMap<>();
+    Map<Integer, TouchDisplay> circleByTouchId = new TreeMap<>();
     Map<Integer, Line> lineByTouchId = new TreeMap<>();
 
-    Map<Node, Vector> vectorByDraggable = new ConcurrentHashMap<>();
+    Map<Node, VectorDisplay> vectorDisplayByDraggable = new ConcurrentHashMap<>();
     Map<Pair<Node>, Line> lineByActiveNodePair = new ConcurrentHashMap<>();
     Map<Node, BoundsDisplay> boundsDisplayByActiveNode = new ConcurrentHashMap<>();
 
@@ -112,7 +111,7 @@ public class DebugParent extends StackPane {
             double x = event.getTouchPoint().getSceneX();
             double y = event.getTouchPoint().getSceneY();
 
-            TouchCircle circle = new TouchCircle(x, y, getTouchCircleRadius(), touchId);
+            TouchDisplay circle = new TouchDisplay(x, y, getTouchCircleRadius(), touchId);
             circleByTouchId.put(touchId, circle);
             overlay.getChildren().add(circle);
 
@@ -144,7 +143,7 @@ public class DebugParent extends StackPane {
             double x = event.getTouchPoint().getSceneX();
             double y = event.getTouchPoint().getSceneY();
 
-            TouchCircle circle = circleByTouchId.get(touchId);
+            TouchDisplay circle = circleByTouchId.get(touchId);
             circle.relocate(x, y);
 
             Line line = lineByTouchId.get(touchId);
@@ -157,7 +156,7 @@ public class DebugParent extends StackPane {
         addEventFilter(TouchEvent.TOUCH_RELEASED, event -> {
             int touchId = event.getTouchPoint().getId();
 
-            TouchCircle circle = circleByTouchId.get(touchId);
+            TouchDisplay circle = circleByTouchId.get(touchId);
             Line line = lineByTouchId.get(touchId);
 
             ScaleTransition st = new ScaleTransition(new Duration(200), circle);
@@ -225,9 +224,9 @@ public class DebugParent extends StackPane {
 
             @Override
             public void handle(long arg0) {
-                for (Node node : vectorByDraggable.keySet()) {
+                for (Node node : vectorDisplayByDraggable.keySet()) {
                     Bounds bounds = node.localToScene(node.getBoundsInLocal());
-                    Vector vector = vectorByDraggable.get(node);
+                    VectorDisplay vector = vectorDisplayByDraggable.get(node);
 
                     vector.relocate(bounds.getMinX(), bounds.getMinY());
                 }
@@ -343,9 +342,9 @@ public class DebugParent extends StackPane {
     }
 
     private void registerDraggable(Node node) {
-        if (!vectorByDraggable.containsKey(node)) {
-            Vector vector = new Vector(TactilePane.vectorProperty(node));
-            vectorByDraggable.put(node, vector);
+        if (!vectorDisplayByDraggable.containsKey(node)) {
+            VectorDisplay vector = new VectorDisplay(TactilePane.vectorProperty(node));
+            vectorDisplayByDraggable.put(node, vector);
 
             Bounds bounds = node.localToScene(node.getBoundsInLocal());
             vector.relocate(bounds.getMinX(), bounds.getMinY());
@@ -354,7 +353,7 @@ public class DebugParent extends StackPane {
     }
 
     private void deregisterDraggable(Node node) {
-        Vector vector = vectorByDraggable.remove(node);
+        VectorDisplay vector = vectorDisplayByDraggable.remove(node);
         if (vector != null) {
             overlay.getChildren().remove(vector);
         }

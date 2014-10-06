@@ -5,17 +5,11 @@ package tactiledemo;
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
-import nl.utwente.cs.caes.tactile.ActivePane;
 
-/**
- * An ActivePane that contains a colored square. Interacts with ColorSlots.
- */
-public class ColorItem extends ActivePane {
-    Rectangle rectangle;
+public class ColorItem extends Rectangle {
     
     public ColorItem() {
-        rectangle = new Rectangle(50, 50);
-        setContent(rectangle);
+        super(50, 50);
     }
     
     public void setColor(Paint color) {
@@ -27,6 +21,6 @@ public class ColorItem extends ActivePane {
     }
     
     public ObjectProperty<Paint> colorProperty() {
-        return rectangle.fillProperty();
+        return super.fillProperty();
     }
 }

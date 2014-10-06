@@ -1,11 +1,13 @@
 package tactiledemo;
 
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import nl.utwente.cs.caes.tactile.control.TactilePane;
 
 /**
  * A Pane that has two ColorSlots. The background color depends on the ColorItems
@@ -44,8 +46,8 @@ public class ColorSlotPane extends Pane {
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(rightSlot.getColorItem().getColor())) {
-                    rightSlot.getColorItem().getDragPaneParent().setAnchor(null);
-                    rightSlot.getColorItem().getDragPaneParent().moveAwayFrom(newValue, 500);
+                    TactilePane.setAnchor(rightSlot.getColorItem(), null);
+                    TactilePane.moveAwayFrom(rightSlot.getColorItem(), newValue, 200);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 }
@@ -65,8 +67,8 @@ public class ColorSlotPane extends Pane {
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(leftSlot.getColorItem().getColor())) {
-                    leftSlot.getColorItem().getDragPaneParent().setAnchor(null);
-                    leftSlot.getColorItem().getDragPaneParent().moveAwayFrom(newValue, 1000);
+                    TactilePane.setAnchor(leftSlot.getColorItem(), null);
+                    TactilePane.moveAwayFrom(leftSlot.getColorItem(), newValue, 200);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 }
@@ -98,5 +100,28 @@ public class ColorSlotPane extends Pane {
     
     public final ObjectProperty<Paint> backgroundColorProperty() {
         return background.fillProperty();
+    }
+    
+    ObjectProperty<TactilePane> tactilePane = new SimpleObjectProperty<TactilePane>() {
+        @Override
+        public void set(TactilePane pane) {
+            if (pane != null) {
+                pane.startTracking(leftSlot);
+                pane.startTracking(rightSlot);
+            }
+            super.set(pane);
+        }
+    };
+    
+    public final void setTactilePane(TactilePane tactilePane) {
+        tactilePaneProperty().set(tactilePane);
+    }
+    
+    public final TactilePane getTactilePane() {
+        return tactilePaneProperty().get();
+    }
+    
+    public final ObjectProperty<TactilePane> tactilePaneProperty() {
+        return tactilePane;
     }
 }

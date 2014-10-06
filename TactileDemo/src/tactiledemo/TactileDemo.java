@@ -6,25 +6,18 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import nl.utwente.cs.caes.tactile.ActivePane;
-import nl.utwente.cs.caes.tactile.DragPane;
-import nl.utwente.cs.caes.tactile.TouchPane;
-import nl.utwente.cs.caes.tactile.debug.DebugParentOld;
+import nl.utwente.cs.caes.tactile.control.TactilePane;
+import nl.utwente.cs.caes.tactile.debug.DebugParent;
 
 public class TactileDemo extends Application {
+    DebugParent debug;
     
     @Override
     public void start(Stage stage) throws Exception {
-        TouchPane root = (TouchPane) FXMLLoader.load(getClass().getResource("Main.fxml"));
+        TactilePane root = (TactilePane) FXMLLoader.load(getClass().getResource("Main.fxml"));
         
-        registerActivePanes(root, root);
-        
-        DebugParentOld debug = new DebugParentOld(root);
-        for (Node child : root.getChildren()) {
-            if (child instanceof DragPane) {
-                debug.register((DragPane)child);
-            }
-        }
+        debug = new DebugParent(root);
+        registerActiveNodes(root, root);
         debug.setMapMouseToTouch(false);
         
         Scene scene = new Scene(debug);
@@ -33,13 +26,13 @@ public class TactileDemo extends Application {
         stage.show();
     }
     
-    private void registerActivePanes(TouchPane touchPane, Parent parent) {
+    private void registerActiveNodes(TactilePane tactilePane, Parent parent) {
         for (Node node: parent.getChildrenUnmodifiable()) {
             if (node instanceof Parent) {
-                registerActivePanes(touchPane, (Parent) node);
+                registerActiveNodes(tactilePane, (Parent) node);
             }
-            if (node instanceof ActivePane) {
-                touchPane.register((ActivePane) node);
+            if (TactilePane.getTracker(node) != null) {
+                debug.registerActiveNode(node, TactilePane.getTracker(node));
             }
         }
     }

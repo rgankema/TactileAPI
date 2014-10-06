@@ -510,8 +510,13 @@ public class TactilePane extends Control {
     // STATIC METHODS
     
     public static void moveAwayFrom(Node move, Node from, double force) {
-        if (move.getParent() == null || !(move.getParent() instanceof TactilePane)) {
-            return;
+        Node moveDraggable = move;
+        while (!(moveDraggable instanceof TactilePane)) {
+            moveDraggable = moveDraggable.getParent();
+            
+            if (moveDraggable == null) {
+                return;
+            }
         }
 
         Bounds moveBounds = move.localToScene(move.getBoundsInLocal());
@@ -526,7 +531,7 @@ public class TactilePane extends Control {
         double distanceY = moveY - fromY;
 
         Point2D vector = new Point2D(distanceX, distanceY).normalize().multiply(force);
-        TactilePane.setVector(move, TactilePane.getVector(move).add(vector));
+        TactilePane.setVector(moveDraggable, TactilePane.getVector(move).add(vector));
     }
     
     // INSTANCE VARIABLES
