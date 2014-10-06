@@ -126,7 +126,7 @@ class Physics {
             
             Node anchor = TactilePane.getAnchor(node);
             // If the node is in use, update its vector for slide behaviour
-            if (TactilePane.isInUse(node)) {
+            if (TactilePane.isInUse(node) && TactilePane.isSlideOnRelease(node)) {
                 Point2D prevLocation = locationByNode.get(node);
                 
                 // Calculate change in position

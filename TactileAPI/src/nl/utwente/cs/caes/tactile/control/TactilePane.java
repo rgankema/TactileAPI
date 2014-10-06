@@ -31,20 +31,30 @@ import nl.utwente.cs.caes.tactile.skin.TactilePaneSkin;
 
 @DefaultProperty("children")
 public class TactilePane extends Control {
+    // Keys for Attached Properties
     static final String IN_USE = "tactile-pane-in-use";
     static final String ANCHOR = "tactile-pane-anchor";
     static final String ANCHOR_OFFSET = "tactile-pane-anchor-offset";
     static final String VECTOR = "tactile-pane-vector";
     static final String GO_TO_FOREGROUND_ON_CONTACT = "tactile-pane-go-to-foreground-on-contact";
     static final String DRAGGABLE = "tactile-pane-draggable";
+    static final String SLIDE_ON_RELEASE = "tactile-pane-slide-on-release";
     static final String NODES_COLLIDING = "tactile-pane-nodes-colliding";
     static final String NODES_PROXIMITY = "tactile-pane-nodes-proximity";
     static final String TRACKER = "tactile-pane-tracker";
+    static final String ON_PROXIMITY_ENTERED = "tactile-pane-on-proximity-entered";
+    static final String ON_PROXIMITY_LEFT = "tactile-pane-on-proximity-left";
+    static final String ON_IN_PROXIMITY = "tactile-pane-on-in-proximity";
+    static final String ON_AREA_ENTERED = "tactile-pane-on-area-entered";
+    static final String ON_AREA_LEFT = "tactile-pane-on-area-left";
+    static final String ON_IN_AREA = "tactile-pane-on-in-area";
     
+    // Attached Properties that are only used privately
     static final String MOUSE_EVENT_FILTER = "tactile-pane-mouse-event-filter";
     static final String TOUCH_EVENT_HANDLER = "tactile-pane-touch-event-handler";
     static final String MOUSE_EVENT_HANDLER = "tactile-pane-mouse-event-handler";
     
+    // IDs to keep track which finger/cursor started dragging a Node
     static final int NULL_ID = -1;
     static final int MOUSE_ID = -2;
     
@@ -200,6 +210,29 @@ public class TactilePane extends Control {
         return property;
     }
     
+    public static void setSlideOnRelease(Node node, boolean slideOnRelease) {
+        slideOnReleaseProperty(node).set(slideOnRelease);
+    }
+    
+    public static boolean isSlideOnRelease(Node node) {
+        return slideOnReleaseProperty(node).get();
+    }
+    
+    /**
+     * Whether the given {@code Node} will get a vector in the direction it was moving
+     * when the user stops dragging that {@code Node}
+     * 
+     * @defaultvalue false
+     */
+    public static BooleanProperty slideOnReleaseProperty(Node node) {
+        BooleanProperty property = (BooleanProperty) getConstraint(node, SLIDE_ON_RELEASE);
+        if (property == null) {
+            property = new SimpleBooleanProperty(false);
+            setConstraint(node, SLIDE_ON_RELEASE, property);
+        }
+        return property;
+    }
+    
     /**
      * Returns the set of {@code Nodes} that are registered to the same {@code TactilePane}
      * as the given {@code node}, and are currently colliding with that {@code node}
@@ -302,9 +335,9 @@ public class TactilePane extends Control {
     
     // MAKING CHILDREN DRAGGABLE
     
-    // Help class used for moving
+    // Help class used for dragging Nodes
     private class DragContext {
-        final Node draggable;   // The node that is dragged around
+        final Node draggable;   // The Node that is dragged around
         double localX, localY;  // The x,y position of the Event in the Node
         int touchId;            // The id of the finger/cursor that is currently dragging the Node
         
@@ -315,7 +348,7 @@ public class TactilePane extends Control {
         
         @Override
         public String toString() {
-            return "DragContext [draggable = " + draggable + ", touchId = " + touchId + ", localX = " + localX + ", localY = " + localY + "]";
+            return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %d, localY = %d]", draggable.toString(), touchId, localX, localY);
         }
     }
     
@@ -489,13 +522,13 @@ public class TactilePane extends Control {
     }
 
     /**
-     * Specifies how close two ActivePanes have to be to each other to fire
-     * {@code CollisionEvent#PROXIMITY_ENTERED} events. When set to 0, the
-     * TouchPane won't fire {@code CollisionEvent#PROXIMITY_ENTERED} events at
-     * all. {@code CollisionEvent#PROXIMITY_LEFT} events will still be fired for
-     * any ActionGroup pair that entered each other's proximity before the
-     * threshold was set to 0. When set to a negative value, an
-     * IllegalArgumentException is thrown.
+     * Specifies how close two {@code Nodes} have to be to each other to be
+     * considered in eachothers proximity. When set to 0, TactilePane won't fire
+     * {@code PROXIMITY_ENTERED} or {@code IN_PROXIMITY} events at all.
+     * {@code PROXIMITY_LEFT} events will still be fired for any pair of
+     * {@code Nodes} that entered each other's proximity before the threshold
+     * was set to 0. When set to a negative value, an IllegalArgumentException
+     * is thrown.
      *
      * @defaultvalue 25.0
      */
