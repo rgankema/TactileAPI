@@ -24,13 +24,12 @@ class BoundsDisplay extends Pane {
         proximityOverlay.xProperty().bind(offset);
         proximityOverlay.yProperty().bind(offset);
         
-        NumberBinding proximityWidth = Bindings.add(boundsWidth, proximityThreshold);
-        NumberBinding proximityHeight = Bindings.add(boundsHeight, proximityThreshold);
-        proximityOverlay.widthProperty().bind(proximityWidth);
-        proximityOverlay.heightProperty().bind(proximityHeight);
+        proximityOverlay.widthProperty().bind(Bindings.add(boundsWidth, proximityThreshold));
+        proximityOverlay.heightProperty().bind(Bindings.add(boundsHeight, proximityThreshold));
         
-        boundsOverlay.setFill(new Color(1, 0, 0, 0.2));
-        proximityOverlay.setFill(new Color(1, 0, 0, 0.2));
+        boundsOverlay.setFill(new Color(1, 0, 0, 0.1));
+        boundsOverlay.setStroke(new Color(1, 0, 0, 0.5));
+        proximityOverlay.setFill(new Color(1, 0, 0, 0.1));
         
         getChildren().addAll(boundsOverlay, proximityOverlay);
     }

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -11,6 +14,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -280,13 +284,11 @@ public class TactilePane extends Control {
             property = new SimpleObjectProperty<EventHandler<? super TactilePaneEvent>>(null) {
                 @Override
                 public void set(EventHandler<? super TactilePaneEvent> handler) {
-                    System.out.println("dit gebeurt");
                     EventHandler<? super TactilePaneEvent> oldHandler = get();
                     if (oldHandler != null) {
                         node.removeEventHandler(TactilePaneEvent.IN_PROXIMITY, oldHandler);
                     }
                     if (handler != null) {
-                        System.out.println("dit gebeurt ook");
                         node.addEventHandler(TactilePaneEvent.IN_PROXIMITY, handler);
                     }
                     super.set(handler);
@@ -551,7 +553,18 @@ public class TactilePane extends Control {
         getChildren().addListener((ListChangeListener.Change<? extends Node> c) -> {
             c.next();
             for (Node node: c.getRemoved()) {
-                removeDragEventHandlers(node);
+                // Delay removal of drag event handlers, just in case all that
+                // happened is a node.toFront() call.
+                TimerTask removeDragEventHandlers = new TimerTask() {
+                    @Override
+                    public void run() {
+                        if (node.getParent() != TactilePane.this) {
+                            removeDragEventHandlers(node);
+                        }
+                    }
+                };
+                Timer timer = new Timer();
+                timer.schedule(removeDragEventHandlers, 500);
             }
             for (Node node: c.getAddedSubList()) {
                 addDragEventHandlers(node);
@@ -587,6 +600,11 @@ public class TactilePane extends Control {
     }
     
     private void addDragEventHandlers(Node node) {
+        if (getConstraint(node, MOUSE_EVENT_FILTER) != null) {
+            // The node already has drag event handlers
+            return;
+        }
+        
         final DragContext dragContext = new DragContext(node);
         
         EventHandler<MouseEvent> mouseFilter = event -> {

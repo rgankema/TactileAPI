@@ -25,4 +25,5 @@
     <ColorItem color="#ffff00" layoutX="700" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
         
     <ColorSlotPane layoutY="400" TactilePane.slideOnRelease="true" tactilePane="$root"/>
+    
 </TactilePane>
