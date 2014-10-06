@@ -17,6 +17,7 @@ public class TactileDemo extends Application {
         TactilePane root = (TactilePane) FXMLLoader.load(getClass().getResource("Main.fxml"));
         
         debug = new DebugParent(root);
+        debug.registerTactilePane(root);
         registerActiveNodes(root, root);
         debug.setMapMouseToTouch(false);
         
@@ -26,6 +27,7 @@ public class TactileDemo extends Application {
         stage.show();
     }
     
+    // Looks for any active node and registers it to the debugger
     private void registerActiveNodes(TactilePane tactilePane, Parent parent) {
         for (Node node: parent.getChildrenUnmodifiable()) {
             if (node instanceof Parent) {

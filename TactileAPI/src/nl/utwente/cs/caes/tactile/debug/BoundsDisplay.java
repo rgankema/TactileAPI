@@ -29,8 +29,8 @@ class BoundsDisplay extends Pane {
         proximityOverlay.widthProperty().bind(proximityWidth);
         proximityOverlay.heightProperty().bind(proximityHeight);
         
-        boundsOverlay.setFill(new Color(0.2, 0.5, 0.6, 0.2));
-        proximityOverlay.setFill(new Color(0.6, 0.2, 0.5, 0.2));
+        boundsOverlay.setFill(new Color(1, 0, 0, 0.2));
+        proximityOverlay.setFill(new Color(1, 0, 0, 0.2));
         
         getChildren().addAll(boundsOverlay, proximityOverlay);
     }

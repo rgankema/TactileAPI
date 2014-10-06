@@ -32,7 +32,7 @@ import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 public class DebugParent extends StackPane {
-
+    
     Pane overlay = new Pane();
     Map<Integer, TouchDisplay> circleByTouchId = new TreeMap<>();
     Map<Integer, Line> lineByTouchId = new TreeMap<>();

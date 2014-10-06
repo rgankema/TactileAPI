@@ -510,11 +510,15 @@ public class TactilePane extends Control {
     // STATIC METHODS
     
     public static void moveAwayFrom(Node move, Node from, double force) {
+        if (move.getParent() == null) {
+            return;
+        }
+        
         Node moveDraggable = move;
-        while (!(moveDraggable instanceof TactilePane)) {
+        while(!(moveDraggable.getParent() instanceof TactilePane)) {
             moveDraggable = moveDraggable.getParent();
             
-            if (moveDraggable == null) {
+            if (move.getParent() == null) {
                 return;
             }
         }

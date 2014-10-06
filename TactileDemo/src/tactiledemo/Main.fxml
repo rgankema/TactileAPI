@@ -7,7 +7,6 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.paint.*?>
-<?import nl.utwente.cs.caes.tactile.*?>
 <?import nl.utwente.cs.caes.tactile.control.*?>
 <?import tactiledemo.*?>
 <?import java.net.*?>
@@ -26,8 +25,4 @@
     <ColorItem color="#ffff00" layoutX="700" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
         
     <ColorSlotPane layoutY="400" TactilePane.slideOnRelease="true" tactilePane="$root"/>
-    
-    <stylesheets>
-        <URL value="@main.css"/>
-    </stylesheets>
 </TactilePane>
