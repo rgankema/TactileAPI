@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.ActivePane;
 import nl.utwente.cs.caes.tactile.DragPane;
 import nl.utwente.cs.caes.tactile.TouchPane;
-import nl.utwente.cs.caes.tactile.debug.DebugParent;
+import nl.utwente.cs.caes.tactile.debug.DebugParentOld;
 
 public class TactileDemo extends Application {
     
@@ -19,7 +19,7 @@ public class TactileDemo extends Application {
         
         registerActivePanes(root, root);
         
-        DebugParent debug = new DebugParent(root);
+        DebugParentOld debug = new DebugParentOld(root);
         for (Node child : root.getChildren()) {
             if (child instanceof DragPane) {
                 debug.register((DragPane)child);

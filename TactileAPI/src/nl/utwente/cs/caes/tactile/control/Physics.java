@@ -17,6 +17,7 @@ class Physics {
 
     protected static final double TIME_STEP = 1d / 60d;
     private static final double BOUNCE = 0.50;
+    private static final double THRESHOLD = 2.5;
     private static final Point2D LEFT_NORMAL = new Point2D(1, 0);
     private static final Point2D RIGHT_NORMAL = new Point2D(-1, 0);
     private static final Point2D TOP_NORMAL = new Point2D(0, 1);
@@ -119,7 +120,7 @@ class Physics {
             TactilePane.setVector(node, vector);
             
             // If the resulting vector is small enough, set the vector to zero vector
-            if (Math.abs(vector.getX()) < 1 && Math.abs(vector.getY()) < 1) {
+            if (Math.abs(vector.getX()) < THRESHOLD && Math.abs(vector.getY()) < THRESHOLD) {
                 vector = Point2D.ZERO;
                 TactilePane.setVector(node, vector);
             }

@@ -27,6 +27,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TouchEvent;
+import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 import nl.utwente.cs.caes.tactile.skin.TactilePaneSkin;
 
 @DefaultProperty("children")
@@ -58,7 +59,7 @@ public class TactilePane extends Control {
     static final int NULL_ID = -1;
     static final int MOUSE_ID = -2;
     
-    // STATIC METHODS
+    // ATTACHED PROPERTIES
     
     static void setInUse(Node node, boolean inUse) {
         inUsePropertyImpl(node).set(inUse);
@@ -219,9 +220,9 @@ public class TactilePane extends Control {
     }
     
     /**
-     * Whether the given {@code Node} will get a vector in the direction it was moving
-     * when the user stops dragging that {@code Node}
-     * 
+     * Whether the given {@code Node} will get a vector in the direction it was
+     * moving when the user stops dragging that {@code Node}
+     *
      * @defaultvalue false
      */
     public static BooleanProperty slideOnReleaseProperty(Node node) {
@@ -234,8 +235,9 @@ public class TactilePane extends Control {
     }
     
     /**
-     * Returns the set of {@code Nodes} that are registered to the same {@code TactilePane}
-     * as the given {@code node}, and are currently colliding with that {@code node}
+     * Returns the set of {@code Nodes} that are registered to the same
+     * {@code TactilePane} as the given {@code node}, and are currently
+     * colliding with that {@code node}
      */
     public static ObservableSet<Node> getNodesColliding(Node node) {
         ObservableSet<Node> result = (ObservableSet<Node>) getConstraint(node, NODES_COLLIDING);
@@ -247,8 +249,9 @@ public class TactilePane extends Control {
     }
     
     /**
-     * Returns the set of {@code Nodes} that are registered to the same {@code TactilePane}
-     * as the given {@code node}, and are currently in the proximity of that {@code node}
+     * Returns the set of {@code Nodes} that are registered to the same
+     * {@code TactilePane} as the given {@code node}, and are currently in the
+     * proximity of that {@code node}
      */
     public static ObservableSet<Node> getNodesInProximity(Node node) {
         ObservableSet<Node> result = (ObservableSet<Node>) getConstraint(node, NODES_PROXIMITY);
@@ -259,24 +262,224 @@ public class TactilePane extends Control {
         return result;
     }
     
+    public static void setOnInProximity(Node node, EventHandler<? super TactilePaneEvent> handler) {
+        onInProximityProperty(node).set(handler);
+    }
+    
+    public static EventHandler<? super TactilePaneEvent> getOnInProximity(Node node) {
+        return onInProximityProperty(node).get();
+    }
+    
     /**
-     * Calls {@code register} on the given TactilePane with {@code node} as argument.
-     * If {@code tactilePane} is {@code null}, {@code node} will be deregistered
-     * at its previous {@code TactilePane}, if one exists.
+     * Defines a function to be called continuously when another {@code Node} is
+     * in the proximity of this {@code node}.
+     */
+    public static ObjectProperty<EventHandler<? super TactilePaneEvent>> onInProximityProperty(Node node) {
+        ObjectProperty<EventHandler<? super TactilePaneEvent>> property = (ObjectProperty<EventHandler<? super TactilePaneEvent>>) getConstraint(node, ON_IN_PROXIMITY);
+        if (property == null) {
+            property = new SimpleObjectProperty<EventHandler<? super TactilePaneEvent>>(null) {
+                @Override
+                public void set(EventHandler<? super TactilePaneEvent> handler) {
+                    System.out.println("dit gebeurt");
+                    EventHandler<? super TactilePaneEvent> oldHandler = get();
+                    if (oldHandler != null) {
+                        node.removeEventHandler(TactilePaneEvent.IN_PROXIMITY, oldHandler);
+                    }
+                    if (handler != null) {
+                        System.out.println("dit gebeurt ook");
+                        node.addEventHandler(TactilePaneEvent.IN_PROXIMITY, handler);
+                    }
+                    super.set(handler);
+                }
+            };
+            setConstraint(node, ON_IN_PROXIMITY, property);
+        }
+        return property;
+    }
+    
+    public static void setOnProximityEntered(Node node, EventHandler<? super TactilePaneEvent> handler) {
+        onProximityEnteredProperty(node).set(handler);
+    }
+    
+    public static EventHandler<? super TactilePaneEvent> getOnProximityEntered(Node node) {
+        return onProximityEnteredProperty(node).get();
+    }
+    
+    /**
+     * Defines a function to be called when another {@code Node} enters the
+     * proximity of this {@code node}.
+     */
+    public static ObjectProperty<EventHandler<? super TactilePaneEvent>> onProximityEnteredProperty(Node node) {
+        ObjectProperty<EventHandler<? super TactilePaneEvent>> property = (ObjectProperty<EventHandler<? super TactilePaneEvent>>) getConstraint(node, ON_PROXIMITY_ENTERED);
+        if (property == null) {
+            property = new SimpleObjectProperty<EventHandler<? super TactilePaneEvent>>(null) {
+                @Override
+                public void set(EventHandler<? super TactilePaneEvent> handler) {
+                    EventHandler<? super TactilePaneEvent> oldHandler = get();
+                    if (oldHandler != null) {
+                        node.removeEventHandler(TactilePaneEvent.PROXIMITY_ENTERED, oldHandler);
+                    }
+                    if (handler != null) {
+                        node.addEventHandler(TactilePaneEvent.PROXIMITY_ENTERED, handler);
+                    }
+                    super.set(handler);
+                }
+            };
+            setConstraint(node, ON_PROXIMITY_ENTERED, property);
+        }
+        return property;
+    }
+    
+    public static void setOnProximityLeft(Node node, EventHandler<? super TactilePaneEvent> handler) {
+        onProximityLeftProperty(node).set(handler);
+    }
+    
+    public static EventHandler<? super TactilePaneEvent> getOnProximityLeft(Node node) {
+        return onProximityLeftProperty(node).get();
+    }
+    
+    /**
+     * Defines a function to be called when another {@code Node} leaves the
+     * proximity of this {@code node}.
+     */
+    public static ObjectProperty<EventHandler<? super TactilePaneEvent>> onProximityLeftProperty(Node node) {
+        ObjectProperty<EventHandler<? super TactilePaneEvent>> property = (ObjectProperty<EventHandler<? super TactilePaneEvent>>) getConstraint(node, ON_PROXIMITY_LEFT);
+        if (property == null) {
+            property = new SimpleObjectProperty<EventHandler<? super TactilePaneEvent>>(null) {
+                @Override
+                public void set(EventHandler<? super TactilePaneEvent> handler) {
+                    EventHandler<? super TactilePaneEvent> oldHandler = get();
+                    if (oldHandler != null) {
+                        node.removeEventHandler(TactilePaneEvent.PROXIMITY_LEFT, oldHandler);
+                    }
+                    if (handler != null) {
+                        node.addEventHandler(TactilePaneEvent.PROXIMITY_LEFT, handler);
+                    }
+                    super.set(handler);
+                }
+            };
+            setConstraint(node, ON_PROXIMITY_LEFT, property);
+        }
+        return property;
+    }
+    
+    public static void setOnInArea(Node node, EventHandler<? super TactilePaneEvent> handler) {
+        onInAreaProperty(node).set(handler);
+    }
+    
+    public static EventHandler<? super TactilePaneEvent> getOnInArea(Node node) {
+        return onInAreaProperty(node).get();
+    }
+    
+    /**
+     * Defines a function to be called continuously when another {@code Node} is
+     * in the bounds of this {@code node}.
+     */
+    public static ObjectProperty<EventHandler<? super TactilePaneEvent>> onInAreaProperty(Node node) {
+        ObjectProperty<EventHandler<? super TactilePaneEvent>> property = (ObjectProperty<EventHandler<? super TactilePaneEvent>>) getConstraint(node, ON_IN_AREA);
+        if (property == null) {
+            property = new SimpleObjectProperty<EventHandler<? super TactilePaneEvent>>(null) {
+                @Override
+                public void set(EventHandler<? super TactilePaneEvent> handler) {
+                    EventHandler<? super TactilePaneEvent> oldHandler = get();
+                    if (oldHandler != null) {
+                        node.removeEventHandler(TactilePaneEvent.IN_AREA, oldHandler);
+                    }
+                    if (handler != null) {
+                        node.addEventHandler(TactilePaneEvent.IN_AREA, handler);
+                    }
+                    super.set(handler);
+                }
+            };
+            setConstraint(node, ON_IN_AREA, property);
+        }
+        return property;
+    }
+    
+    public static void setOnAreaEntered(Node node, EventHandler<? super TactilePaneEvent> handler) {
+        onAreaEnteredProperty(node).set(handler);
+    }
+    
+    public static EventHandler<? super TactilePaneEvent> getOnAreaEntered(Node node) {
+        return onAreaEnteredProperty(node).get();
+    }
+    
+    /**
+     * Defines a function to be called when another {@code Node} enters the
+     * bounds of this {@code node}.
+     */
+    public static ObjectProperty<EventHandler<? super TactilePaneEvent>> onAreaEnteredProperty(Node node) {
+        ObjectProperty<EventHandler<? super TactilePaneEvent>> property = (ObjectProperty<EventHandler<? super TactilePaneEvent>>) getConstraint(node, ON_AREA_ENTERED);
+        if (property == null) {
+            property = new SimpleObjectProperty<EventHandler<? super TactilePaneEvent>>(null) {
+                @Override
+                public void set(EventHandler<? super TactilePaneEvent> handler) {
+                    EventHandler<? super TactilePaneEvent> oldHandler = get();
+                    if (oldHandler != null) {
+                        node.removeEventHandler(TactilePaneEvent.AREA_ENTERED, oldHandler);
+                    }
+                    if (handler != null) {
+                        node.addEventHandler(TactilePaneEvent.AREA_ENTERED, handler);
+                    }
+                    super.set(handler);
+                }
+            };
+            setConstraint(node, ON_AREA_ENTERED, property);
+        }
+        return property;
+    }
+    
+    public static void setOnAreaLeft(Node node, EventHandler<? super TactilePaneEvent> handler) {
+        onAreaLeftProperty(node).set(handler);
+    }
+    
+    public static EventHandler<? super TactilePaneEvent> getOnAreaLeft(Node node) {
+        return onAreaLeftProperty(node).get();
+    }
+    
+    /**
+     * Defines a function to be called when another {@code Node} leaves the
+     * bounds of this {@code node}.
+     */
+    public static ObjectProperty<EventHandler<? super TactilePaneEvent>> onAreaLeftProperty(Node node) {
+        ObjectProperty<EventHandler<? super TactilePaneEvent>> property = (ObjectProperty<EventHandler<? super TactilePaneEvent>>) getConstraint(node, ON_AREA_LEFT);
+        if (property == null) {
+            property = new SimpleObjectProperty<EventHandler<? super TactilePaneEvent>>(null) {
+                @Override
+                public void set(EventHandler<? super TactilePaneEvent> handler) {
+                    EventHandler<? super TactilePaneEvent> oldHandler = get();
+                    if (oldHandler != null) {
+                        node.removeEventHandler(TactilePaneEvent.AREA_LEFT, oldHandler);
+                    }
+                    if (handler != null) {
+                        node.addEventHandler(TactilePaneEvent.AREA_LEFT, handler);
+                    }
+                    super.set(handler);
+                }
+            };
+            setConstraint(node, ON_AREA_LEFT, property);
+        }
+        return property;
+    }
+    
+    /**
+     * Calls {@code register} on the given TactilePane with {@code node} as
+     * argument. If {@code tactilePane} is {@code null}, {@code node} will be
+     * deregistered at its previous {@code TactilePane}, if one exists.
      */
     public static void setTracker(Node node, TactilePane tactilePane) {
         if (tactilePane == null) {
             TactilePane oldPane = getTracker(node);
             if (oldPane != null) {
-                oldPane.deregister(node);
+                oldPane.stopTracking(node);
             }
         } else {
-            tactilePane.register(node);
+            tactilePane.startTracking(node);
         }
     }
     
     /**
-     * The {@code TactilePane} where {@code node} is currently registered.
+     * The {@code TactilePane} which is currently tracking {@code node}.
      */
     public static TactilePane getTracker(Node node) {
         return (TactilePane) getConstraint(node, TRACKER);
@@ -302,6 +505,28 @@ public class TactilePane extends Control {
             }
         }
         return null;
+    }
+    
+    // STATIC METHODS
+    
+    public static void moveAwayFrom(Node move, Node from, double force) {
+        if (move.getParent() == null || !(move.getParent() instanceof TactilePane)) {
+            return;
+        }
+
+        Bounds moveBounds = move.localToScene(move.getBoundsInLocal());
+        Bounds fromBounds = from.localToScene(from.getBoundsInLocal());
+
+        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
+        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
+        double fromX = fromBounds.getMinX() + moveBounds.getWidth() / 2;
+        double fromY = fromBounds.getMinY() + moveBounds.getHeight() / 2;
+
+        double distanceX = moveX - fromX;
+        double distanceY = moveY - fromY;
+
+        Point2D vector = new Point2D(distanceX, distanceY).normalize().multiply(force);
+        TactilePane.setVector(move, TactilePane.getVector(move).add(vector));
     }
     
     // INSTANCE VARIABLES
@@ -348,7 +573,7 @@ public class TactilePane extends Control {
         
         @Override
         public String toString() {
-            return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %d, localY = %d]", draggable.toString(), touchId, localX, localY);
+            return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %f, localY = %f]", draggable.toString(), touchId, localX, localY);
         }
     }
     
@@ -478,7 +703,7 @@ public class TactilePane extends Control {
     }
     
     
-    // PROPERTIES
+    // INSTANCE PROPERTIES
     
    /**
      *
@@ -538,18 +763,18 @@ public class TactilePane extends Control {
     
     // INSTANCE METHODS
     
-    public void register(Node... nodes) {
+    public void startTracking(Node... nodes) {
         for (Node node: nodes) {
             TactilePane oldPane = getTracker(node);
             if (oldPane != null) {
-                oldPane.deregister(node);
+                oldPane.stopTracking(node);
             }
             physics.startTracking(node);
             setConstraint(node, TRACKER, this);
         }
     }
     
-    public void deregister(Node... nodes) {
+    public void stopTracking(Node... nodes) {
         for (Node node: nodes) {
             physics.stopTracking(node);
             setConstraint(node, TRACKER, null);
