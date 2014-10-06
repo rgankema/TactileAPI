@@ -47,7 +47,7 @@ public class ColorSlotPane extends Pane {
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(rightSlot.getColorItem().getColor())) {
                     TactilePane.setAnchor(rightSlot.getColorItem(), null);
-                    TactilePane.moveAwayFrom(rightSlot.getColorItem(), newValue, 200);
+                    TactilePane.moveAwayFrom(rightSlot.getColorItem(), newValue, 500);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 }
@@ -68,7 +68,7 @@ public class ColorSlotPane extends Pane {
                     setBorderColor(newValue.getColor());
                 } else if (!newValue.getColor().equals(leftSlot.getColorItem().getColor())) {
                     TactilePane.setAnchor(leftSlot.getColorItem(), null);
-                    TactilePane.moveAwayFrom(leftSlot.getColorItem(), newValue, 200);
+                    TactilePane.moveAwayFrom(leftSlot.getColorItem(), newValue, 500);
                     setBackgroundColor(newValue.getColor());
                     setBorderColor(newValue.getColor());
                 }

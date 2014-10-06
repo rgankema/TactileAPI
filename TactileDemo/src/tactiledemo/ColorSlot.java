@@ -67,7 +67,7 @@ public class ColorSlot extends Rectangle {
             if (parent.getBackgroundColor() == Color.GREY) {
                 parent.setBorderColor(colorItem.getColor());
             } else if (!parent.getBorderColor().equals(colorItem.getColor())) {
-                TactilePane.moveAwayFrom(this, other, 200);
+                TactilePane.moveAwayFrom(this, other, 500);
             }
         }
     }
