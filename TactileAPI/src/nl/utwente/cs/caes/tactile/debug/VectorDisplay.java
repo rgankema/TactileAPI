@@ -1,5 +1,7 @@
 package nl.utwente.cs.caes.tactile.debug;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.geometry.Point2D;
 import javafx.scene.control.Label;
@@ -11,11 +13,11 @@ class VectorDisplay extends Pane {
 
     static Color COLOR_OPAQUE = new Color(0, 0, 1, 1);
     static Color COLOR_SEMI_TRANSPARENT = new Color(0, 0, 1, 0.5);
-    private static double OFFSET = 10;
+    static final double OFFSET = 10;
 
-    private Line line = new Line(0, 0, 0, 0);
-    private Label label = new Label("");
-    private ObjectProperty<Point2D> vectorProperty;
+    private final Line line = new Line(0, 0, 0, 0);
+    private final Label label = new Label("");
+    private final ObjectProperty<Point2D> vectorProperty;
 
     public VectorDisplay(ObjectProperty<Point2D> vectorProperty) {
         this.vectorProperty = vectorProperty;

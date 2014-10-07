@@ -15,10 +15,10 @@ class TouchDisplay extends Pane {
     static Color COLOR_OPAQUE = new Color(1.0, 0, 0, 1);
     static Color COLOR_SEMI_TRANSPARENT = new Color(1.0, 0, 0, 0.5);
 
-    private StringProperty labelText;
-    private Circle circle;
-    private Label label;
-    private int touchId;
+    private final StringProperty labelText;
+    private final Circle circle;
+    private final Label label;
+    private final int touchId;
 
     public TouchDisplay(double x, double y, double radius, int touchId) {
         this.touchId = touchId;

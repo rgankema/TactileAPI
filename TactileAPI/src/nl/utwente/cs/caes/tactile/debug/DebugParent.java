@@ -29,7 +29,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.util.Duration;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
-import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 public class DebugParent extends StackPane {
     
@@ -38,7 +37,6 @@ public class DebugParent extends StackPane {
     Map<Integer, Line> lineByTouchId = new TreeMap<>();
 
     Map<Node, VectorDisplay> vectorDisplayByDraggable = new ConcurrentHashMap<>();
-    Map<Pair<Node>, Line> lineByActiveNodePair = new ConcurrentHashMap<>();
     Map<Node, BoundsDisplay> boundsDisplayByActiveNode = new ConcurrentHashMap<>();
 
     List<TouchPoint> touchPoints = new ArrayList<>();
@@ -179,47 +177,6 @@ public class DebugParent extends StackPane {
             ft.play();
         });
 
-        addEventFilter(TactilePaneEvent.PROXIMITY_ENTERED, event -> {
-            Node n1 = event.getTarget();
-            Node n2 = event.getOther();
-            Bounds b1 = n1.localToScene(n1.getBoundsInLocal());
-            Bounds b2 = n2.localToScene(n2.getBoundsInLocal());
-
-            Pair<Node> pair = new Pair<>(n1, n2);
-
-            Line line = new Line(b1.getMinX(), b1.getMinY(), b2.getMinX(), b2.getMinY());
-            Line old = lineByActiveNodePair.put(pair, line);
-            overlay.getChildren().add(line);
-            overlay.getChildren().remove(old);
-        });
-
-        addEventFilter(TactilePaneEvent.PROXIMITY_LEFT, event -> {
-            Node n1 = event.getTarget();
-            Node n2 = event.getOther();
-            Pair<Node> pair = null;
-            Line line = null;
-
-            for (Pair<Node> p : lineByActiveNodePair.keySet()) {
-                if (p.left == n1 && p.right == n2 || p.left == n2 && p.right == n1) {
-                    line = lineByActiveNodePair.get(p);
-                    pair = p;
-                    break;
-                }
-            }
-
-            lineByActiveNodePair.remove(pair);
-
-            final Line rLine = line;
-
-            FadeTransition ft = new FadeTransition(new Duration(100), line);
-            ft.setFromValue(1);
-            ft.setToValue(0);
-            ft.setOnFinished(e -> {
-                overlay.getChildren().remove(rLine);
-            });
-            ft.play();
-        });
-
         new AnimationTimer() {
 
             @Override
@@ -229,16 +186,6 @@ public class DebugParent extends StackPane {
                     VectorDisplay vector = vectorDisplayByDraggable.get(node);
 
                     vector.relocate(bounds.getMinX(), bounds.getMinY());
-                }
-                for (Pair<Node> pair : lineByActiveNodePair.keySet()) {
-                    Bounds b1 = pair.left.localToScene(pair.left.getBoundsInLocal());
-                    Bounds b2 = pair.right.localToScene(pair.right.getBoundsInLocal());
-
-                    Line line = lineByActiveNodePair.get(pair);
-                    line.setStartX(b1.getMinX());
-                    line.setStartY(b1.getMinY());
-                    line.setEndX(b2.getMinX());
-                    line.setEndY(b2.getMinY());
                 }
                 for (Node node : boundsDisplayByActiveNode.keySet()) {
                     Bounds bounds = node.localToScene(node.getBoundsInLocal());
@@ -358,16 +305,5 @@ public class DebugParent extends StackPane {
             overlay.getChildren().remove(vector);
         }
 
-    }
-
-    private class Pair<T> {
-
-        public T left;
-        public T right;
-
-        public Pair(T left, T right) {
-            this.left = left;
-            this.right = right;
-        }
     }
 }

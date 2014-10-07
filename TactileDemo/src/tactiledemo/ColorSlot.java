@@ -28,7 +28,7 @@ public class ColorSlot extends Rectangle {
         setStroke(Color.DARKGREY);
         setStrokeWidth(4);
         
-        TactilePane.setOnProximityEntered(this, event -> onProximityEntered(event));
+        TactilePane.setOnInProximity(this, event -> onInProximity(event));
         TactilePane.setOnProximityLeft(this, event -> onProximityLeft(event));
         TactilePane.setOnAreaEntered(this, event -> onAreaEntered(event));
         TactilePane.setOnAreaLeft(this, event -> onAreaLeft(event));
@@ -54,7 +54,7 @@ public class ColorSlot extends Rectangle {
         return colorItem;
     }
     
-    private void onProximityEntered(TactilePaneEvent event) {
+    private void onInProximity(TactilePaneEvent event) {
         Node other = event.getOther();
         
         if (other instanceof ColorItem) {

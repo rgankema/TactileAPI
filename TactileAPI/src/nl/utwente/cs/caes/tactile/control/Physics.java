@@ -14,10 +14,20 @@ import javafx.scene.Node;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 class Physics {
-
+    // TODO: misschien een idee om hier properties van te maken
+    
+    // Length of a time step
     protected static final double TIME_STEP = 1d / 60d;
+    // Multiplied with each vector every time step
+    private static final double FRICTION = 0.95;
+    // Multiplier for a reflection vector
     private static final double BOUNCE = 0.50;
-    private static final double THRESHOLD = 2.5;
+    // Multiplier for the slide vector
+    private static final double SLIDE = 1.2;
+    // The threshold at which a vector is set to the zero vector
+    private static final double THRESHOLD = 2.5;    
+    
+    // Normal vectors
     private static final Point2D LEFT_NORMAL = new Point2D(1, 0);
     private static final Point2D RIGHT_NORMAL = new Point2D(-1, 0);
     private static final Point2D TOP_NORMAL = new Point2D(0, 1);
@@ -83,10 +93,6 @@ class Physics {
         timer.stop();
     }
     
-    public QuadTree getQuadTree() {
-        return quadTree;
-    }
-    
     public boolean startTracking(Node node) {
         if (activeNodes.add(node)) {
             quadTree.insert(node);
@@ -115,8 +121,8 @@ class Physics {
         for (Node node: draggables) {
             Point2D vector = TactilePane.getVector(node);
             
-            // Multiply with 0.95 to model friction
-            vector = vector.multiply(0.95);
+            // Multiply with FRICTION to model friction
+            vector = vector.multiply(FRICTION);
             TactilePane.setVector(node, vector);
             
             // If the resulting vector is small enough, set the vector to zero vector
@@ -135,7 +141,7 @@ class Physics {
                 double deltaY = node.getLayoutY() - prevLocation.getY();
                 
                 // Update vector
-                Point2D newVector = TactilePane.getVector(node).add(new Point2D(deltaX , deltaY));
+                Point2D newVector = TactilePane.getVector(node).add(new Point2D(deltaX , deltaY).multiply(SLIDE));
                 TactilePane.setVector(node, newVector);
             }
             // If the node is not actively being used and not anchored update the node's position according to vector

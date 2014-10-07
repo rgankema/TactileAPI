@@ -785,7 +785,7 @@ public class TactilePane extends Control {
      * @defaultvalue 25.0
      */
     public final DoubleProperty proximityThresholdProperty() {
-        return physics.getQuadTree().proximityThresholdProperty();
+        return physics.quadTree.proximityThresholdProperty();
     }
     
     // INSTANCE METHODS
