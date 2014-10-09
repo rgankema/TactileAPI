@@ -25,7 +25,9 @@ class Physics {
     // Multiplier for the slide vector
     private static final double SLIDE = 1.2;
     // The threshold at which a vector is set to the zero vector
-    private static final double THRESHOLD = 2.5;    
+    private static final double THRESHOLD = 2.5;
+    // Default value for force
+    protected static final double FORCE_DEF = 100;
     
     // Normal vectors
     private static final Point2D LEFT_NORMAL = new Point2D(1, 0);

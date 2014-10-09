@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ScheduledExecutorService;
+
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -537,6 +538,52 @@ public class TactilePane extends Control {
         double distanceY = moveY - fromY;
 
         Point2D vector = new Point2D(distanceX, distanceY).normalize().multiply(force);
+        TactilePane.setVector(moveDraggable, TactilePane.getVector(move).add(vector));
+    }
+    
+    /**
+     * Moves two nodes away from each other with the default level of force.
+     * @param move - node moving away
+     * @param from - Node move is moving away from
+     */
+    public static void moveAwayFrom(Node move, Node from) {
+    	moveAwayFrom(move, from, Physics.FORCE_DEF);
+    }
+    
+    public static void moveCloserTo(Node move, Node to, double force){
+    	if (move.getParent() == null) {
+            return;
+        }
+    	
+    	Node moveDraggable = move;
+    	while(!(moveDraggable.getParent() instanceof TactilePane)) {
+            moveDraggable = moveDraggable.getParent();
+            
+            if (move.getParent() == null) {
+                return;
+            }
+        }
+    	
+    	Bounds moveBounds = move.localToScene(move.getBoundsInLocal());
+        Bounds toBounds = to.localToScene(to.getBoundsInLocal());
+        
+        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
+        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
+        double toX = toBounds.getMinX() + moveBounds.getWidth() / 2;
+        double toY = toBounds.getMinY() + moveBounds.getHeight() / 2;
+
+        double distanceX = moveX - toX;
+        double distanceY = moveY - toY;
+
+        //smaller on smaller distance? divide by active area
+        
+        Point2D forFactor = new Point2D(distanceX, distanceY);
+        double factor = forFactor.magnitude() / 150.0; //active area *2, how to get?
+        //TODO: needs varying divisor depending on active area
+        factor = factor * -1.0; //invert for attraction
+        factor = factor * force; //for the increase after normalization of vector
+        
+        Point2D vector = new Point2D(distanceX, distanceY).normalize().multiply(factor);
         TactilePane.setVector(moveDraggable, TactilePane.getVector(move).add(vector));
     }
     

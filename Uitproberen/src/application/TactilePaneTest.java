@@ -50,7 +50,7 @@ public class TactilePaneTest extends Application {
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
                 if (!TactilePane.isInUse(circle)) {
-                    TactilePane.moveAwayFrom(circle, event.getOther(), 100);
+                    TactilePane.moveCloserTo(circle, event.getOther(), 20);
                 }
             });
             root.getChildren().add(circle);
@@ -60,8 +60,11 @@ public class TactilePaneTest extends Application {
         }
         
         root.addEventFilter(TactilePaneEvent.ANY, event -> {
-            System.out.println(event.getEventType());
+            //System.out.println(event.getEventType());
         });
+        
+        // Set proximity threshhold
+        root.proximityThresholdProperty().set(75);
         
         // Debug meuk
         DebugParent debug = new DebugParent(root);
