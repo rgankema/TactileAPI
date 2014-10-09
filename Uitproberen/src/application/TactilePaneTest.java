@@ -15,6 +15,8 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Transform;
+import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
@@ -41,7 +43,16 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < RECTANGLES; i++) {
             Rectangle rectangle = new Rectangle(80, 80);
             rectangle.relocate(Math.random() * (WIDTH - 80), Math.random() * (HEIGHT - 80));
-            TactilePane.setDraggable(rectangle, false);
+            TactilePane.setDraggable(rectangle, true);
+            TactilePane.setOnAreaLeft(rectangle, event -> {
+            	//rectangle.getTransforms().add(new Rotate(15,0,0,15));
+            	rectangle.setRotate(rectangle.getRotate() + 15);
+            });
+            rectangle.setOnMouseClicked(event -> {
+            	//rectangle.getTransforms().add(new Rotate(90,0,0,15));
+            	rectangle.setRotate(0.0);
+            	
+            });
             root.getChildren().add(rectangle);
         }
         for (int i = 0; i < CIRCLES; i++) {
