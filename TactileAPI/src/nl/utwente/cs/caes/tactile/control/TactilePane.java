@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
@@ -15,11 +15,11 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleableProperty;
@@ -474,10 +474,10 @@ public class TactilePane extends Control {
         if (tactilePane == null) {
             TactilePane oldPane = getTracker(node);
             if (oldPane != null) {
-                oldPane.stopTracking(node);
+                oldPane.getActiveNodes().remove(node);
             }
         } else {
-            tactilePane.startTracking(node);
+            tactilePane.getActiveNodes().add(node);
         }
     }
     
@@ -547,48 +547,13 @@ public class TactilePane extends Control {
      * @param from - Node move is moving away from
      */
     public static void moveAwayFrom(Node move, Node from) {
-    	moveAwayFrom(move, from, Physics.FORCE_DEF);
-    }
-    
-    public static void moveCloserTo(Node move, Node to, double force){
-    	if (move.getParent() == null) {
-            return;
-        }
-    	
-    	Node moveDraggable = move;
-    	while(!(moveDraggable.getParent() instanceof TactilePane)) {
-            moveDraggable = moveDraggable.getParent();
-            
-            if (move.getParent() == null) {
-                return;
-            }
-        }
-    	
-    	Bounds moveBounds = move.localToScene(move.getBoundsInLocal());
-        Bounds toBounds = to.localToScene(to.getBoundsInLocal());
-        
-        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
-        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
-        double toX = toBounds.getMinX() + moveBounds.getWidth() / 2;
-        double toY = toBounds.getMinY() + moveBounds.getHeight() / 2;
-
-        double distanceX = moveX - toX;
-        double distanceY = moveY - toY;
-
-        //smaller on smaller distance? divide by active area
-        
-        Point2D forFactor = new Point2D(distanceX, distanceY);
-        double factor = forFactor.magnitude() / 150.0; //active area *2, how to get?
-        //TODO: needs varying divisor depending on active area
-        factor = factor * -1.0; //invert for attraction
-        factor = factor * force; //for the increase after normalization of vector
-        
-        Point2D vector = new Point2D(distanceX, distanceY).normalize().multiply(factor);
-        TactilePane.setVector(moveDraggable, TactilePane.getVector(move).add(vector));
+    	moveAwayFrom(move, from, PhysicsTimer.DEFAULT_FORCE);
     }
     
     // INSTANCE VARIABLES
-    private Physics physics;
+    private final PhysicsTimer physics;
+    final QuadTree quadTree;
+    private final ObservableSet<Node> activeNodes;
     
     // CONSTRUCTORS
     
@@ -618,7 +583,38 @@ public class TactilePane extends Control {
             }
         });
         
-        physics = new Physics(this);
+        // Initialise quadTree
+        quadTree = new QuadTree(this.localToScene(this.getBoundsInLocal()));
+        
+        this.widthProperty().addListener((observableValue, oldWidth, newWidth) -> {
+            quadTree.setBounds(this.localToScene(this.getBoundsInLocal()));
+        });
+
+        this.heightProperty().addListener((observableValue, oldHeight, newHeight) -> {
+            quadTree.setBounds(this.localToScene(this.getBoundsInLocal()));
+        });
+        
+        activeNodes = FXCollections.observableSet(Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        activeNodes.addListener((SetChangeListener.Change<? extends Node> change) -> {
+            if (change.wasAdded()) {
+                Node node = change.getElementAdded();
+                TactilePane oldPane = getTracker(node);
+                if (oldPane != null) {
+                    oldPane.getActiveNodes().remove(node);
+                }
+                quadTree.insert(node);
+                setConstraint(node, TRACKER, TactilePane.this);
+            }
+            else {
+                Node node = change.getElementRemoved();
+                quadTree.insert(node);
+                TactilePane.getNodesColliding(node).clear();
+                TactilePane.getNodesInProximity(node).clear();
+                setConstraint(node, TRACKER, null);
+            }
+        });
+        
+        physics = new PhysicsTimer(this);
         physics.start();
     }
     
@@ -787,6 +783,10 @@ public class TactilePane extends Control {
         return super.getChildren();
     }
     
+    public ObservableSet<Node> getActiveNodes() {
+        return activeNodes;
+    }
+    
     /**
      * Whether children will collide with the borders of this
      * {@code TactilePane}. If set to true the {@code TactilePane} will prevent
@@ -822,7 +822,7 @@ public class TactilePane extends Control {
 
     /**
      * Specifies how close two {@code Nodes} have to be to each other to be
-     * considered in eachothers proximity. When set to 0, TactilePane won't fire
+     * considered in each others proximity. When set to 0, TactilePane won't fire
      * {@code PROXIMITY_ENTERED} or {@code IN_PROXIMITY} events at all.
      * {@code PROXIMITY_LEFT} events will still be fired for any pair of
      * {@code Nodes} that entered each other's proximity before the threshold
@@ -832,27 +832,7 @@ public class TactilePane extends Control {
      * @defaultvalue 25.0
      */
     public final DoubleProperty proximityThresholdProperty() {
-        return physics.quadTree.proximityThresholdProperty();
-    }
-    
-    // INSTANCE METHODS
-    
-    public void startTracking(Node... nodes) {
-        for (Node node: nodes) {
-            TactilePane oldPane = getTracker(node);
-            if (oldPane != null) {
-                oldPane.stopTracking(node);
-            }
-            physics.startTracking(node);
-            setConstraint(node, TRACKER, this);
-        }
-    }
-    
-    public void stopTracking(Node... nodes) {
-        for (Node node: nodes) {
-            physics.stopTracking(node);
-            setConstraint(node, TRACKER, null);
-        }
+        return quadTree.proximityThresholdProperty();
     }
     
     // STYLESHEET HANDLING

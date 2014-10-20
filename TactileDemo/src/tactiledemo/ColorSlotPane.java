@@ -106,8 +106,8 @@ public class ColorSlotPane extends Pane {
         @Override
         public void set(TactilePane pane) {
             if (pane != null) {
-                pane.startTracking(leftSlot);
-                pane.startTracking(rightSlot);
+                pane.getActiveNodes().add(leftSlot);
+                pane.getActiveNodes().add(rightSlot);
             }
             super.set(pane);
         }

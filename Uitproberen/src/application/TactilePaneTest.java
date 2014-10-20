@@ -15,8 +15,6 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.transform.Transform;
-import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
@@ -61,13 +59,13 @@ public class TactilePaneTest extends Application {
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
                 if (!TactilePane.isInUse(circle)) {
-                    TactilePane.moveCloserTo(circle, event.getOther(), 20);
+                    TactilePane.moveAwayFrom(circle, event.getOther(), -20);
                 }
             });
             root.getChildren().add(circle);
         }
         for (Node node: root.getChildren()) {
-            root.startTracking(node);
+            root.getActiveNodes().add(node);
         }
         
         root.addEventFilter(TactilePaneEvent.ANY, event -> {
@@ -80,9 +78,6 @@ public class TactilePaneTest extends Application {
         // Debug meuk
         DebugParent debug = new DebugParent(root);
         debug.registerTactilePane(root);
-        for (Node node : root.getChildren()) {
-            debug.registerActiveNode(node, root);
-        }
         
         Scene scene = new Scene(debug);
         primaryStage.setScene(scene);

@@ -15,6 +15,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ListChangeListener;
+import javafx.collections.SetChangeListener;
 import javafx.event.Event;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
@@ -62,8 +63,7 @@ public class DebugParent extends StackPane {
         // Makes sure the overlay is always drawn on top of the other child
         getChildren().add(overlay);
         getChildren().addListener((Observable value) -> {
-            getChildren().remove(overlay);
-            getChildren().add(overlay);
+            overlay.toFront();
         });
 
         // Maps mouse events to touch events
@@ -261,6 +261,9 @@ public class DebugParent extends StackPane {
     }
     
     public void registerTactilePane(TactilePane pane) {
+        for (Node node : pane.getChildren()) {
+            registerDraggable(node);
+        }
         
         pane.getChildren().addListener((ListChangeListener.Change<? extends Node> c) -> {
             c.next();
@@ -271,9 +274,21 @@ public class DebugParent extends StackPane {
                 registerDraggable(node);
             }
         });
+        
+        for (Node node : pane.getActiveNodes()) {
+            registerActiveNode(node, pane);
+        }
+        
+        pane.getActiveNodes().addListener((SetChangeListener.Change<? extends Node> c) -> {
+            if (c.wasAdded()) {
+                registerActiveNode(c.getElementAdded(), pane);
+            } else {
+                deregisterActiveNode(c.getElementRemoved());
+            }
+        });
     }
     
-    public void registerActiveNode(Node node, TactilePane pane) {
+    private void registerActiveNode(Node node, TactilePane pane) {
         Bounds bounds = node.localToScene(node.getBoundsInLocal());
                 
         BoundsDisplay bd = new BoundsDisplay(bounds.getWidth(), bounds.getHeight(), pane.proximityThresholdProperty());
@@ -283,7 +298,7 @@ public class DebugParent extends StackPane {
         boundsDisplayByActiveNode.put(node, bd);
     }
     
-    public void deregisterActiveNode(Node node) {
+    private void deregisterActiveNode(Node node) {
         BoundsDisplay bd = boundsDisplayByActiveNode.remove(node);
         overlay.getChildren().remove(bd);
     }
