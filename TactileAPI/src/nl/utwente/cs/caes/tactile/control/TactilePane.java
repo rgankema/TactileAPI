@@ -56,7 +56,6 @@ public class TactilePane extends Control {
     static final String ON_IN_AREA = "tactile-pane-on-in-area";
     
     // Attached Properties that are only used privately
-    static final String MOUSE_EVENT_FILTER = "tactile-pane-mouse-event-filter";
     static final String TOUCH_EVENT_HANDLER = "tactile-pane-touch-event-handler";
     static final String MOUSE_EVENT_HANDLER = "tactile-pane-mouse-event-handler";
     
@@ -557,16 +556,22 @@ public class TactilePane extends Control {
     
     // CONSTRUCTORS
     
+    /**
+     * Creates a TactilePane control 
+     */
     public TactilePane() {
         getStyleClass().setAll(DEFAULT_STYLE_CLASS);
         // Since this Control is more or less a Pane, focusTraversable should be false by default
         ((StyleableProperty<Boolean>)focusTraversableProperty()).applyStyle(null, false);
         
+        // Add EventHandlers for dragging to children when they are added
         getChildren().addListener((ListChangeListener.Change<? extends Node> c) -> {
             c.next();
             for (Node node: c.getRemoved()) {
                 // Delay removal of drag event handlers, just in case all that
                 // happened is a node.toFront() call.
+                
+                // TODO: Rewrite code so this ugly workaround isn't necessary
                 TimerTask removeDragEventHandlers = new TimerTask() {
                     @Override
                     public void run() {
@@ -585,15 +590,14 @@ public class TactilePane extends Control {
         
         // Initialise quadTree
         quadTree = new QuadTree(this.localToScene(this.getBoundsInLocal()));
-        
         this.widthProperty().addListener((observableValue, oldWidth, newWidth) -> {
             quadTree.setBounds(this.localToScene(this.getBoundsInLocal()));
         });
-
         this.heightProperty().addListener((observableValue, oldHeight, newHeight) -> {
             quadTree.setBounds(this.localToScene(this.getBoundsInLocal()));
         });
         
+        // Initialise activeNodes
         activeNodes = FXCollections.observableSet(Collections.newSetFromMap(new ConcurrentHashMap<>()));
         activeNodes.addListener((SetChangeListener.Change<? extends Node> change) -> {
             if (change.wasAdded()) {
@@ -614,10 +618,15 @@ public class TactilePane extends Control {
             }
         });
         
+        // Initialise Physics
         physics = new PhysicsTimer(this);
         physics.start();
     }
     
+    /**
+     * Creates a TactilePane control
+     * @param children The initial set of children for this TactilePane
+     */
     public TactilePane(Node... children) {
         this();
         getChildren().addAll(children);
@@ -643,18 +652,12 @@ public class TactilePane extends Control {
     }
     
     private void addDragEventHandlers(Node node) {
-        if (getConstraint(node, MOUSE_EVENT_FILTER) != null) {
+        if (getConstraint(node, MOUSE_EVENT_HANDLER) != null) {
             // The node already has drag event handlers
             return;
         }
         
         final DragContext dragContext = new DragContext(node);
-        
-        EventHandler<MouseEvent> mouseFilter = event -> {
-            if (isDraggable(node) && event.isSynthesized() && event.getTarget() == node) {
-                event.consume();
-            }
-        };
         
         EventHandler<TouchEvent> touchHandler = event -> {
             EventType type = event.getEventType();
@@ -700,25 +703,20 @@ public class TactilePane extends Control {
             event.consume();
         };
         
-        setConstraint(node, MOUSE_EVENT_FILTER, mouseFilter);
         setConstraint(node, TOUCH_EVENT_HANDLER, touchHandler);
         setConstraint(node, MOUSE_EVENT_HANDLER, mouseHandler);
         
-        node.addEventFilter(MouseEvent.ANY, mouseFilter);
         node.addEventHandler(TouchEvent.ANY, touchHandler);
         node.addEventHandler(MouseEvent.ANY, mouseHandler);
     }
     
     private void removeDragEventHandlers(Node node) {
-        EventHandler<MouseEvent> mouseFilter = (EventHandler<MouseEvent>) getConstraint(node, MOUSE_EVENT_FILTER);
         EventHandler<TouchEvent> touchHandler = (EventHandler<TouchEvent>) getConstraint(node, TOUCH_EVENT_HANDLER);
         EventHandler<MouseEvent> mouseHandler = (EventHandler<MouseEvent>) getConstraint(node, MOUSE_EVENT_HANDLER);
         
-        node.removeEventFilter(MouseEvent.ANY, mouseFilter);
         node.removeEventHandler(TouchEvent.ANY, touchHandler);
         node.removeEventHandler(MouseEvent.ANY, mouseHandler);
         
-        setConstraint(node, MOUSE_EVENT_FILTER, null);
         setConstraint(node, TOUCH_EVENT_HANDLER, null);
         setConstraint(node, MOUSE_EVENT_HANDLER, null);
     }
@@ -783,6 +781,10 @@ public class TactilePane extends Control {
         return super.getChildren();
     }
     
+    /**
+     * 
+     * @return modifiable list of {@code Nodes} that should be tracked by this {@code TactilePane}
+     */
     public ObservableSet<Node> getActiveNodes() {
         return activeNodes;
     }
@@ -839,7 +841,6 @@ public class TactilePane extends Control {
     
     // The selector class
     private static String DEFAULT_STYLE_CLASS = "tactile-pane";
-    // TODO PseudoClasses maken
     
     private static final class StyleableProperties {
         // TODO CSSMetaData maken voor properties

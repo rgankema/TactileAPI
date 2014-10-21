@@ -232,8 +232,8 @@ class QuadTree {
      */
     public void update() {
         Iterator<Node> iterator = proximityBoundsByObject.keySet().iterator();
-        List<Node> objectsToAdd = new ArrayList<Node>();
-        List<Bounds> boundsToAdd = new ArrayList<Bounds>();
+        List<Node> objectsToAdd = new ArrayList<>();
+        List<Bounds> boundsToAdd = new ArrayList<>();
 
         while (iterator.hasNext()) {
             Node object = iterator.next();
@@ -273,10 +273,10 @@ class QuadTree {
      * Retrieves all the objects that could be in the proximity (or collide
      * with) the given object.
      *
-     * @param object The object to find neighbors for
+     * @param object The object to find neighbours for
      */
     public List<Node> retrieve(Node object) {
-        List<Node> returnObjects = retrieve(object, new ArrayList<Node>());
+        List<Node> returnObjects = retrieve(object, new ArrayList<>());
         returnObjects.remove(object);
         return returnObjects;
     }

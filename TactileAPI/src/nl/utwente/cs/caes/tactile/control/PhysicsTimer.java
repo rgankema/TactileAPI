@@ -1,6 +1,6 @@
 package nl.utwente.cs.caes.tactile.control;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,26 +27,17 @@ class PhysicsTimer extends AnimationTimer {
     // Default value for force
     protected static final double DEFAULT_FORCE = 100;
     
-    // Normal vectors
-    private static final Point2D LEFT_NORMAL = new Point2D(1, 0);
-    private static final Point2D RIGHT_NORMAL = new Point2D(-1, 0);
-    private static final Point2D TOP_NORMAL = new Point2D(0, 1);
-    private static final Point2D BOTTOM_NORMAL = new Point2D(0, -1);
-
-    private double accumulatedTime;
-    private long previousTime = 0;
-    
-    TactilePane pane;
-    ConcurrentHashMap<Node, Point2D> locationByNode;
+    final TactilePane pane;
+    final ConcurrentHashMap<Node, Point2D> locationByNode  = new ConcurrentHashMap<>();
 
     PhysicsTimer(TactilePane tactilePane) {
         this.pane = tactilePane;
-        
-        locationByNode = new ConcurrentHashMap<>();
     }
     
-    @Override
-    public void handle(long currentTime) {
+    private double accumulatedTime;
+    private long previousTime = 0;
+    
+    @Override public void handle(long currentTime) {
         if (previousTime == 0) {
             previousTime = currentTime;
             return;
@@ -64,7 +55,9 @@ class PhysicsTimer extends AnimationTimer {
     }
 
     private void updatePositions() {
-        for (Node node: pane.getChildren()) {
+        // Copy list for thread safety, not 100% sure if necessary
+        Collection<Node> children = pane.getChildren();
+        for (Node node: children) {
             if (!TactilePane.isDraggable(node)) {
                 continue;
             }
@@ -112,13 +105,19 @@ class PhysicsTimer extends AnimationTimer {
         }
     }
 
+    /**
+     * Relocates a given Node by delta. If the TactilePane's bordersCollide property 
+     * is set to true, it will be ensured that the Node won't be relocated outside of
+     * the TactilePane's bounds. If a Node collides with the border of its TactilePane,
+     * it will get a new vector that is the reflection of its current one, to simulate
+     * reflection.
+     */
     private void layoutNode(Node node, Point2D delta) {
         double deltaX = delta.getX();
         double deltaY = delta.getY();
         
         if (!pane.isBordersCollide()) {
-            node.setLayoutX(node.getLayoutX() + deltaX);
-            node.setLayoutY(node.getLayoutY() + deltaY);
+            node.relocate(node.getLayoutX() + deltaX, node.getLayoutY() + deltaY);
             return;
         }
 
@@ -129,51 +128,52 @@ class PhysicsTimer extends AnimationTimer {
         Bounds destination = new BoundingBox(nodeBounds.getMinX() + deltaX, nodeBounds.getMinY() + deltaY, nodeBounds.getWidth(), nodeBounds.getHeight());
         
         if (paneBounds.contains(destination)) {
-            node.setLayoutX(node.getLayoutX() + deltaX);
-            node.setLayoutY(node.getLayoutY() + deltaY);
+            node.relocate(node.getLayoutX() + deltaX, node.getLayoutY() + deltaY);
         } else {
-            Point2D vecChopped, vc1 = null, vc2 = null, vecRest, vecNormal, vecReflection;
-            double ratio = deltaX / deltaY;
+            Point2D trimmedDelta1 = null;   // Delta trimmed so that it stops at the vertical wall the node would collide with (null if there's no such wall)
+            Point2D trimmedDelta2 = null;   // Delta trimmed so that it stops at the horizontal wall the node would collide with (null if there's no such wall)
+            Point2D restDelta;              // delta - td, with td = minimum(td1, td2)
+            Point2D reflectionDelta;        // The delta that is the result of bouncing off a wall
             
+            double xyRatio = deltaX / deltaY;
+            
+            // Compute td1 if one exists
             if (deltaX < 0 && destination.getMinX() < paneBounds.getMinX()) {
                 deltaX = paneBounds.getMinX() - nodeBounds.getMinX();
-                deltaY = deltaX / ratio;
-                vc1 = new Point2D(deltaX, deltaY);
+                deltaY = deltaX / xyRatio;
+                trimmedDelta1 = new Point2D(deltaX, deltaY);
             } else if (deltaX > 0 && destination.getMaxX() > paneBounds.getMaxX()) {
                 deltaX = paneBounds.getMaxX() - nodeBounds.getMaxX();
-                deltaY = deltaX / ratio;
-                vc1 = new Point2D(deltaX, deltaY);
+                deltaY = deltaX / xyRatio;
+                trimmedDelta1 = new Point2D(deltaX, deltaY);
             }
+            // Compute td2 if one exists
             if (deltaY < 0 && destination.getMinY() < paneBounds.getMinY()) {
                 deltaY = paneBounds.getMinY() - nodeBounds.getMinY();
-                deltaX = deltaY * ratio;
-                vc2 = new Point2D(deltaX, deltaY);
+                deltaX = deltaY * xyRatio;
+                trimmedDelta2 = new Point2D(deltaX, deltaY);
             } else if (deltaY > 0 && destination.getMaxY() > paneBounds.getMaxY()) {
                 deltaY = paneBounds.getMaxY() - nodeBounds.getMaxY();
-                deltaX = deltaY * ratio;
-                vc2 = new Point2D(deltaX, deltaY);
+                deltaX = deltaY * xyRatio;
+                trimmedDelta2 = new Point2D(deltaX, deltaY);
             }
-
-            if (vc1 == null && vc2 == null) {
-                node.setLayoutX(node.getLayoutX() + deltaX);
-                node.setLayoutY(node.getLayoutY() + deltaY);
-                return;
-            } else if (vc1 == null || (vc2 != null && vc1.magnitude() > vc2.magnitude())) {
-                // Would hit top/bottom boundary before left/right
-                vecChopped = vc2;
-                vecNormal = (deltaY < 0) ? TOP_NORMAL : BOTTOM_NORMAL;
+            // Determine reflectionDelta
+            if (trimmedDelta1 == null || (trimmedDelta2 != null && trimmedDelta1.magnitude() > trimmedDelta2.magnitude())) {
+                // Would hit top/bottom border before left/right
+                restDelta = delta.subtract(trimmedDelta2);
+                reflectionDelta = new Point2D(restDelta.getX(), -restDelta.getY());
             } else {
-                // Would hit left/right boundary before top/bottom
-                vecChopped = vc1;
-                vecNormal = (deltaX < 0) ? LEFT_NORMAL : RIGHT_NORMAL;
+                // Would hit left/right border before top/bottom
+                restDelta = delta.subtract(trimmedDelta1);
+                reflectionDelta = new Point2D(-restDelta.getX(), restDelta.getY());
             }
-
-            vecRest = delta.subtract(vecChopped);
-            vecReflection = vecRest.subtract(vecNormal.multiply(2 * vecRest.dotProduct(vecNormal)));
-            node.setLayoutX(node.getLayoutX() + deltaX);
-            node.setLayoutY(node.getLayoutY() + deltaY);
-            TactilePane.setVector(node, vecReflection.multiply(1 / TIME_STEP).multiply(BOUNCE));
-            layoutNode(node, vecReflection);
+            
+            // Relocate node to the wall it collides with
+            node.relocate(node.getLayoutX() + deltaX, node.getLayoutY() + deltaY);
+            TactilePane.setVector(node, reflectionDelta.multiply(1 / TIME_STEP).multiply(BOUNCE));
+            
+            // Layout the node for the remaining delta
+            layoutNode(node, reflectionDelta);
         }
     }
     
@@ -181,15 +181,18 @@ class PhysicsTimer extends AnimationTimer {
         // Update QuadTree
         pane.quadTree.update();
 
-        for (Node thisNode : pane.getActiveNodes()) {
+        // Copy set for thread safety, not 100% sure if necessary
+        Collection<Node> children = pane.getActiveNodes(); 
+        for (Node thisNode : children) {
             Bounds thisBounds = thisNode.localToScene(thisNode.getBoundsInLocal());
             Bounds proximityBounds = null;
-            double proximityThreshold = pane.getProximityThreshold();
-            if (proximityThreshold > 0) {
-                double x = thisBounds.getMinX() - proximityThreshold;
-                double y = thisBounds.getMinY() - proximityThreshold;
-                double w = thisBounds.getWidth() + proximityThreshold * 2;
-                double h = thisBounds.getHeight() + proximityThreshold * 2;
+            
+            double pt = pane.getProximityThreshold();
+            if (pt > 0) {
+                double x = thisBounds.getMinX() - pt;
+                double y = thisBounds.getMinY() - pt;
+                double w = thisBounds.getWidth() + pt * 2;
+                double h = thisBounds.getHeight() + pt * 2;
                 proximityBounds = new BoundingBox(x, y, w, h);
             }
 
