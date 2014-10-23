@@ -23,7 +23,7 @@ public class ColorSlotPane extends Pane {
     ColorSlot rightSlot;
     
     public ColorSlotPane() {
-        background = new Rectangle(190, 90);
+        background = new Rectangle(2.5, 2.5, 190, 90); //TODO: x=2.5, y=2.5 is een workaround voor bug in API, mag niet er in blijven!!!
         background.setStrokeWidth(5);
         background.setFill(Color.GREY);
         background.setStroke(Color.GREY);
