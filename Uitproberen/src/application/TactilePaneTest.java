@@ -1,6 +1,7 @@
 package application;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -13,7 +14,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
-import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 public class TactilePaneTest extends Application {
     static final int RECTANGLES = 2;
@@ -32,16 +32,7 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < RECTANGLES; i++) {
             Rectangle rectangle = new Rectangle(80, 80);
             rectangle.relocate(Math.random() * (WIDTH - 80), Math.random() * (HEIGHT - 80));
-            TactilePane.setDraggable(rectangle, true);
-            TactilePane.setOnAreaLeft(rectangle, event -> {
-            	//rectangle.getTransforms().add(new Rotate(15,0,0,15));
-            	rectangle.setRotate(rectangle.getRotate() + 15);
-            });
-            rectangle.setOnMouseClicked(event -> {
-            	//rectangle.getTransforms().add(new Rotate(90,0,0,15));
-            	rectangle.setRotate(0.0);
-            	
-            });
+            TactilePane.setDraggable(rectangle, false);
             root.getChildren().add(rectangle);
         }
         for (int i = 0; i < CIRCLES; i++) {
@@ -50,7 +41,7 @@ public class TactilePaneTest extends Application {
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
                 if (!TactilePane.isInUse(circle)) {
-                    TactilePane.moveAwayFrom(circle, event.getOther(), -20);
+                    TactilePane.moveAwayFrom(circle, event.getOther(), 20);
                 }
             });
             root.getChildren().add(circle);
@@ -58,10 +49,6 @@ public class TactilePaneTest extends Application {
         for (Node node: root.getChildren()) {
             root.getActiveNodes().add(node);
         }
-        
-        root.addEventFilter(TactilePaneEvent.ANY, event -> {
-            //System.out.println(event.getEventType());
-        });
         
         // Set proximity threshhold
         root.proximityThresholdProperty().set(75);
@@ -71,6 +58,7 @@ public class TactilePaneTest extends Application {
         debug.registerTactilePane(root);
         
         Scene scene = new Scene(debug);
+        primaryStage.setOnCloseRequest(event -> { Platform.exit(); });
         primaryStage.setScene(scene);
         primaryStage.show();
     }

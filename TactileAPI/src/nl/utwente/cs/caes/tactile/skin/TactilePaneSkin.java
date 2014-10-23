@@ -29,10 +29,9 @@ public class TactilePaneSkin extends SkinBase<TactilePane> {
         
         // Like a Pane, it will only set the size of managed, resizable content 
         // to their preferred sizes and does not do any node positioning.
-        for (Node node: pane.getChildren()) {
-            if (node.isResizable() && node.isManaged()) {
-                node.autosize();
-            }
-        }
+        pane.getChildren().stream()
+            .filter(Node::isResizable)
+            .filter(Node::isManaged)
+            .forEach(Node::autosize);
     }
 }

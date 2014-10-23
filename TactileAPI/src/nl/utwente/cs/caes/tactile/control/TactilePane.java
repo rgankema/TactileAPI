@@ -700,6 +700,7 @@ public class TactilePane extends Control {
                     dragContext.touchId = NULL_ID;
                 }
             } else return;
+            
             event.consume();
         };
         

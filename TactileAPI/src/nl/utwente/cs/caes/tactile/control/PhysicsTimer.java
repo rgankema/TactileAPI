@@ -117,10 +117,12 @@ class PhysicsTimer extends AnimationTimer {
         double deltaY = delta.getY();
         
         if (!pane.isBordersCollide()) {
-            node.relocate(node.getLayoutX() + deltaX, node.getLayoutY() + deltaY);
+            // Using setLayoutX/setLayoutY instead of relocate, relocate acts strange for Circles
+            node.setLayoutX(node.getLayoutX() + deltaX);
+            node.setLayoutY(node.getLayoutY() + deltaY);
             return;
         }
-
+        
         Bounds paneBounds = pane.getBoundsInLocal();
         Bounds nodeBounds = node.getBoundsInParent();
 
@@ -128,7 +130,8 @@ class PhysicsTimer extends AnimationTimer {
         Bounds destination = new BoundingBox(nodeBounds.getMinX() + deltaX, nodeBounds.getMinY() + deltaY, nodeBounds.getWidth(), nodeBounds.getHeight());
         
         if (paneBounds.contains(destination)) {
-            node.relocate(node.getLayoutX() + deltaX, node.getLayoutY() + deltaY);
+            node.setLayoutX(node.getLayoutX() + deltaX);
+            node.setLayoutY(node.getLayoutY() + deltaY);
         } else {
             Point2D trimmedDelta1 = null;   // Delta trimmed so that it stops at the vertical wall the node would collide with (null if there's no such wall)
             Point2D trimmedDelta2 = null;   // Delta trimmed so that it stops at the horizontal wall the node would collide with (null if there's no such wall)
@@ -169,7 +172,8 @@ class PhysicsTimer extends AnimationTimer {
             }
             
             // Relocate node to the wall it collides with
-            node.relocate(node.getLayoutX() + deltaX, node.getLayoutY() + deltaY);
+            node.setLayoutX(node.getLayoutX() + deltaX);
+            node.setLayoutY(node.getLayoutY() + deltaY);
             TactilePane.setVector(node, reflectionDelta.multiply(1 / TIME_STEP).multiply(BOUNCE));
             
             // Layout the node for the remaining delta

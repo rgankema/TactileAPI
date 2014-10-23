@@ -1,9 +1,8 @@
 package tactiledemo;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
@@ -18,10 +17,10 @@ public class TactileDemo extends Application {
         
         debug = new DebugParent(root);
         debug.registerTactilePane(root);
-        debug.setMapMouseToTouch(false);
         
         Scene scene = new Scene(debug);
-        stage.setFullScreen(true);
+        //stage.setFullScreen(true);
+        stage.setOnCloseRequest(event -> { Platform.exit(); });
         stage.setScene(scene);
         stage.show();
     }
