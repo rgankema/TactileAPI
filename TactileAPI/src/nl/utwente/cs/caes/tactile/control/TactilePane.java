@@ -730,7 +730,6 @@ public class TactilePane extends Control {
             setVector(node, Point2D.ZERO);
             
             Bounds nodeBounds = node.getBoundsInParent();
-            
             dragContext.localX = sceneX - nodeBounds.getMinX();
             dragContext.localY = sceneY - nodeBounds.getMinY();
 

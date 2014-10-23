@@ -1,6 +1,7 @@
 package nl.utwente.cs.caes.tactile.control;
 
-import java.util.Collection;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,13 +56,13 @@ class PhysicsTimer extends AnimationTimer {
     }
 
     private void updatePositions() {
-        // Copy list for thread safety, not 100% sure if necessary
-        Collection<Node> children = pane.getChildren();
+        // Copy children to new list, so we don't get a ConcurrentModificationException when calling toFront()
+        List<Node> children = new ArrayList<>();
+        pane.getChildren().stream()
+                .filter(TactilePane::isDraggable)
+                .forEach(children::add);
+        
         for (Node node: children) {
-            if (!TactilePane.isDraggable(node)) {
-                continue;
-            }
-            
             Point2D vector = TactilePane.getVector(node);
             
             // Multiply with FRICTION to model friction
@@ -90,13 +91,15 @@ class PhysicsTimer extends AnimationTimer {
             // If the node is not actively being used and not anchored update the node's position according to vector
             else if (anchor == null && !vector.equals(Point2D.ZERO)) {
                 layoutNode(node, vector.multiply(TIME_STEP));
-            } 
+            }
+            
             // If anchored, update the node's position according to its anchor
             else if (anchor != null) {
                 Bounds bounds = anchor.localToScene(anchor.getBoundsInLocal());
                 Bounds boundsInPane = pane.sceneToLocal(bounds);
                 Point2D offset = TactilePane.getAnchorOffset(node);
-                node.relocate(boundsInPane.getMinX() + offset.getX(), boundsInPane.getMinY() + offset.getY());
+                node.setLayoutX(boundsInPane.getMinX() + offset.getX());
+                node.setLayoutY(boundsInPane.getMinY() + offset.getY());
                 node.toFront();
             }
             
@@ -185,9 +188,7 @@ class PhysicsTimer extends AnimationTimer {
         // Update QuadTree
         pane.quadTree.update();
 
-        // Copy set for thread safety, not 100% sure if necessary
-        Collection<Node> children = pane.getActiveNodes(); 
-        for (Node thisNode : children) {
+        for (Node thisNode : pane.getActiveNodes()) {
             Bounds thisBounds = thisNode.localToScene(thisNode.getBoundsInLocal());
             Bounds proximityBounds = null;
             

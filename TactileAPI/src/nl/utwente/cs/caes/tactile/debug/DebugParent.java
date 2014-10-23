@@ -59,6 +59,8 @@ public class DebugParent extends StackPane {
 
         // Overlay shouldn't receive events
         overlay.setDisable(true);
+        
+        overlay.visibleProperty().bind(overlayVisibleProperty());
 
         // Makes sure the overlay is always drawn on top of the other child
         getChildren().add(overlay);
@@ -231,7 +233,29 @@ public class DebugParent extends StackPane {
         }
         return mapMouseToTouch;
     }
+    
+    /**
+     * Whether the overlay is visible or not
+     * 
+     * @defaultvalue true
+     */
+    private BooleanProperty overlayVisible;
 
+    public void setOverlayVisible(boolean value) {
+        overlayVisibleProperty().set(value);
+    }
+    
+    public boolean isOverlayVisible() {
+        return overlayVisibleProperty().get();
+    }
+    
+    public BooleanProperty overlayVisibleProperty() {
+        if (overlayVisible == null) {
+            overlayVisible = new SimpleBooleanProperty(true);
+        }
+        return overlayVisible;
+    }
+    
     /**
      * The radius of the circles that are drawn on touch events.
      */
