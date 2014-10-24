@@ -2,10 +2,13 @@ package application;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
@@ -39,7 +42,7 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < RECTANGLES; i++) {
             Rectangle rectangle = new Rectangle(80, 80);
             rectangle.relocate(Math.random() * (WIDTH - 80), Math.random() * (HEIGHT - 80));
-            TactilePane.setDraggable(rectangle, false);
+            TactilePane.setDraggable(rectangle, true);
             tactilePane.getChildren().add(rectangle);
         }
         for (int i = 0; i < CIRCLES; i++) {
@@ -74,7 +77,24 @@ public class TactilePaneTest extends Application {
         debug.overlayVisibleProperty().bindBidirectional(enableDebug.selectedProperty());
         debug.registerTactilePane(tactilePane);
         
+        // Key bindings
+        debug.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+        	@Override
+        	public void handle(KeyEvent keyEvent){
+                if (keyEvent.getCode() == KeyCode.F11) {
+                	if (primaryStage.isFullScreen()){
+                		primaryStage.setFullScreen(false);
+                	} else {
+                		primaryStage.setFullScreen(true);
+                	}
+                	keyEvent.consume();
+                }
+            }
+        	
+        });
+        
         Scene scene = new Scene(debug);
+        primaryStage.setFullScreen(false);
         primaryStage.setOnCloseRequest(event -> { Platform.exit(); });
         primaryStage.setScene(scene);
         primaryStage.show();
