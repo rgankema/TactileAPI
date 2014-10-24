@@ -5,9 +5,12 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.CheckBox;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
@@ -21,19 +24,23 @@ public class TactilePaneTest extends Application {
     static final int WIDTH = 800;
     static final int HEIGHT = 600;
     
+    DebugParent debug;
+    
     @Override
     public void start(Stage primaryStage) throws Exception {
+    	BorderPane root = new BorderPane();
         
-        TactilePane root = new TactilePane();
-        root.setPrefSize(WIDTH, HEIGHT);
-        root.setBackground(new Background(new BackgroundFill(Color.ALICEBLUE, CornerRadii.EMPTY, Insets.EMPTY)));
-        root.setBordersCollide(true);
+    	//Init TactilePane
+        TactilePane tactilePane = new TactilePane();
+        tactilePane.setPrefSize(WIDTH, HEIGHT);
+        tactilePane.setBackground(new Background(new BackgroundFill(Color.ALICEBLUE, CornerRadii.EMPTY, Insets.EMPTY)));
+        tactilePane.setBordersCollide(true);
         
         for (int i = 0; i < RECTANGLES; i++) {
             Rectangle rectangle = new Rectangle(80, 80);
             rectangle.relocate(Math.random() * (WIDTH - 80), Math.random() * (HEIGHT - 80));
             TactilePane.setDraggable(rectangle, false);
-            root.getChildren().add(rectangle);
+            tactilePane.getChildren().add(rectangle);
         }
         for (int i = 0; i < CIRCLES; i++) {
             Circle circle = new Circle(50);
@@ -44,18 +51,28 @@ public class TactilePaneTest extends Application {
                     TactilePane.moveAwayFrom(circle, event.getOther(), 20);
                 }
             });
-            root.getChildren().add(circle);
+            tactilePane.getChildren().add(circle);
         }
-        for (Node node: root.getChildren()) {
-            root.getActiveNodes().add(node);
+        for (Node node: tactilePane.getChildren()) {
+            tactilePane.getActiveNodes().add(node);
         }
         
         // Set proximity threshhold
-        root.proximityThresholdProperty().set(75);
+        tactilePane.proximityThresholdProperty().set(75);
         
-        // Debug meuk
-        DebugParent debug = new DebugParent(root);
-        debug.registerTactilePane(root);
+        // Init Control Pane
+        FlowPane controlLayout = new FlowPane();
+        CheckBox enableDebug = new CheckBox("Enable Debug Mode");
+        enableDebug.setSelected(false);
+        controlLayout.getChildren().add(enableDebug);
+        
+        root.setCenter(tactilePane);
+        root.setBottom(controlLayout);
+        
+        // Debug layer
+        debug = new DebugParent(root);
+        debug.overlayVisibleProperty().bindBidirectional(enableDebug.selectedProperty());
+        debug.registerTactilePane(tactilePane);
         
         Scene scene = new Scene(debug);
         primaryStage.setOnCloseRequest(event -> { Platform.exit(); });

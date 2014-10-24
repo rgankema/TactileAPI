@@ -24,7 +24,7 @@ public class TactileDemo extends Application {
         // Init Control Pane
         FlowPane controlLayout = new FlowPane();
         CheckBox enableDebug = new CheckBox("Enable Debug Mode");
-        enableDebug.setSelected(true);
+        enableDebug.setSelected(false);
         controlLayout.getChildren().add(enableDebug);
         
         root.setCenter(tactilePane);
