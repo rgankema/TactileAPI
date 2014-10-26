@@ -565,26 +565,27 @@ public class TactilePane extends Control {
         ((StyleableProperty<Boolean>)focusTraversableProperty()).applyStyle(null, false);
         
         // Add EventHandlers for dragging to children when they are added
-        getChildren().addListener((ListChangeListener.Change<? extends Node> c) -> {
-            c.next();
-            for (Node node: c.getRemoved()) {
-                // Delay removal of drag event handlers, just in case all that
-                // happened is a node.toFront() call.
-                
-                // TODO: Rewrite code so this ugly workaround isn't necessary
-                TimerTask removeDragEventHandlers = new TimerTask() {
-                    @Override
-                    public void run() {
-                        if (node.getParent() != TactilePane.this) {
-                            removeDragEventHandlers(node);
+        super.getChildren().addListener((ListChangeListener.Change<? extends Node> c) -> {
+            while(c.next()) {
+                for (Node node: c.getRemoved()) {
+                    // Delay removal of drag event handlers, just in case all that
+                    // happened is a node.toFront() call.
+
+                    // TODO: Rewrite code so this ugly workaround isn't necessary
+                    TimerTask removeDragEventHandlers = new TimerTask() {
+                        @Override
+                        public void run() {
+                            if (node.getParent() != TactilePane.this) {
+                                removeDragEventHandlers(node);
+                            }
                         }
-                    }
-                };
-                Timer timer = new Timer();
-                timer.schedule(removeDragEventHandlers, 500);
-            }
-            for (Node node: c.getAddedSubList()) {
-                addDragEventHandlers(node);
+                    };
+                    Timer timer = new Timer();
+                    timer.schedule(removeDragEventHandlers, 500);
+                }
+                for (Node node: c.getAddedSubList()) {
+                    addDragEventHandlers(node);
+                }
             }
         });
         
@@ -629,7 +630,7 @@ public class TactilePane extends Control {
      */
     public TactilePane(Node... children) {
         this();
-        getChildren().addAll(children);
+        super.getChildren().addAll(children);
     }
     
     // MAKING CHILDREN DRAGGABLE
