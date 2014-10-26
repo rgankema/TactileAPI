@@ -7,6 +7,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeType;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 
 /**
@@ -23,13 +24,13 @@ public class ColorSlotPane extends Pane {
     ColorSlot rightSlot;
     
     public ColorSlotPane() {
-        background = new Rectangle(2.5, 2.5, 190, 90); //TODO: x=2.5, y=2.5 is een workaround voor bug in API, mag niet er in blijven!!!
-        background.setStrokeWidth(5);
+        background = new Rectangle(5, 5, 195, 95);
+        background.setStrokeWidth(10);
         background.setFill(Color.GREY);
         background.setStroke(Color.GREY);
         
         leftSlot = new ColorSlot(this);
-        leftSlot.relocate(20, 20);
+        leftSlot.relocate(25, 25);
         leftSlot.colorItemProperty().addListener((ObservableValue<? extends ColorItem> observable, ColorItem oldValue, ColorItem newValue) -> {
             if (newValue == null) {
                 // If both slots don't host a ColorItem, the ColorSlotPane will be grey
@@ -56,7 +57,7 @@ public class ColorSlotPane extends Pane {
         
         
         rightSlot = new ColorSlot(this);
-        rightSlot.relocate(120, 20);
+        rightSlot.relocate(125, 25);
         rightSlot.colorItemProperty().addListener((ObservableValue<? extends ColorItem> observable, ColorItem oldValue, ColorItem newValue) -> {
             if (newValue == null) {
                 if (leftSlot.getColorItem() == null) {

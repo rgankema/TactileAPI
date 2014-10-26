@@ -665,11 +665,11 @@ public class TactilePane extends Control {
             if (type == TouchEvent.TOUCH_PRESSED) {
                 if (dragContext.touchId == NULL_ID) {
                     dragContext.touchId = event.getTouchPoint().getId();
-                    handleTouchPressed(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+                    handleTouchPressed(dragContext, new Point2D(event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY()));
                 }
             } else if (type == TouchEvent.TOUCH_MOVED) {
                 if (dragContext.touchId == event.getTouchPoint().getId()) {
-                    handleTouchMoved(dragContext, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+                    handleTouchMoved(dragContext, new Point2D(event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY()));
                 }
             } else if (type == TouchEvent.TOUCH_RELEASED) {
                 if (dragContext.touchId == event.getTouchPoint().getId()) {
@@ -687,12 +687,12 @@ public class TactilePane extends Control {
             if (type == MouseEvent.MOUSE_PRESSED) {
                 if (dragContext.touchId == NULL_ID) {
                     dragContext.touchId = MOUSE_ID;
-                    handleTouchPressed(dragContext, event.getSceneX(), event.getSceneY());
+                    handleTouchPressed(dragContext, new Point2D(event.getSceneX(), event.getSceneY()));
                 }
             } else if (type == MouseEvent.MOUSE_DRAGGED) {
                 
                 if (dragContext.touchId == MOUSE_ID) {
-                    handleTouchMoved(dragContext, event.getSceneX(), event.getSceneY());
+                    handleTouchMoved(dragContext, new Point2D(event.getSceneX(), event.getSceneY()));
                 }
             } else if (type == MouseEvent.MOUSE_RELEASED) {
                 if (dragContext.touchId == MOUSE_ID) {
@@ -722,16 +722,16 @@ public class TactilePane extends Control {
         setConstraint(node, MOUSE_EVENT_HANDLER, null);
     }
     
-    private void handleTouchPressed(final DragContext dragContext, double sceneX, double sceneY) {
+    private void handleTouchPressed(final DragContext dragContext, Point2D scenePoint) {
         Node node = dragContext.draggable;
         if (isDraggable(node)) {
             setAnchor(node, null);
             setInUse(node, true);
             setVector(node, Point2D.ZERO);
             
-            Bounds nodeBounds = node.getBoundsInParent();
-            dragContext.localX = sceneX - nodeBounds.getMinX();
-            dragContext.localY = sceneY - nodeBounds.getMinY();
+            Point2D localPoint = node.sceneToLocal(scenePoint);
+            dragContext.localX = localPoint.getX();
+            dragContext.localY = localPoint.getY();
 
             if (isGoToForegroundOnContact(node)) {
                 node.toFront();
@@ -739,29 +739,34 @@ public class TactilePane extends Control {
         }
     }
 
-    private void handleTouchMoved(final DragContext dragContext, double sceneX, double sceneY) {
+    private void handleTouchMoved(final DragContext dragContext, Point2D scenePoint) {
         Node node = dragContext.draggable;
         if (isDraggable(node) && getAnchor(node) == null) {
 
-            double x = sceneX - dragContext.localX;
-            double y = sceneY - dragContext.localY;
+            Point2D localPoint = this.sceneToLocal(scenePoint);
+            double x = localPoint.getX() - dragContext.localX - node.getTranslateX();
+            double y = localPoint.getY() - dragContext.localY - node.getTranslateY();
 
             if (isBordersCollide()) {
                 Bounds paneBounds = this.getBoundsInLocal();
                 Bounds nodeBounds = node.getBoundsInParent();
+                
+                double deltaX = node.getLayoutX() - nodeBounds.getMinX();
+                double deltaY = node.getLayoutY() - nodeBounds.getMinY();
 
-                if (x < paneBounds.getMinX()) {
-                    x = paneBounds.getMinX();
-                } else if (x + nodeBounds.getWidth() > paneBounds.getMaxX()) {
-                    x = paneBounds.getMaxX() - nodeBounds.getWidth();
+                if (x - deltaX < paneBounds.getMinX()) {
+                    x = paneBounds.getMinX() + deltaX;
+                } else if (x - deltaX + nodeBounds.getWidth() > paneBounds.getMaxX()) {
+                    x = paneBounds.getMaxX() - nodeBounds.getWidth() + deltaX;
                 }
-                if (y < paneBounds.getMinY()) {
-                    y = paneBounds.getMinY();
-                } else if (y + nodeBounds.getHeight() > paneBounds.getMaxY()) {
-                    y = paneBounds.getMaxY() - nodeBounds.getHeight();
+                if (y - deltaY < paneBounds.getMinY()) {
+                    y = paneBounds.getMinY() + deltaY;
+                } else if (y - deltaY + nodeBounds.getHeight() > paneBounds.getMaxY()) {
+                    y = paneBounds.getMaxY() - nodeBounds.getHeight() + deltaY;
                 }
             }
-            node.relocate(x, y);
+            node.setLayoutX(x); 
+            node.setLayoutY(y);
         }
     }
 

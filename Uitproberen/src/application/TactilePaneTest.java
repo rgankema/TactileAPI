@@ -6,6 +6,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -47,6 +48,8 @@ public class TactilePaneTest extends Application {
         }
         for (int i = 0; i < CIRCLES; i++) {
             Circle circle = new Circle(50);
+            circle.setScaleX(1.5);
+            circle.setTranslateX(50);
             circle.relocate(Math.random() * (WIDTH - 100), Math.random() * (HEIGHT - 100));
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
@@ -56,6 +59,7 @@ public class TactilePaneTest extends Application {
             });
             tactilePane.getChildren().add(circle);
         }
+        
         for (Node node: tactilePane.getChildren()) {
             tactilePane.getActiveNodes().add(node);
         }
@@ -69,6 +73,7 @@ public class TactilePaneTest extends Application {
         enableDebug.setSelected(false);
         controlLayout.getChildren().add(enableDebug);
         
+        root.setLeft(new Button("Loze ruimte"));
         root.setCenter(tactilePane);
         root.setBottom(controlLayout);
         
