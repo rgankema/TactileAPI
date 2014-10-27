@@ -7,7 +7,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.StrokeType;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 
 /**
