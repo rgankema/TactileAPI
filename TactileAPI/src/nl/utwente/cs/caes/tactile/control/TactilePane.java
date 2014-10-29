@@ -47,6 +47,7 @@ public class TactilePane extends Control {
     static final String SLIDE_ON_RELEASE = "tactile-pane-slide-on-release";
     static final String NODES_COLLIDING = "tactile-pane-nodes-colliding";
     static final String NODES_PROXIMITY = "tactile-pane-nodes-proximity";
+    static final String NODES_BOND = "tactile-pane-nodes-bond";
     static final String TRACKER = "tactile-pane-tracker";
     static final String ON_PROXIMITY_ENTERED = "tactile-pane-on-proximity-entered";
     static final String ON_PROXIMITY_LEFT = "tactile-pane-on-proximity-left";
@@ -265,6 +266,45 @@ public class TactilePane extends Control {
         }
         return result;
     }
+    
+    /**
+     * Returns the set of {@code Nodes} that are registered to the same
+     * {@code TactilePane} as the given {@code node}, and have a bond
+     * with that {@code node}
+     */
+    public static ObservableSet<Node> getBondList(Node node) {
+        ObservableSet<Node> result = (ObservableSet<Node>) getConstraint(node, NODES_BOND);
+        if (result == null) {
+            result = FXCollections.observableSet(new HashSet<Node>());
+            setConstraint(node, NODES_BOND, result);
+        }
+        return result;
+    }
+    
+    // TODO: remove once done
+//    /**
+//     * Returns the set of {@code Nodes} that a node has bonds to.
+//     */
+//    public static ObservableList<Node> bondListProperty(Node node) {
+//        ObservableList<Node> result = (ObservableList<Node>) getConstraint(node, NODES_BOND);
+//        if (result == null) {
+//            result = FXCollections.observableList(new ArrayList<Node>());
+//            setConstraint(node, NODES_BOND, result);
+//        }
+//        return result;
+//    }
+//    
+//    public static void setBondList(Node node, )
+//    
+//    public static void setBondListy(Node node, EventHandler<? super TactilePaneEvent> handler) {
+//        onInProximityProperty(node).set(handler);
+//        bondListProperty(node).
+//    }
+//    
+//    public static EventHandler<? super TactilePaneEvent> getBondList(Node node) {
+//        return onInProximityProperty(node).get();
+//    }
+    
     
     public static void setOnInProximity(Node node, EventHandler<? super TactilePaneEvent> handler) {
         onInProximityProperty(node).set(handler);
@@ -507,6 +547,21 @@ public class TactilePane extends Control {
             }
         }
         return null;
+    }
+    
+
+    
+    // METHODS
+    
+    /**
+     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
+     * @param one
+     * @param two
+     * @param force
+     * @param distance
+     */
+    public void createBond(Node one, Node two, double force, double distance){
+    	
     }
     
     // STATIC METHODS
