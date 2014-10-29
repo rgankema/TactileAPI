@@ -100,6 +100,7 @@ class PhysicsTimer extends AnimationTimer {
                 Bounds anchorBounds = pane.sceneToLocal(anchorNode.localToScene(anchorNode.getBoundsInLocal()));
                 Bounds nodeBounds = node.getBoundsInParent();
                 
+                // Relocate anchored Node
                 double x = anchor.xOffset; 
                 double y = anchor.yOffset;
                 switch(anchor.alignment) {

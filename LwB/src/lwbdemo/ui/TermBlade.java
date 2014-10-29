@@ -7,11 +7,7 @@ package lwbdemo.ui;
 
 import javafx.scene.control.Label;
 
-/**
- *
- * @author Richard
- */
-public class TermBlade extends BowtieBlade {
+class TermBlade extends BowtieBlade {
     Label nameLabel;
     
     public TermBlade(Bowtie bowtie, String name) {

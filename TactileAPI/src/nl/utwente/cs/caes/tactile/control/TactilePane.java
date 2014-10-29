@@ -911,7 +911,6 @@ public class TactilePane extends Control {
             CENTER_LEFT, CENTER, CENTER_RIGHT,
             BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
         }
-        
         public Anchor(Node anchorNode) {
             this(anchorNode, 0, 0, null);
         }
@@ -938,7 +937,6 @@ public class TactilePane extends Control {
         public Node getAnchorNode() {
             return anchorNode;
         }
-        
         public double getXOffset() {
             return xOffset;
         }

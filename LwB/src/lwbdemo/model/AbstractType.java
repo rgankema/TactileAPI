@@ -5,7 +5,6 @@
  */
 package lwbdemo.model;
 
-import lwbdemo.model.Term;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
@@ -21,6 +20,7 @@ public class AbstractType extends Term{
         this.name = name;
     }
     
+    @Override
     public boolean canBeSet(Term term) {
         return true;
     }

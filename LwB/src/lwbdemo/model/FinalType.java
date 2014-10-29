@@ -27,12 +27,12 @@ public class FinalType extends Term {
 
     @Override
     public boolean canBeSet(Term term) {
-        return false;
+        return (term instanceof FinalType && term.getString().equals(this.getString()));
     }
     
     @Override
     public boolean setTerm(Term term) {
-        return false;
+        return canBeSet(term);
     }
     
     @Override

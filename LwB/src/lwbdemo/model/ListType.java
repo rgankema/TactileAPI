@@ -25,7 +25,14 @@ public class ListType extends Term{
     
     @Override
     public boolean canBeSet(Term term) {
-        return (term == null || term instanceof ListType);
+        if (term == null) {
+            return true;
+        }
+        if (term instanceof ListType) {
+            ListType list = (ListType) term;
+            return this.term.setTerm(list.getTerm());
+        }
+        return false;
     }
     
     public boolean setTerm(Term term) {
