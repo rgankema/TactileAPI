@@ -10,6 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
+import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 /**
@@ -129,8 +130,7 @@ public class ColorSlot extends Rectangle {
         // will be anchored to that ColorSlot
         if (getColorItem() == null) {
             setColorItem((ColorItem) colorItem);
-            TactilePane.setAnchor(colorItem, this);
-            TactilePane.setAnchorOffset(colorItem, new Point2D(2, 2));
+            TactilePane.setAnchor(colorItem, new Anchor(this, Anchor.Pos.CENTER));
         }
     }
 }
