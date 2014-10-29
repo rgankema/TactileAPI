@@ -6,6 +6,10 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import lwbdemo.ui.Bowtie;
+import lwbdemo.model.Function;
+import lwbdemo.model.ListType;
+import lwbdemo.model.AbstractType;
+import lwbdemo.model.FinalType;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
 
@@ -16,7 +20,16 @@ public class Main extends Application {
         TactilePane tactilePane = new TactilePane();
         tactilePane.setBordersCollide(true);
         
-        tactilePane.getChildren().add(new Bowtie("map", "(a->b)", "[a]", "[b]"));
+        AbstractType a = new AbstractType("a");
+        AbstractType b = new AbstractType("b");
+        Function f1 = new Function(a, b);
+        
+        AbstractType c = new AbstractType("c");
+        AbstractType d = new AbstractType("d");
+        
+        tactilePane.getChildren().add(new Bowtie(tactilePane, "map", f1, new ListType(a), new ListType(b)));
+        tactilePane.getChildren().add(new Bowtie(tactilePane, "\"Hello world\"", new ListType(new FinalType("Char"))));
+        tactilePane.getChildren().add(new Bowtie(tactilePane, "const", c, d, c));
         
         for (Node child : tactilePane.getChildren()) {
             TactilePane.setSlideOnRelease(child, true);
@@ -26,6 +39,7 @@ public class Main extends Application {
         root.setCenter(tactilePane);
         
         DebugParent debug = new DebugParent(root);
+        debug.setOverlayVisible(false);
         debug.registerTactilePane(tactilePane);
         
         Scene scene = new Scene(debug, 800, 600);

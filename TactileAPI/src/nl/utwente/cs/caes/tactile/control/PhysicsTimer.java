@@ -10,6 +10,7 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 class PhysicsTimer extends AnimationTimer {
@@ -75,7 +76,7 @@ class PhysicsTimer extends AnimationTimer {
                 TactilePane.setVector(node, vector);
             }
             
-            Node anchor = TactilePane.getAnchor(node);
+            Anchor anchor = TactilePane.getAnchor(node);
             // If the node is in use, update its vector for slide behaviour
             if (TactilePane.isInUse(node) && TactilePane.isSlideOnRelease(node)) {
                 Point2D prevLocation = locationByNode.get(node);
@@ -95,12 +96,61 @@ class PhysicsTimer extends AnimationTimer {
             
             // If anchored, update the node's position according to its anchor
             else if (anchor != null) {
-                Bounds bounds = anchor.localToScene(anchor.getBoundsInLocal());
-                Bounds boundsInPane = pane.sceneToLocal(bounds);
-                Point2D offset = TactilePane.getAnchorOffset(node);
-                node.setLayoutX(boundsInPane.getMinX() + offset.getX());
-                node.setLayoutY(boundsInPane.getMinY() + offset.getY());
-                node.toFront();
+                Node anchorNode = anchor.getAnchorNode();
+                Bounds anchorBounds = pane.sceneToLocal(anchorNode.localToScene(anchorNode.getBoundsInLocal()));
+                Bounds nodeBounds = node.getBoundsInParent();
+                
+                double x = anchor.xOffset; 
+                double y = anchor.yOffset;
+                switch(anchor.alignment) {
+                    case TOP_LEFT: 
+                        x += anchorBounds.getMinX();
+                        y += anchorBounds.getMinY();
+                        break;
+                    case TOP_CENTER:
+                        x += anchorBounds.getMinX() + anchorBounds.getWidth() / 2 - nodeBounds.getWidth() / 2;
+                        y += anchorBounds.getMinY();
+                        break;
+                    case TOP_RIGHT:
+                        x += anchorBounds.getMaxX() - nodeBounds.getWidth();
+                        y += anchorBounds.getMinY();
+                        break;
+                    case CENTER_LEFT:
+                        x += anchorBounds.getMinX();
+                        y += anchorBounds.getMinY() + anchorBounds.getHeight() / 2 - nodeBounds.getHeight() / 2;
+                        break;
+                    case CENTER:
+                        x += anchorBounds.getMinX() + anchorBounds.getWidth() / 2 - nodeBounds.getWidth() / 2;
+                        y += anchorBounds.getMinY() + anchorBounds.getHeight() / 2 - nodeBounds.getHeight() / 2;
+                        break;
+                    case CENTER_RIGHT:
+                        x += anchorBounds.getMaxX() - nodeBounds.getWidth();
+                        y += anchorBounds.getMinY() + anchorBounds.getHeight() / 2 - nodeBounds.getHeight() / 2;
+                        break;
+                    case BOTTOM_LEFT:
+                        x += anchorBounds.getMinX();
+                        y += anchorBounds.getMaxY() - nodeBounds.getHeight();
+                        break;
+                    case BOTTOM_CENTER:
+                        x += anchorBounds.getMinX() + anchorBounds.getWidth() / 2 - nodeBounds.getWidth() / 2;
+                        y += anchorBounds.getMaxY() - nodeBounds.getHeight();
+                        break;
+                    case BOTTOM_RIGHT:
+                        x += anchorBounds.getMaxX() - nodeBounds.getWidth();
+                        y += anchorBounds.getMaxY() - nodeBounds.getHeight();
+                        break;
+                }
+                node.setLayoutX(x);
+                node.setLayoutY(y);
+                
+                // Only call toFront if necessary
+                while(anchorNode != null && !pane.getChildren().contains(anchorNode)) {
+                    anchorNode = anchorNode.getParent();
+                }
+                if (anchorNode != null && pane.getChildren().indexOf(node) < pane.getChildren().indexOf(anchorNode)) {
+                    node.toFront();
+                }
+                
             }
             
             // Record the new location

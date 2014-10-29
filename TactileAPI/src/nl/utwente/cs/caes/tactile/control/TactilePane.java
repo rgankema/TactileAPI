@@ -40,7 +40,6 @@ public class TactilePane extends Control {
     // Keys for Attached Properties
     static final String IN_USE = "tactile-pane-in-use";
     static final String ANCHOR = "tactile-pane-anchor";
-    static final String ANCHOR_OFFSET = "tactile-pane-anchor-offset";
     static final String VECTOR = "tactile-pane-vector";
     static final String GO_TO_FOREGROUND_ON_CONTACT = "tactile-pane-go-to-foreground-on-contact";
     static final String DRAGGABLE = "tactile-pane-draggable";
@@ -90,52 +89,20 @@ public class TactilePane extends Control {
         return inUsePropertyImpl(node);
     }
     
-    public static void setAnchor(Node node, Node anchor) {
+    public static void setAnchor(Node node, Anchor anchor) {
         anchorProperty(node).set(anchor);
     }
     
-    public static Node getAnchor(Node node) {
+    public static Anchor getAnchor(Node node) {
         return anchorProperty(node).get();
     }
     
-    /**
-     * The {@code Node} the given {@code node} is anchored to. When a 
-     * {@code Node} is anchored to another {@code Node} (called {@code anchor}), it will move
-     * wherever the {@code anchor} moves to, provided that both the {@code node}
-     * and the {@code anchor} have the same {@code TactilePane} as ancestor. The actual
-     * position the anchored {@code Node} will move to is the sum of the position of the
-     * {@code anchor} and the {@code anchorOffset}.
-     * 
-     * When anchored, the {@code node} will not respond to physics. It will however 
-     * still respond to user input. When a user tries to drag an anchored {@code Node}, its {@anchor}
-     * will automatically be set to {@code null}.
-     */
-    public static ObjectProperty<Node> anchorProperty(Node node) {
-        ObjectProperty<Node> property = (ObjectProperty<Node>) getConstraint(node, ANCHOR);
+    // TODO: Rewrite JavaDoc
+    public static ObjectProperty<Anchor> anchorProperty(Node node) {
+        ObjectProperty<Anchor> property = (ObjectProperty<Anchor>) getConstraint(node, ANCHOR);
         if (property == null) {
             property = new SimpleObjectProperty<>(null);
             setConstraint(node, ANCHOR, property);
-        }
-        return property;
-    }
-    
-    public static void setAnchorOffset(Node node, Point2D offset) {
-        anchorOffsetProperty(node).set(offset);
-    }
-    
-    public static Point2D getAnchorOffset(Node node) {
-        return anchorOffsetProperty(node).get();
-    }
-    
-    /**
-     * Defines the position of this {@code node} relative to its {@anchor}, if it
-     * has one.
-     */
-    public static ObjectProperty<Point2D> anchorOffsetProperty(Node node) {
-        ObjectProperty<Point2D> property = (ObjectProperty<Point2D>) getConstraint(node, ANCHOR_OFFSET);
-        if (property == null) {
-            property = new SimpleObjectProperty<>(Point2D.ZERO);
-            setConstraint(node, ANCHOR_OFFSET, property);
         }
         return property;
     }
@@ -613,8 +580,19 @@ public class TactilePane extends Control {
             else {
                 Node node = change.getElementRemoved();
                 quadTree.insert(node);
+                
+                for (Node colliding : TactilePane.getNodesColliding(node)) {
+                    node.fireEvent(new TactilePaneEvent(TactilePaneEvent.AREA_LEFT, node, colliding));
+                    colliding.fireEvent(new TactilePaneEvent(TactilePaneEvent.AREA_LEFT, colliding, node));
+                }
                 TactilePane.getNodesColliding(node).clear();
+                
+                for (Node colliding : TactilePane.getNodesInProximity(node)) {
+                    node.fireEvent(new TactilePaneEvent(TactilePaneEvent.PROXIMITY_LEFT, node, colliding));
+                    colliding.fireEvent(new TactilePaneEvent(TactilePaneEvent.PROXIMITY_LEFT, colliding, node));
+                }
                 TactilePane.getNodesInProximity(node).clear();
+                
                 setConstraint(node, TRACKER, null);
             }
         });
@@ -634,23 +612,6 @@ public class TactilePane extends Control {
     }
     
     // MAKING CHILDREN DRAGGABLE
-    
-    // Help class used for dragging Nodes
-    private class DragContext {
-        final Node draggable;   // The Node that is dragged around
-        double localX, localY;  // The x,y position of the Event in the Node
-        int touchId;            // The id of the finger/cursor that is currently dragging the Node
-        
-        public DragContext(Node draggable) {
-            this.draggable = draggable;
-            touchId = -1;
-        }
-        
-        @Override
-        public String toString() {
-            return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %f, localY = %f]", draggable.toString(), touchId, localX, localY);
-        }
-    }
     
     private void addDragEventHandlers(Node node) {
         if (getConstraint(node, MOUSE_EVENT_HANDLER) != null) {
@@ -878,5 +839,78 @@ public class TactilePane extends Control {
     @Override
     protected Skin<TactilePane> createDefaultSkin() {
         return new TactilePaneSkin(this);
+    }
+    
+    // NESTED CLASSES
+    
+    
+    
+    public static class Anchor {
+        final Node anchorNode;
+        final double xOffset;
+        final double yOffset;
+        final Pos alignment;
+        
+        public enum Pos {
+            TOP_LEFT, TOP_CENTER, TOP_RIGHT,
+            CENTER_LEFT, CENTER, CENTER_RIGHT,
+            BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
+        }
+        
+        public Anchor(Node anchorNode) {
+            this(anchorNode, 0, 0, null);
+        }
+        
+        public Anchor(Node anchorNode, double xOffset, double yOffset) {
+            this(anchorNode, xOffset, yOffset, null);
+        }
+        
+        public Anchor(Node anchorNode, Pos alignment) {
+            this(anchorNode, 0, 0, alignment);
+        }
+        
+        public Anchor(Node anchorNode, double xOffset, double yOffset, Pos alignment) {
+            if (anchorNode == null) {
+                throw new NullPointerException("anchorNode may not be null");
+            }
+            
+            this.anchorNode = anchorNode;
+            this.xOffset = xOffset;
+            this.yOffset = yOffset;
+            this.alignment = (alignment == null) ? Pos.TOP_LEFT : alignment;
+        }
+        
+        public Node getAnchorNode() {
+            return anchorNode;
+        }
+        
+        public double getXOffset() {
+            return xOffset;
+        }
+        
+        public double getYOffset() {
+            return yOffset;
+        }
+        
+        public Pos getAlignment() {
+            return alignment;
+        }
+    }
+    
+    // Help class used for dragging Nodes
+    private class DragContext {
+        final Node draggable;   // The Node that is dragged around
+        double localX, localY;  // The x,y position of the Event in the Node
+        int touchId;            // The id of the finger/cursor that is currently dragging the Node
+        
+        public DragContext(Node draggable) {
+            this.draggable = draggable;
+            touchId = -1;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %f, localY = %f]", draggable.toString(), touchId, localX, localY);
+        }
     }
 }
