@@ -573,7 +573,7 @@ public class TactilePane extends Control {
      * Uses default values for force and distance.
      */
     public static void createBond(Node one, Node two){
-    	createBond(one, two, PhysicsTimer.DEFAULT_BOND,getBondDistance() );
+    	createBond(one, two, PhysicsTimer.DEFAULT_BOND_FORCE, getBondDistance() );
     }
     
     /**
@@ -743,16 +743,26 @@ public class TactilePane extends Control {
         setConstraint(node, TOUCH_EVENT_HANDLER, touchHandler);
         setConstraint(node, MOUSE_EVENT_HANDLER, mouseHandler);
         
-        node.addEventHandler(TouchEvent.ANY, touchHandler);
-        node.addEventHandler(MouseEvent.ANY, mouseHandler);
+        if (getDragProcessingMode() == EventProcessingMode.FILTER) {
+            node.addEventFilter(TouchEvent.ANY, touchHandler);
+            node.addEventFilter(MouseEvent.ANY, mouseHandler);
+        } else {
+            node.addEventHandler(TouchEvent.ANY, touchHandler);
+            node.addEventHandler(MouseEvent.ANY, mouseHandler);
+        }
     }
     
     private void removeDragEventHandlers(Node node) {
         EventHandler<TouchEvent> touchHandler = (EventHandler<TouchEvent>) getConstraint(node, TOUCH_EVENT_HANDLER);
         EventHandler<MouseEvent> mouseHandler = (EventHandler<MouseEvent>) getConstraint(node, MOUSE_EVENT_HANDLER);
         
-        node.removeEventHandler(TouchEvent.ANY, touchHandler);
-        node.removeEventHandler(MouseEvent.ANY, mouseHandler);
+        if (getDragProcessingMode() == EventProcessingMode.FILTER) {
+            node.removeEventFilter(TouchEvent.ANY, touchHandler);
+            node.removeEventFilter(MouseEvent.ANY, mouseHandler);
+        } else {
+            node.removeEventHandler(TouchEvent.ANY, touchHandler);
+            node.removeEventHandler(MouseEvent.ANY, mouseHandler);
+        }
         
         setConstraint(node, TOUCH_EVENT_HANDLER, null);
         setConstraint(node, MOUSE_EVENT_HANDLER, null);
@@ -831,6 +841,39 @@ public class TactilePane extends Control {
     }
     
     /**
+     * Whether Mouse/Touch events at this TactilePane's children should be processed and consumed
+     * at the filtering stage or the handling stage.
+     */
+    private ObjectProperty<EventProcessingMode> dragProcessingMode;
+    
+    public void setDragProcessingMode(EventProcessingMode mode) {
+        dragProcessingModeProperty().set(mode);
+    }
+    
+    public EventProcessingMode getDragProcessingMode() {
+        return dragProcessingModeProperty().get();
+    }
+    
+    public ObjectProperty<EventProcessingMode> dragProcessingModeProperty() {
+        if (dragProcessingMode == null) {
+            dragProcessingMode = new SimpleObjectProperty<EventProcessingMode>(EventProcessingMode.HANDLER) {
+                
+                @Override
+                public void set(EventProcessingMode value) {
+                    for (Node node : TactilePane.this.getChildren()) {
+                        removeDragEventHandlers(node);
+                    }
+                    super.set(value);
+                    for (Node node : TactilePane.this.getChildren()) {
+                        addDragEventHandlers(node);
+                    }
+                }
+            };
+        }
+        return dragProcessingMode;
+    }
+    
+    /**
      * Whether children will collide with the borders of this
      * {@code TactilePane}. If set to true the {@code TactilePane} will prevent
      * children that are moving because of user input or physics to
@@ -878,6 +921,7 @@ public class TactilePane extends Control {
         return quadTree.proximityThresholdProperty();
     }
     
+    // TODO: HIER HOREN INSTANCE PROPERTIES TE STAAN, GEEN STATIC DINGEN
     public static final void setBondDistance(double threshold) {
     	bondDistanceProperty().set(threshold);
     }
@@ -934,6 +978,15 @@ public class TactilePane extends Control {
     @Override
     protected Skin<TactilePane> createDefaultSkin() {
         return new TactilePaneSkin(this);
+    }
+    
+    // ENUMS
+    
+    /**
+     * Defines whether an Event should be processed at the filter stage or the handler stage.
+     */
+    public enum EventProcessingMode {
+        HANDLER, FILTER
     }
     
     // NESTED CLASSES

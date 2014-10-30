@@ -6,6 +6,7 @@
 package lwbdemo.ui;
 
 import javafx.scene.control.Label;
+import nl.utwente.cs.caes.tactile.control.TactilePane;
 
 class TermBlade extends BowtieBlade {
     Label nameLabel;
@@ -30,11 +31,12 @@ class TermBlade extends BowtieBlade {
         TermDisplay result = null;
         if (getChildren().size() > 1) {
             result = (TermDisplay) getChildren().get(getChildren().size() - 1);
-            if (result.isActive()) {
-                getChildren().remove(result);
-            } else {
-                result = null;
+            Bowtie anchoredBowtie = result.getAnchoredBowtie();
+            if (anchoredBowtie != null) {
+                result.setAnchoredBowtie(null);
+                TactilePane.moveAwayFrom(anchoredBowtie, result, 500);
             }
+            getChildren().remove(result);
         }
         return result;
     }

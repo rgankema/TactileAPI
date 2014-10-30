@@ -50,7 +50,7 @@ class TermDisplay extends StackPane{
         
         anchorListener = (observable, oldVal, newVal) -> {
             if (newVal == null) {
-                anchorBowtie(null);
+                setAnchoredBowtie(null);
             }
         };
         
@@ -124,7 +124,7 @@ class TermDisplay extends StackPane{
     
     // When a Bowtie is dropped on a TermDisplay, try to anchor it (apply its type to this term)
     private void onDropped(Bowtie bowtie) {
-        anchorBowtie(bowtie);
+        setAnchoredBowtie(bowtie);
     }
     
     // When a Bowtie leaves the area of a TermDisplay, stop listening for drop gesture
@@ -156,20 +156,22 @@ class TermDisplay extends StackPane{
     
     // Try to apply a Bowties type to this term. If succesful, anchor that Bowtie to this TermDisplay. 
     // Giving null as argument will remove the previous anchor.
-    private void anchorBowtie(Bowtie bowtie) {
+    void setAnchoredBowtie(Bowtie bowtie) {
         if (bowtie == anchoredBowtie) {
             return;
         }
         
         if (bowtie == null) {
+            // Revert application of previous term
             term.applyTerm(null);
             
-            anchoredBowtie.setAnchor(null);
-            TactilePane.anchorProperty(anchoredBowtie).removeListener(anchorListener);
-            
+            // Stop accomodating size to bowtie
             anchoredBowtie.termBlade.boundsInParentProperty().removeListener(boundsListener);
             setMinSize(-1, -1);
             
+            // Remove anchor
+            TactilePane.anchorProperty(anchoredBowtie).removeListener(anchorListener);
+            anchoredBowtie.setAnchor(null);
             anchoredBowtie = null;
             
             getChildren().add(termLabel);
@@ -178,16 +180,23 @@ class TermDisplay extends StackPane{
             setActive(false);
             getChildren().remove(termLabel);
             
+            // Anchor bowtie to TermDisplay
             bowtie.setAnchor(this);
             TactilePane.anchorProperty(bowtie).addListener(anchorListener);
             anchoredBowtie = bowtie;
             
+            // Accomodate size to Anchor
             Bounds anchoredBounds = anchoredBowtie.termBlade.getBoundsInParent();
             setMinSize(anchoredBounds.getWidth() + 15, anchoredBounds.getHeight() + 15);
             anchoredBowtie.termBlade.boundsInParentProperty().addListener(boundsListener);
         } else if (TactilePane.getAnchor(bowtie) == null) {
+            // If a Bowtie tried to anchor that doesn't "fit", repell it
             TactilePane.moveAwayFrom(bowtie.typeBlade, this, 500);
             TactilePane.moveAwayFrom(this, bowtie.typeBlade, 500);
         }
+    }
+    
+    Bowtie getAnchoredBowtie() {
+        return anchoredBowtie;
     }
 }

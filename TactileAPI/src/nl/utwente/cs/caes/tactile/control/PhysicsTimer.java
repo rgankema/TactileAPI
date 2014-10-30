@@ -29,7 +29,7 @@ class PhysicsTimer extends AnimationTimer {
     // Default value for force
     protected static final double DEFAULT_FORCE = 100;
     // Default value for bond force
-    protected static final double DEFAULT_BOND = -10;
+    protected static final double DEFAULT_BOND_FORCE = -10;
     
     final TactilePane pane;
     final ConcurrentHashMap<Node, Point2D> locationByNode  = new ConcurrentHashMap<>();
