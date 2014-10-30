@@ -30,7 +30,11 @@ class TermBlade extends BowtieBlade {
         TermDisplay result = null;
         if (getChildren().size() > 1) {
             result = (TermDisplay) getChildren().get(getChildren().size() - 1);
-            getChildren().remove(result);
+            if (result.isActive()) {
+                getChildren().remove(result);
+            } else {
+                result = null;
+            }
         }
         return result;
     }

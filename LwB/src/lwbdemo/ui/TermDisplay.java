@@ -35,6 +35,7 @@ class TermDisplay extends StackPane{
     
     private final Bowtie parentBowtie;
     private Bowtie anchoredBowtie;
+    private boolean active;
     
     public TermDisplay(Term term, Bowtie parentBowtie) {
         this.term = term;
@@ -49,7 +50,7 @@ class TermDisplay extends StackPane{
         
         anchorListener = (observable, oldVal, newVal) -> {
             if (newVal == null) {
-                hostBowtie(null);
+                anchorBowtie(null);
             }
         };
         
@@ -65,7 +66,7 @@ class TermDisplay extends StackPane{
     public void setActive(boolean active) {
         if (active) {
             setBackground(new Background(new BackgroundFill(Color.ALICEBLUE, CornerRadii.EMPTY, Insets.EMPTY)));
-            setMinWidth(40);
+            setMinWidth(50);
             
             TactilePane.setTracker(this, (TactilePane) parentBowtie.getParent());
             TactilePane.setOnAreaEntered(this, event -> {
@@ -78,9 +79,9 @@ class TermDisplay extends StackPane{
                     onAreaLeft(((TypeBlade) event.getOther()).getBowtie());
                 }
             });
-            TactilePane.setOnInProximity(this, event -> {
+            TactilePane.setOnProximityLeft(this, event -> {
                 if (event.getOther() instanceof TypeBlade && event.getOther() != parentBowtie.typeBlade) {
-                    onInProximityOrArea(((TypeBlade) event.getOther()).getBowtie());
+                    onProximityLeft(((TypeBlade) event.getOther()).getBowtie());
                 }
             });
             TactilePane.setOnInArea(this, event -> {
@@ -88,9 +89,9 @@ class TermDisplay extends StackPane{
                     onInProximityOrArea(((TypeBlade) event.getOther()).getBowtie());
                 }
             });
-            TactilePane.setOnProximityLeft(this, event -> {
+            TactilePane.setOnInProximity(this, event -> {
                 if (event.getOther() instanceof TypeBlade && event.getOther() != parentBowtie.typeBlade) {
-                    onProximityLeft(((TypeBlade) event.getOther()).getBowtie());
+                    onInProximityOrArea(((TypeBlade) event.getOther()).getBowtie());
                 }
             });
         } else {
@@ -99,12 +100,18 @@ class TermDisplay extends StackPane{
             TactilePane.setOnAreaLeft(this, null);
             TactilePane.setOnInProximity(this, null);
             TactilePane.setOnInArea(this, null);
-              
+             
             setBackground(null);
             setMinWidth(-1);
         }
+        this.active = active;
     }
     
+    public boolean isActive() {
+        return active;
+    }
+    
+    // When a Bowtie enters the area of a TermDisplay, starting listening for drop gesture
     private void onAreaEntered(Bowtie bowtie) {
         ChangeListener<Boolean> listener = (observable, oldVal, newVal) -> {
             if (!newVal) {
@@ -115,6 +122,12 @@ class TermDisplay extends StackPane{
         inUseListenerByBowtie.put(bowtie, listener);
     }
     
+    // When a Bowtie is dropped on a TermDisplay, try to anchor it (apply its type to this term)
+    private void onDropped(Bowtie bowtie) {
+        anchorBowtie(bowtie);
+    }
+    
+    // When a Bowtie leaves the area of a TermDisplay, stop listening for drop gesture
     private void onAreaLeft(Bowtie bowtie) {
         ChangeListener listener = inUseListenerByBowtie.remove(bowtie);
         if (listener != null) {
@@ -122,8 +135,9 @@ class TermDisplay extends StackPane{
         }
     }
     
+    // When a Bowtie is in the proximity, set border green or red when its type may be applied to this term or not respectively.
     private void onInProximityOrArea(Bowtie bowtie) {
-        if (!term.canBeSet(bowtie.getType())) {
+        if (!term.isApplicable(bowtie.getType())) {
             Border red = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2)));
             bowtie.typeBlade.setBorder(red);
             this.setBorder(red);
@@ -134,28 +148,23 @@ class TermDisplay extends StackPane{
         }
     }
     
+    // When a Bowtie leaves the proximity, set border back to default
     private void onProximityLeft(Bowtie bowtie) {
         bowtie.typeBlade.setBorder(null);
         this.setBorder(null);
     }
     
-    private void onDropped(Bowtie bowtie) {
-        hostBowtie(bowtie);
-        ChangeListener<Boolean> inUseListener = inUseListenerByBowtie.get(bowtie);
-        if (inUseListener != null) {
-            TactilePane.inUseProperty(bowtie).removeListener(inUseListener);
-        }
-    }
-    
-    public void hostBowtie(Bowtie bowtie) {
+    // Try to apply a Bowties type to this term. If succesful, anchor that Bowtie to this TermDisplay. 
+    // Giving null as argument will remove the previous anchor.
+    private void anchorBowtie(Bowtie bowtie) {
         if (bowtie == anchoredBowtie) {
             return;
         }
         
         if (bowtie == null) {
-            term.setTerm(null);
+            term.applyTerm(null);
             
-            anchoredBowtie.anchorAt(null);
+            anchoredBowtie.setAnchor(null);
             TactilePane.anchorProperty(anchoredBowtie).removeListener(anchorListener);
             
             anchoredBowtie.termBlade.boundsInParentProperty().removeListener(boundsListener);
@@ -165,11 +174,11 @@ class TermDisplay extends StackPane{
             
             getChildren().add(termLabel);
             setActive(true);
-        } else if (TactilePane.getAnchor(bowtie) == null && term.setTerm(bowtie.getType())) {
+        } else if (TactilePane.getAnchor(bowtie) == null && term.applyTerm(bowtie.getType())) {
             setActive(false);
             getChildren().remove(termLabel);
             
-            bowtie.anchorAt(this);
+            bowtie.setAnchor(this);
             TactilePane.anchorProperty(bowtie).addListener(anchorListener);
             anchoredBowtie = bowtie;
             

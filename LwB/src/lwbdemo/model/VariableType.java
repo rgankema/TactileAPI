@@ -8,51 +8,13 @@ package lwbdemo.model;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-/**
- *
- * @author Richard
- */
-public class AbstractType extends Term{
+public class VariableType extends Term{
     final String name;
-    Term term;
+    Term type;
     
-    public AbstractType(String name) {
+    public VariableType(String name) {
         this.name = name;
     }
-    
-    @Override
-    public boolean canBeSet(Term term) {
-        return true;
-    }
-    
-    @Override
-    public boolean setTerm(Term term) {
-        if (this.term != null) {
-            if (term != null) {
-                return this.term.setTerm(term);
-            } else {
-                this.term = term;
-                stringProperty().unbind();
-                stringProperty().set(this.name);
-            }
-        } else {
-            if (term != null) {
-                this.term = term;
-                stringProperty().bind(term.stringProperty());
-            } else {
-                this.term = term;
-                stringProperty().unbind();
-                stringProperty().set(this.name);
-            }
-        }
-        return true;
-    }
-    
-    public Term getTerm() {
-        return term;
-    }
-    
-    private StringProperty string;
     
     @Override
     public StringProperty stringProperty() {
@@ -61,4 +23,39 @@ public class AbstractType extends Term{
         }
         return string;
     }
+    
+    @Override
+    public boolean isApplicable(Term term) {
+        return true;
+    }
+    
+    @Override
+    public boolean applyTerm(Term term) {
+        if (this.type != null) {
+            if (term != null) {
+                return this.type.applyTerm(term);
+            } else {
+                this.type = term;
+                stringProperty().unbind();
+                stringProperty().set(this.name);
+            }
+        } else {
+            if (term != null) {
+                this.type = term;
+                stringProperty().bind(term.stringProperty());
+            } else {
+                this.type = term;
+                stringProperty().unbind();
+                stringProperty().set(this.name);
+            }
+        }
+        return true;
+    }
+    
+    @Override
+    public Term getAppliedTerm() {
+        return type;
+    }
+    
+    
 }

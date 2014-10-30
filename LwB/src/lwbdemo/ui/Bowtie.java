@@ -59,13 +59,31 @@ public class Bowtie extends Group {
         TactilePane.setTracker(typeBlade, tracker);
     }
     
-    public TermDisplay getAnchor() {
-        return anchor;
-    }
+    // PROPERTIES
     
     public Term getType() {
         return typeBlade.getType();
     }
+    
+    void setAnchor(TermDisplay termDisplay) {
+        if (termDisplay == null) {
+            grow();
+            
+            TactilePane.setAnchor(this, null);
+            TactilePane.setTracker(typeBlade, (TactilePane) getParent());
+        } else {
+            shrink();
+            
+            TactilePane.setAnchor(this, new Anchor(termDisplay, 1, 1, Anchor.Pos.CENTER));
+        }
+        anchor = termDisplay;
+    }
+    
+    TermDisplay getAnchor() {
+        return anchor;
+    }
+    
+    // METHODS
     
     public void exposeHole() {
         TermDisplay removeNode = typeBlade.popTerm();
@@ -81,19 +99,7 @@ public class Bowtie extends Group {
         }
     }
     
-    public void anchorAt(TermDisplay termDisplay) {
-        if (termDisplay == null) {
-            grow();
-            
-            TactilePane.setAnchor(this, null);
-            TactilePane.setTracker(typeBlade, (TactilePane) getParent());
-        } else {
-            shrink();
-            
-            TactilePane.setAnchor(this, new Anchor(termDisplay, 1, 1, Anchor.Pos.CENTER));
-        }
-        anchor = termDisplay;
-    }
+    // HELPER METHODS
     
     private void shrink() {
         if (!compact) {

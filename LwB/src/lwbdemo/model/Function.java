@@ -9,34 +9,25 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-/**
- *
- * @author Richard
- */
 public class Function extends Term {
-    final Term[] terms;
+    final Term[] type;
     
-    public Function(Term... terms) {
-        if (terms.length < 2) {
+    public Function(Term... arguments) {
+        if (arguments.length < 2) {
             throw new IllegalArgumentException();
         }
         
-        this.terms = terms;
+        this.type = arguments;
     }
     
-    public Term[] getArguments() {
-        return terms;
-    }
-    
-    private StringProperty string;
-    
+    @Override
     public StringProperty stringProperty() {
         if (string == null) {
             string = new SimpleStringProperty();
             
-            StringProperty[] stringProperties = new StringProperty[terms.length];
-            for (int i = 0; i < terms.length; i++) {
-                stringProperties[i] = terms[i].stringProperty();
+            StringProperty[] stringProperties = new StringProperty[type.length];
+            for (int i = 0; i < type.length; i++) {
+                stringProperties[i] = type[i].stringProperty();
             }
             
             Object[] concatArgs = new Object[stringProperties.length * 2 + 1];
@@ -57,17 +48,21 @@ public class Function extends Term {
         return string;
     }
     
+    public Term[] getArguments() {
+        return type;
+    }
+    
     @Override
-    public boolean canBeSet(Term term) {
+    public boolean isApplicable(Term term) {
         if (term == null) {
             return true;
         }
         // Klopt bij lange na niet, geeft alleen een idee
         if (term instanceof Function) {
             Function other = (Function) term;
-            if (this.terms.length == other.terms.length) {
-                for (int i = 0; i < terms.length; i++) {
-                    if (!this.terms[i].canBeSet(other.terms[i])) {
+            if (this.type.length == other.type.length) {
+                for (int i = 0; i < type.length; i++) {
+                    if (!this.type[i].isApplicable(other.type[i])) {
                         return false;
                     }
                 }
@@ -78,24 +73,25 @@ public class Function extends Term {
     }
 
     @Override
-    public boolean setTerm(Term term) {
+    public boolean applyTerm(Term term) {
         if (term == null) {
-            for (int i = 0; i < terms.length; i++) {
-                this.terms[i].setTerm(null);
+            for (int i = 0; i < type.length; i++) {
+                this.type[i].applyTerm(null);
             }
             return true;
         }
-        if (canBeSet(term)) {
+        if (isApplicable(term)) {
             Function other = (Function) term;
-            for (int i = 0; i < terms.length; i++) {
-                this.terms[i].setTerm(other.terms[i]);
+            for (int i = 0; i < type.length; i++) {
+                this.type[i].applyTerm(other.type[i]);
             }
             return true;
         }
         return false;
     }
     
-    public Term getTerm() {
+    @Override
+    public Term getAppliedTerm() {
         return this;
     }
 

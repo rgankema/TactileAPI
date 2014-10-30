@@ -49,16 +49,16 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < CIRCLES; i++) {
             Circle circle = new Circle(50);
             circle.setScaleX(1.5);
-            circle.setTranslateX(50);
+            circle.setTranslateX(150);
             circle.relocate(Math.random() * (WIDTH - 100), Math.random() * (HEIGHT - 100));
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
-                if (!TactilePane.isInUse(circle)) {
+                if (!TactilePane.isInUse(circle) && event.getOther() instanceof Circle) {
                     TactilePane.moveAwayFrom(circle, event.getOther(), 20);
                 }
             });
             TactilePane.setOnAreaEntered(circle, event -> {
-                if (TactilePane.isInUse(circle) && !TactilePane.isDraggable(event.getOther()) && TactilePane.isInUse(event.getOther())) { //ugly way of saying rectangle.
+                if (TactilePane.isInUse(circle) && event.getOther() instanceof Rectangle) {
                     TactilePane.createBond(circle, event.getOther());
                     System.out.println("created bond");
                 }

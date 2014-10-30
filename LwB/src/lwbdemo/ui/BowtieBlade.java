@@ -15,7 +15,7 @@ abstract class BowtieBlade extends HBox {
     static final Font NAME_FONT = Font.font("Verdana", FontWeight.BOLD, 20);
     static final Font TERM_FONT = Font.font("Verdana", FontWeight.NORMAL, 20);
     
-    private Bowtie bowtie;
+    private final Bowtie bowtie;
     
     public BowtieBlade(Bowtie bowtie) {
         this.bowtie = bowtie;
@@ -32,7 +32,6 @@ abstract class BowtieBlade extends HBox {
     
     protected abstract TermDisplay popTerm();
     
-    // HELPER METHODS     
     protected Label buildArrowLabel() {
         Label label = new Label("->");
         label.setFont(TERM_FONT);

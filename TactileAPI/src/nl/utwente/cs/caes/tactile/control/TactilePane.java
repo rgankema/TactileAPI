@@ -521,7 +521,6 @@ public class TactilePane extends Control {
                 if (move.getParent() == null) return;
             }
         }
-
         
         Point2D distance = calculateDistance(move,from);
 
@@ -541,7 +540,8 @@ public class TactilePane extends Control {
     /**
      * Calculates the distance between two nodes, returning the result as a vector of the two distances.
      */
-    
+    // This calculates the distance between the middle of two nodes, not the border of two nodes, which I think is desirable
+    // Also not really sure if you'd want this to be public
     public static Point2D calculateDistance(Node one, Node two){
     	Bounds moveBounds = one.localToScene(one.getBoundsInLocal());
         Bounds fromBounds = two.localToScene(two.getBoundsInLocal());
@@ -780,8 +780,8 @@ public class TactilePane extends Control {
         if (isDraggable(node) && getAnchor(node) == null) {
 
             Point2D localPoint = this.sceneToLocal(scenePoint);
-            double x = localPoint.getX() - dragContext.localX - node.getTranslateX();
-            double y = localPoint.getY() - dragContext.localY - node.getTranslateY();
+            double x = localPoint.getX() - dragContext.localX - getTranslateX();
+            double y = localPoint.getY() - dragContext.localY - getTranslateY();
 
             if (isBordersCollide()) {
                 Bounds paneBounds = this.getBoundsInLocal();
@@ -938,8 +938,7 @@ public class TactilePane extends Control {
     
     // NESTED CLASSES
     
-    
-    
+    // TODO: builder voor maken (zie http://docs.oracle.com/javase/8/javafx/api/javafx/fxml/doc-files/introduction_to_fxml.html)
     public static class Anchor {
         final Node anchorNode;
         final double xOffset;

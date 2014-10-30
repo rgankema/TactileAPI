@@ -7,20 +7,19 @@ package lwbdemo.model;
 
 import javafx.beans.property.StringProperty;
 
-/**
- *
- * @author Richard
- */
 public abstract class Term {
+    
+    protected StringProperty string;
+    
     public String getString() {
         return stringProperty().get();
     }
     
     public abstract StringProperty stringProperty();
     
-    public abstract boolean canBeSet(Term term);
+    public abstract boolean isApplicable(Term term);
     
-    public abstract Term getTerm();
+    public abstract Term getAppliedTerm();
     
-    public abstract boolean setTerm(Term term);
+    public abstract boolean applyTerm(Term term);
 }
