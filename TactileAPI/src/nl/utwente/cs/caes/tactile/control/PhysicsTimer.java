@@ -28,6 +28,8 @@ class PhysicsTimer extends AnimationTimer {
     private static final double THRESHOLD = 2.5;
     // Default value for force
     protected static final double DEFAULT_FORCE = 100;
+    // Default value for bond force
+    protected static final double DEFAULT_BOND = 10;
     
     final TactilePane pane;
     final ConcurrentHashMap<Node, Point2D> locationByNode  = new ConcurrentHashMap<>();
@@ -89,10 +91,24 @@ class PhysicsTimer extends AnimationTimer {
                 Point2D newVector = TactilePane.getVector(node).add(new Point2D(deltaX , deltaY).multiply(SLIDE));
                 TactilePane.setVector(node, newVector);
             }
+            // If the node is not in use, update vector for Bonds
+            if (!TactilePane.isInUse(node)){
+            	if(!TactilePane.getBondList(node).isEmpty()){
+            		for(Node bondes: TactilePane.getBondList(node) ){
+            			Point2D difference = TactilePane.calculateDistance(node,bondes);
+            			if (difference.magnitude() > TactilePane.getBondDistance()){
+            				//If two nodes have a bond, and they are out of bond range, nudge them slightly towards each other.
+            				vector.add(difference.normalize().multiply(DEFAULT_BOND));
+            			}
+            		}
+            	}
+            }
             // If the node is not actively being used and not anchored update the node's position according to vector
-            else if (anchor == null && !vector.equals(Point2D.ZERO)) {
+            if (!TactilePane.isInUse(node) && anchor == null && !vector.equals(Point2D.ZERO)) {
                 layoutNode(node, vector.multiply(TIME_STEP));
             }
+            
+            
             
             // If anchored, update the node's position according to its anchor
             else if (anchor != null) {

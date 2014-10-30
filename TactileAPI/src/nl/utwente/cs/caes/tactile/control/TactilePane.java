@@ -14,6 +14,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -62,6 +63,8 @@ public class TactilePane extends Control {
     // IDs to keep track which finger/cursor started dragging a Node
     static final int NULL_ID = -1;
     static final int MOUSE_ID = -2;
+    
+    private static DoubleProperty bondDistance;
     
     // ATTACHED PROPERTIES
     
@@ -247,30 +250,6 @@ public class TactilePane extends Control {
         }
         return result;
     }
-    
-    // TODO: remove once done
-//    /**
-//     * Returns the set of {@code Nodes} that a node has bonds to.
-//     */
-//    public static ObservableList<Node> bondListProperty(Node node) {
-//        ObservableList<Node> result = (ObservableList<Node>) getConstraint(node, NODES_BOND);
-//        if (result == null) {
-//            result = FXCollections.observableList(new ArrayList<Node>());
-//            setConstraint(node, NODES_BOND, result);
-//        }
-//        return result;
-//    }
-//    
-//    public static void setBondList(Node node, )
-//    
-//    public static void setBondListy(Node node, EventHandler<? super TactilePaneEvent> handler) {
-//        onInProximityProperty(node).set(handler);
-//        bondListProperty(node).
-//    }
-//    
-//    public static EventHandler<? super TactilePaneEvent> getBondList(Node node) {
-//        return onInProximityProperty(node).get();
-//    }
     
     
     public static void setOnInProximity(Node node, EventHandler<? super TactilePaneEvent> handler) {
@@ -522,12 +501,25 @@ public class TactilePane extends Control {
     
     /**
      * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
-     * @param one
-     * @param two
-     * @param force
-     * @param distance
+     * Relations are kept symmetric, so that either node one can create a bond with node two, or the developer can 
+     * switch these and it will not matter.
      */
     public void createBond(Node one, Node two, double force, double distance){
+    	getBondList(one).add(two);
+    	getBondList(two).add(one);
+    }
+    
+    /**
+     * Removes a bond between nodes one and two. Removes the bond for both nodes.
+     */
+    public void removeBond(Node one, Node two){
+    	if(getBondList(one).contains(two)){
+    		getBondList(one).remove(two);
+        	getBondList(two).remove(one);
+    	} else{
+    		// TODO: add proper error handling
+    		System.err.println("Attempting to remove a bond that was not placed.");
+    	}
     	
     }
     
@@ -547,18 +539,10 @@ public class TactilePane extends Control {
             }
         }
 
-        Bounds moveBounds = move.localToScene(move.getBoundsInLocal());
-        Bounds fromBounds = from.localToScene(from.getBoundsInLocal());
+        
+        Point2D distance = calculateDistance(move,from);
 
-        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
-        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
-        double fromX = fromBounds.getMinX() + moveBounds.getWidth() / 2;
-        double fromY = fromBounds.getMinY() + moveBounds.getHeight() / 2;
-
-        double distanceX = moveX - fromX;
-        double distanceY = moveY - fromY;
-
-        Point2D vector = new Point2D(distanceX, distanceY).normalize().multiply(force);
+        Point2D vector = distance.normalize().multiply(force);
         TactilePane.setVector(moveDraggable, TactilePane.getVector(move).add(vector));
     }
     
@@ -569,6 +553,26 @@ public class TactilePane extends Control {
      */
     public static void moveAwayFrom(Node move, Node from) {
     	moveAwayFrom(move, from, PhysicsTimer.DEFAULT_FORCE);
+    }
+    
+    /**
+     * Calculates the distance between two nodes, returning the result as a vector of the two distances.
+     */
+    
+    public static Point2D calculateDistance(Node one, Node two){
+    	Bounds moveBounds = one.localToScene(one.getBoundsInLocal());
+        Bounds fromBounds = two.localToScene(two.getBoundsInLocal());
+
+        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
+        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
+        double fromX = fromBounds.getMinX() + moveBounds.getWidth() / 2;
+        double fromY = fromBounds.getMinY() + moveBounds.getHeight() / 2;
+
+        double distanceX = moveX - fromX;
+        double distanceY = moveY - fromY;
+
+        Point2D vector = new Point2D(distanceX, distanceY);
+        return vector;
     }
     
     // INSTANCE VARIABLES
@@ -857,6 +861,27 @@ public class TactilePane extends Control {
      */
     public final DoubleProperty proximityThresholdProperty() {
         return quadTree.proximityThresholdProperty();
+    }
+    
+    public static final void setBondDistance(double threshold) {
+    	bondDistanceProperty().set(threshold);
+    }
+
+    public static final double getBondDistance() {
+        return bondDistanceProperty().get();
+    }
+
+    /**
+     * Specifies how close two {@code Nodes} have to be to each other to be
+     * considered out of each others bond reach, at which point they will
+     * start moving towards each other again.
+     * @defaultvalue 50.0
+     */ 
+    public final static DoubleProperty bondDistanceProperty() {
+    	if (bondDistance == null) {
+            bondDistance = new SimpleDoubleProperty(50.0);
+        }
+        return bondDistance;
     }
     
     // STYLESHEET HANDLING
