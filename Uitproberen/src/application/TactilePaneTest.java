@@ -43,7 +43,7 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < RECTANGLES; i++) {
             Rectangle rectangle = new Rectangle(80, 80);
             rectangle.relocate(Math.random() * (WIDTH - 80), Math.random() * (HEIGHT - 80));
-            TactilePane.setDraggable(rectangle, true);
+            TactilePane.setDraggable(rectangle, false);
             tactilePane.getChildren().add(rectangle);
         }
         for (int i = 0; i < CIRCLES; i++) {
@@ -57,6 +57,12 @@ public class TactilePaneTest extends Application {
                     TactilePane.moveAwayFrom(circle, event.getOther(), 20);
                 }
             });
+            TactilePane.setOnAreaEntered(circle, event -> {
+                if (TactilePane.isInUse(circle) && !TactilePane.isDraggable(event.getOther())) { //ugly way of saying rectangle.
+                    TactilePane.createBond(circle, event.getOther(), 0.0, 0.0);
+                    System.out.println("created bond");
+                }
+            });
             tactilePane.getChildren().add(circle);
         }
         
@@ -66,6 +72,7 @@ public class TactilePaneTest extends Application {
         
         // Set proximity threshhold
         tactilePane.proximityThresholdProperty().set(75);
+        TactilePane.setBondDistance(250);
         
         // Init Control Pane
         FlowPane controlLayout = new FlowPane();

@@ -29,7 +29,7 @@ class PhysicsTimer extends AnimationTimer {
     // Default value for force
     protected static final double DEFAULT_FORCE = 100;
     // Default value for bond force
-    protected static final double DEFAULT_BOND = 10;
+    protected static final double DEFAULT_BOND = -10;
     
     final TactilePane pane;
     final ConcurrentHashMap<Node, Point2D> locationByNode  = new ConcurrentHashMap<>();
@@ -98,7 +98,8 @@ class PhysicsTimer extends AnimationTimer {
             			Point2D difference = TactilePane.calculateDistance(node,bondes);
             			if (difference.magnitude() > TactilePane.getBondDistance()){
             				//If two nodes have a bond, and they are out of bond range, nudge them slightly towards each other.
-            				vector.add(difference.normalize().multiply(DEFAULT_BOND));
+            				vector = vector.add(difference.normalize().multiply(DEFAULT_BOND));
+            				TactilePane.setVector(node, vector);
             			}
             		}
             	}

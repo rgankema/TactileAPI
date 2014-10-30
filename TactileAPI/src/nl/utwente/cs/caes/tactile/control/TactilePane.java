@@ -495,33 +495,6 @@ public class TactilePane extends Control {
         return null;
     }
     
-
-    
-    // METHODS
-    
-    /**
-     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
-     * Relations are kept symmetric, so that either node one can create a bond with node two, or the developer can 
-     * switch these and it will not matter.
-     */
-    public void createBond(Node one, Node two, double force, double distance){
-    	getBondList(one).add(two);
-    	getBondList(two).add(one);
-    }
-    
-    /**
-     * Removes a bond between nodes one and two. Removes the bond for both nodes.
-     */
-    public void removeBond(Node one, Node two){
-    	if(getBondList(one).contains(two)){
-    		getBondList(one).remove(two);
-        	getBondList(two).remove(one);
-    	} else{
-    		// TODO: add proper error handling
-    		System.err.println("Attempting to remove a bond that was not placed.");
-    	}
-    	
-    }
     
     // STATIC METHODS
     
@@ -573,6 +546,30 @@ public class TactilePane extends Control {
 
         Point2D vector = new Point2D(distanceX, distanceY);
         return vector;
+    }
+    
+    /**
+     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
+     * Relations are kept symmetric, so that either node one can create a bond with node two, or the developer can 
+     * switch these and it will not matter.
+     */
+    public static void createBond(Node one, Node two, double force, double distance){
+    	getBondList(one).add(two);
+    	getBondList(two).add(one);
+    }
+    
+    /**
+     * Removes a bond between nodes one and two. Removes the bond for both nodes.
+     */
+    public static void removeBond(Node one, Node two){
+    	if(getBondList(one).contains(two)){
+    		getBondList(one).remove(two);
+        	getBondList(two).remove(one);
+    	} else{
+    		// TODO: add proper error handling
+    		System.err.println("Attempting to remove a bond that was not placed.");
+    	}
+    	
     }
     
     // INSTANCE VARIABLES
@@ -875,11 +872,11 @@ public class TactilePane extends Control {
      * Specifies how close two {@code Nodes} have to be to each other to be
      * considered out of each others bond reach, at which point they will
      * start moving towards each other again.
-     * @defaultvalue 50.0
+     * @defaultvalue 150.0
      */ 
     public final static DoubleProperty bondDistanceProperty() {
     	if (bondDistance == null) {
-            bondDistance = new SimpleDoubleProperty(50.0);
+            bondDistance = new SimpleDoubleProperty(150.0);
         }
         return bondDistance;
     }
