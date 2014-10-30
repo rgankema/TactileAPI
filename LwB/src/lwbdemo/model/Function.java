@@ -59,11 +59,38 @@ public class Function extends Term {
     
     @Override
     public boolean canBeSet(Term term) {
-        return false;
+        if (term == null) {
+            return true;
+        }
+        // Klopt bij lange na niet, geeft alleen een idee
+        if (term instanceof Function) {
+            Function other = (Function) term;
+            if (this.terms.length == other.terms.length) {
+                for (int i = 0; i < terms.length; i++) {
+                    if (!this.terms[i].canBeSet(other.terms[i])) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     @Override
     public boolean setTerm(Term term) {
+        if (term == null) {
+            for (int i = 0; i < terms.length; i++) {
+                this.terms[i].setTerm(null);
+            }
+            return true;
+        }
+        if (canBeSet(term)) {
+            Function other = (Function) term;
+            for (int i = 0; i < terms.length; i++) {
+                this.terms[i].setTerm(other.terms[i]);
+            }
+            return true;
+        }
         return false;
     }
     

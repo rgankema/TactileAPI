@@ -12,6 +12,10 @@ import javafx.beans.property.StringProperty;
  * @author Richard
  */
 public abstract class Term {
+    public String getString() {
+        return stringProperty().get();
+    }
+    
     public abstract StringProperty stringProperty();
     
     public abstract boolean canBeSet(Term term);

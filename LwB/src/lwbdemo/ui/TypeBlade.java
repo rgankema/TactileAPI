@@ -1,19 +1,9 @@
 package lwbdemo.ui;
 
-import javafx.scene.layout.HBox;
 import lwbdemo.model.Function;
 import lwbdemo.model.Term;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-/**
- *
- * @author Richard
- */
-public class TypeBlade extends BowtieBlade {
+class TypeBlade extends BowtieBlade {
     Bowtie bowtie;
     Term[] terms;
     int termCount;

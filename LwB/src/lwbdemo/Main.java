@@ -27,9 +27,13 @@ public class Main extends Application {
         AbstractType c = new AbstractType("c");
         AbstractType d = new AbstractType("d");
         
+        AbstractType e = new AbstractType("e");
+        
+        tactilePane.getChildren().add(new Bowtie(tactilePane, "add", new FinalType("Num"), new FinalType("Num"), new FinalType("Num")));
         tactilePane.getChildren().add(new Bowtie(tactilePane, "map", f1, new ListType(a), new ListType(b)));
-        tactilePane.getChildren().add(new Bowtie(tactilePane, "\"Hello world\"", new ListType(new FinalType("Char"))));
+        tactilePane.getChildren().add(new Bowtie(tactilePane, "\"foo\"", new ListType(new FinalType("Char"))));
         tactilePane.getChildren().add(new Bowtie(tactilePane, "const", c, d, c));
+        tactilePane.getChildren().add(new Bowtie(tactilePane, "length", new ListType(e), new FinalType("Num")));
         
         for (Node child : tactilePane.getChildren()) {
             TactilePane.setSlideOnRelease(child, true);

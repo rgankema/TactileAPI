@@ -7,13 +7,10 @@ package lwbdemo.ui;
 
 import lwbdemo.model.Term;
 import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
@@ -23,8 +20,7 @@ import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
  * @author Richard
  */
 public class Bowtie extends Group {
-    static final double OFFSET = 10;
-    
+    private static final double BG_OFFSET = 10;
     
     final Knot knot;
     final HBox hbox;
@@ -32,17 +28,13 @@ public class Bowtie extends Group {
     final TypeBlade typeBlade;
     final Polygon background;
     
-    private final String name;
-    
     private boolean compact = false;
     private TermDisplay anchor = null;
     
     public Bowtie(TactilePane tracker, String name, Term... terms) {
-        this.name = name;
-        
         termBlade = new TermBlade(this, name);
-        knot = new Knot();
         typeBlade = new TypeBlade(this, terms);
+        knot = new Knot(this);
         
         hbox = new HBox();
         hbox.setSpacing(10);
@@ -53,6 +45,7 @@ public class Bowtie extends Group {
         background = new Polygon();
         background.setFill(Color.BISQUE);
         background.setStroke(Color.BROWN);
+        background.setStrokeWidth(2);
         
         hbox.boundsInParentProperty().addListener((obs, oldVal, newVal) -> {
             drawBackground();
@@ -64,10 +57,6 @@ public class Bowtie extends Group {
         getChildren().addAll(background, hbox);
         
         TactilePane.setTracker(typeBlade, tracker);
-    }
-    
-    public String getName() {
-        return this.name;
     }
     
     public TermDisplay getAnchor() {
@@ -99,11 +88,9 @@ public class Bowtie extends Group {
             TactilePane.setAnchor(this, null);
             TactilePane.setTracker(typeBlade, (TactilePane) getParent());
         } else {
-            //TactilePane.setTracker(typeBlade, null);
-            
             shrink();
             
-            TactilePane.setAnchor(this, new Anchor(termDisplay, Anchor.Pos.CENTER));
+            TactilePane.setAnchor(this, new Anchor(termDisplay, 1, 1, Anchor.Pos.CENTER));
         }
         anchor = termDisplay;
     }
@@ -112,6 +99,8 @@ public class Bowtie extends Group {
         if (!compact) {
             hbox.getChildren().removeAll(knot, typeBlade);
             compact = true;
+            
+            background.setFill(Color.LIGHTGREEN);
         }
     }
     
@@ -119,6 +108,9 @@ public class Bowtie extends Group {
         if (compact) {
             hbox.getChildren().addAll(knot, typeBlade);
             compact = false;
+            
+            background.setFill(Color.BISQUE);
+            drawBackground();
         }
     }
     
@@ -137,92 +129,20 @@ public class Bowtie extends Group {
 
             background.getPoints().addAll(new Double[]{
                 // Top left corner
-                hboxBounds.getMinX() - OFFSET, hboxBounds.getMinY() - OFFSET,
-                knotBounds.getMinX(), hboxBounds.getMinY() - OFFSET,
+                hboxBounds.getMinX() - BG_OFFSET, hboxBounds.getMinY() - BG_OFFSET,
+                knotBounds.getMinX(), hboxBounds.getMinY() - BG_OFFSET,
                 knotBounds.getMinX() + knotBounds.getWidth() / 2, hboxBounds.getMinY() + hboxBounds.getHeight() / 2,
-                knotBounds.getMaxX(), hboxBounds.getMinY() - OFFSET,
+                knotBounds.getMaxX(), hboxBounds.getMinY() - BG_OFFSET,
                 // Top right corner
-                hboxBounds.getMaxX() + OFFSET, hboxBounds.getMinY() - OFFSET,
+                hboxBounds.getMaxX() + BG_OFFSET, hboxBounds.getMinY() - BG_OFFSET,
                 // Bottom right corner
-                hboxBounds.getMaxX() + OFFSET, hboxBounds.getMaxY() + OFFSET,
-                knotBounds.getMaxX(), hboxBounds.getMaxY() + OFFSET,
+                hboxBounds.getMaxX() + BG_OFFSET, hboxBounds.getMaxY() + BG_OFFSET,
+                knotBounds.getMaxX(), hboxBounds.getMaxY() + BG_OFFSET,
                 knotBounds.getMinX() + knotBounds.getWidth() / 2, hboxBounds.getMinY() + hboxBounds.getHeight() / 2,
-                knotBounds.getMinX(), hboxBounds.getMaxY() + OFFSET,
+                knotBounds.getMinX(), hboxBounds.getMaxY() + BG_OFFSET,
                 // Bottom left corner
-                hboxBounds.getMinX() - OFFSET, hboxBounds.getMaxY() + OFFSET
+                hboxBounds.getMinX() - BG_OFFSET, hboxBounds.getMaxY() + BG_OFFSET
             });
         }
     }
-    
-    // NESTED CLASSES
-    class Knot extends Circle {
-        private static final double RADIUS = 15;
-        private double anchorX;
-        
-        public Knot() {
-            super(RADIUS);
-            setFill(Color.RED);
-
-            setOnMousePressed(event -> {
-                // Record location of click event in Knot
-                anchorX = event.getX();
-                event.consume();
-            });
-
-            setOnMouseDragged(event -> {
-                Bounds thisBounds = this.localToScene(getBoundsInLocal());
-                double thisCenterX = thisBounds.getMinX() + thisBounds.getWidth() / 2;
-
-                double x = event.getSceneX() - anchorX;
-
-                if (x < thisCenterX && termBlade.getChildren().size() > 1) {
-                    Node left = termBlade.getChildren().get(termBlade.getChildren().size() - 1);
-                    Bounds leftBounds = left.localToScene(left.getBoundsInLocal());
-                    double leftCenterX = leftBounds.getMinX() + leftBounds.getWidth() / 2;
-
-                    double delta = thisCenterX - leftCenterX;
-                    double progress = 1 - (x - leftCenterX) / delta;
-                    if (progress < 0) progress = 0;
-                    if (progress > 1) progress = 1;
-
-                    setScaleX(1 + progress * 0.3);
-                    setScaleY(1 - progress * 0.3);
-                    setTranslateX(-RADIUS * progress);
-
-                    if (x < leftCenterX) {
-                        coverHole();
-                    }
-                }
-
-                if (x > thisCenterX && typeBlade.getChildren().size() > 1) {
-                    Node right = typeBlade.getChildren().get(0);
-                    Bounds rightBounds = right.localToScene(right.getBoundsInLocal());
-                    double rightCenterX = rightBounds.getMinX() + rightBounds.getWidth() / 2;
-
-                    double delta = rightCenterX - thisCenterX;
-                    double progress = 1 - (rightCenterX - x) / delta;
-                    if (progress < 0) progress = 0;
-                    if (progress > 1) progress = 1;
-
-                    setScaleX(1 + progress * 0.3);
-                    setScaleY(1 - progress * 0.3);
-                    setTranslateX(RADIUS * progress);
-
-                    if (x > rightCenterX) {
-                        exposeHole();
-                    }
-                }
-
-                event.consume();
-            });
-
-            setOnMouseReleased(event -> {
-                setScaleX(1);
-                setScaleY(1);
-                setTranslateX(0);
-                event.consume();
-            });
-        }
-    }
-    
 }

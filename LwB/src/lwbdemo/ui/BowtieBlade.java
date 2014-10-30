@@ -10,13 +10,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import lwbdemo.model.Term;
 
-/**
- *
- * @author Richard
- */
-public abstract class BowtieBlade extends HBox {
+abstract class BowtieBlade extends HBox {
     static final Font NAME_FONT = Font.font("Verdana", FontWeight.BOLD, 20);
     static final Font TERM_FONT = Font.font("Verdana", FontWeight.NORMAL, 20);
     

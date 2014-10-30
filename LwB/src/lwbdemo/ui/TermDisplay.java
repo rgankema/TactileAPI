@@ -6,13 +6,11 @@
 package lwbdemo.ui;
 
 import lwbdemo.model.Term;
-import lwbdemo.model.FinalType;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -24,26 +22,20 @@ import javafx.scene.text.FontWeight;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
 
-/**
- *
- * @author Richard
- */
-public class TermDisplay extends StackPane{
-    final Term term;
-    final Label termLabel;
-    final Map<Bowtie, ChangeListener<Boolean>> dropListenerByBowtie;
-    final ChangeListener<Anchor> anchorListener;
+class TermDisplay extends StackPane{
+    private final Term term;
+    private final Label termLabel;
+    private final Map<Bowtie, ChangeListener<Boolean>> inUseListenerByBowtie;
+    private final ChangeListener<Anchor> anchorListener;
+    private final ChangeListener<Bounds> boundsListener;
     
-    Bowtie parentBowtie;
-    
-    Bowtie anchoredBowtie;
-    boolean active;
+    private final Bowtie parentBowtie;
+    private Bowtie anchoredBowtie;
     
     public TermDisplay(Term term, Bowtie parentBowtie) {
         this.term = term;
         this.parentBowtie = parentBowtie;
-        this.active = false;
-        this.dropListenerByBowtie = new HashMap<>();
+        this.inUseListenerByBowtie = new HashMap<>();
         
         termLabel = new Label();
         termLabel.textProperty().bind(term.stringProperty());
@@ -56,17 +48,10 @@ public class TermDisplay extends StackPane{
                 hostBowtie(null);
             }
         };
-    }
-    
-    @Override
-    protected void layoutChildren() {
-        super.layoutChildren();
         
-        if (anchoredBowtie != null) {
-            Bounds bounds = anchoredBowtie.termBlade.getBoundsInParent();
-            setMinWidth(bounds.getWidth());
-        }
-        
+        boundsListener = (observable, oldVal, newVal) -> {
+            setMinSize(newVal.getWidth() + 15, newVal.getHeight() + 15);
+        };
     }
     
     public Term getTerm() {
@@ -74,11 +59,6 @@ public class TermDisplay extends StackPane{
     }
     
     public void setActive(boolean active) {
-        if (term instanceof FinalType) {
-            return;
-        }
-        this.active = active;
-        
         if (active) {
             setBackground(new Background(new BackgroundFill(Color.ALICEBLUE, CornerRadii.EMPTY, Insets.EMPTY)));
             setMinWidth(40);
@@ -111,12 +91,14 @@ public class TermDisplay extends StackPane{
             }
         };
         TactilePane.inUseProperty(bowtie).addListener(listener);
-        dropListenerByBowtie.put(bowtie, listener);
+        inUseListenerByBowtie.put(bowtie, listener);
     }
     
     private void onAreaLeft(Bowtie bowtie) {
-        ChangeListener listener = dropListenerByBowtie.remove(bowtie);
-        TactilePane.inUseProperty(bowtie).removeListener(listener);
+        ChangeListener listener = inUseListenerByBowtie.remove(bowtie);
+        if (listener != null) {
+            TactilePane.inUseProperty(bowtie).removeListener(listener);
+        }
     }
     
     private void onDropped(Bowtie bowtie) {
@@ -132,6 +114,10 @@ public class TermDisplay extends StackPane{
             
             anchoredBowtie.anchorAt(null);
             TactilePane.anchorProperty(anchoredBowtie).removeListener(anchorListener);
+            
+            anchoredBowtie.termBlade.boundsInParentProperty().removeListener(boundsListener);
+            setMinSize(-1, -1);
+            
             anchoredBowtie = null;
             
             getChildren().add(termLabel);
@@ -145,6 +131,10 @@ public class TermDisplay extends StackPane{
             bowtie.anchorAt(this);
             TactilePane.anchorProperty(bowtie).addListener(anchorListener);
             anchoredBowtie = bowtie;
+            
+            Bounds anchoredBounds = anchoredBowtie.termBlade.getBoundsInParent();
+            setMinSize(anchoredBounds.getWidth() + 15, anchoredBounds.getHeight() + 15);
+            anchoredBowtie.termBlade.boundsInParentProperty().addListener(boundsListener);
             
             return true;
         }
