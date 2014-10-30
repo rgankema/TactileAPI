@@ -34,6 +34,7 @@ public class Main extends Application {
         tactilePane.getChildren().add(new Bowtie(tactilePane, "\"foo\"", new ListType(new FinalType("Char"))));
         tactilePane.getChildren().add(new Bowtie(tactilePane, "const", c, d, c));
         tactilePane.getChildren().add(new Bowtie(tactilePane, "length", new ListType(e), new FinalType("Num")));
+        tactilePane.getChildren().add(new Bowtie(tactilePane, "1", new FinalType("Num")));
         
         for (Node child : tactilePane.getChildren()) {
             TactilePane.setSlideOnRelease(child, true);

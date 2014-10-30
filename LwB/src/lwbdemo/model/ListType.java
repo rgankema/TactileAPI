@@ -16,7 +16,7 @@ import javafx.beans.property.StringProperty;
 public class ListType extends Term{
     final Term initialTerm;
     
-    Term term;
+    final Term term;
     
     public ListType(Term term) {
         this.initialTerm = term;
@@ -26,11 +26,11 @@ public class ListType extends Term{
     @Override
     public boolean canBeSet(Term term) {
         if (term == null) {
-            return true;
+            return this.term.canBeSet(null);
         }
         if (term instanceof ListType) {
             ListType list = (ListType) term;
-            return this.term.setTerm(list.getTerm());
+            return this.term.canBeSet(list.getTerm());
         }
         return false;
     }

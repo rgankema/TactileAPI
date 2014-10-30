@@ -72,8 +72,9 @@ public class Function extends Term {
                     }
                 }
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Override

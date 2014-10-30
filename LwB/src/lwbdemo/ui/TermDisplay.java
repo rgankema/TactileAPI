@@ -14,6 +14,10 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -74,11 +78,28 @@ class TermDisplay extends StackPane{
                     onAreaLeft(((TypeBlade) event.getOther()).getBowtie());
                 }
             });
+            TactilePane.setOnInProximity(this, event -> {
+                if (event.getOther() instanceof TypeBlade && event.getOther() != parentBowtie.typeBlade) {
+                    onInProximityOrArea(((TypeBlade) event.getOther()).getBowtie());
+                }
+            });
+            TactilePane.setOnInArea(this, event -> {
+                if (event.getOther() instanceof TypeBlade && event.getOther() != parentBowtie.typeBlade) {
+                    onInProximityOrArea(((TypeBlade) event.getOther()).getBowtie());
+                }
+            });
+            TactilePane.setOnProximityLeft(this, event -> {
+                if (event.getOther() instanceof TypeBlade && event.getOther() != parentBowtie.typeBlade) {
+                    onProximityLeft(((TypeBlade) event.getOther()).getBowtie());
+                }
+            });
         } else {
             TactilePane.setTracker(this, null);
             TactilePane.setOnAreaEntered(this, null);
             TactilePane.setOnAreaLeft(this, null);
-            
+            TactilePane.setOnInProximity(this, null);
+            TactilePane.setOnInArea(this, null);
+              
             setBackground(null);
             setMinWidth(-1);
         }
@@ -101,14 +122,36 @@ class TermDisplay extends StackPane{
         }
     }
     
-    private void onDropped(Bowtie bowtie) {
-        hostBowtie(bowtie);
+    private void onInProximityOrArea(Bowtie bowtie) {
+        if (!term.canBeSet(bowtie.getType())) {
+            Border red = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2)));
+            bowtie.typeBlade.setBorder(red);
+            this.setBorder(red);
+        } else {
+            Border green = new Border(new BorderStroke(Color.GREEN, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2)));
+            bowtie.typeBlade.setBorder(green);
+            this.setBorder(green);
+        }
     }
     
-    public boolean hostBowtie(Bowtie bowtie) {
-        if (bowtie == anchoredBowtie) {
-            return false;
+    private void onProximityLeft(Bowtie bowtie) {
+        bowtie.typeBlade.setBorder(null);
+        this.setBorder(null);
+    }
+    
+    private void onDropped(Bowtie bowtie) {
+        hostBowtie(bowtie);
+        ChangeListener<Boolean> inUseListener = inUseListenerByBowtie.get(bowtie);
+        if (inUseListener != null) {
+            TactilePane.inUseProperty(bowtie).removeListener(inUseListener);
         }
+    }
+    
+    public void hostBowtie(Bowtie bowtie) {
+        if (bowtie == anchoredBowtie) {
+            return;
+        }
+        
         if (bowtie == null) {
             term.setTerm(null);
             
@@ -122,8 +165,6 @@ class TermDisplay extends StackPane{
             
             getChildren().add(termLabel);
             setActive(true);
-            
-            return true;
         } else if (TactilePane.getAnchor(bowtie) == null && term.setTerm(bowtie.getType())) {
             setActive(false);
             getChildren().remove(termLabel);
@@ -135,9 +176,9 @@ class TermDisplay extends StackPane{
             Bounds anchoredBounds = anchoredBowtie.termBlade.getBoundsInParent();
             setMinSize(anchoredBounds.getWidth() + 15, anchoredBounds.getHeight() + 15);
             anchoredBowtie.termBlade.boundsInParentProperty().addListener(boundsListener);
-            
-            return true;
+        } else if (TactilePane.getAnchor(bowtie) == null) {
+            TactilePane.moveAwayFrom(bowtie.typeBlade, this, 500);
+            TactilePane.moveAwayFrom(this, bowtie.typeBlade, 500);
         }
-        return false;
     }
 }

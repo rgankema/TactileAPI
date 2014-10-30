@@ -27,13 +27,23 @@ public class AbstractType extends Term{
     
     @Override
     public boolean setTerm(Term term) {
-        stringProperty().unbind();
-        
-        this.term = term;
-        if (term != null) {
-            stringProperty().bind(term.stringProperty());
+        if (this.term != null) {
+            if (term != null) {
+                return this.term.setTerm(term);
+            } else {
+                this.term = term;
+                stringProperty().unbind();
+                stringProperty().set(this.name);
+            }
         } else {
-            stringProperty().set(name);
+            if (term != null) {
+                this.term = term;
+                stringProperty().bind(term.stringProperty());
+            } else {
+                this.term = term;
+                stringProperty().unbind();
+                stringProperty().set(this.name);
+            }
         }
         return true;
     }

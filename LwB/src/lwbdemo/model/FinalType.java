@@ -37,7 +37,7 @@ public class FinalType extends Term {
     
     @Override
     public Term getTerm() {
-        return this;
+        return null;
     }
     
 }
