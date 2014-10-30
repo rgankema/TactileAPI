@@ -34,8 +34,7 @@ public class Main extends Application {
         // map bowtie
         VariableType a = new VariableType("a");
         VariableType b = new VariableType("b");
-        Function f1 = new Function(new VariableType("a"), new VariableType("b"));
-        Bowtie btFuncMap = new Bowtie(tactilePane, "map", f1, new List(a), new List(b));
+        Bowtie btFuncMap = new Bowtie(tactilePane, "map", new Function(a, b), new List(a), new List(b));
         // cost bowtie
         VariableType c = new VariableType("c");
         VariableType d = new VariableType("d");

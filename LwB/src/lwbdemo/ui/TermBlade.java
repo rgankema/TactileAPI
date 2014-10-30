@@ -34,7 +34,7 @@ class TermBlade extends BowtieBlade {
             Bowtie anchoredBowtie = result.getAnchoredBowtie();
             if (anchoredBowtie != null) {
                 result.setAnchoredBowtie(null);
-                TactilePane.moveAwayFrom(anchoredBowtie, result, 500);
+                TactilePane.moveAwayFrom(anchoredBowtie, getBowtie().knot, 500);
             }
             getChildren().remove(result);
         }
