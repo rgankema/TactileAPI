@@ -59,7 +59,7 @@ public class TactilePaneTest extends Application {
             });
             TactilePane.setOnAreaEntered(circle, event -> {
                 if (TactilePane.isInUse(circle) && !TactilePane.isDraggable(event.getOther())) { //ugly way of saying rectangle.
-                    TactilePane.createBond(circle, event.getOther(), 0.0, 0.0);
+                    TactilePane.createBond(circle, event.getOther());
                     System.out.println("created bond");
                 }
             });

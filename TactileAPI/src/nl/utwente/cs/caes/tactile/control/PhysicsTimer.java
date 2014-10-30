@@ -94,11 +94,12 @@ class PhysicsTimer extends AnimationTimer {
             // If the node is not in use, update vector for Bonds
             if (!TactilePane.isInUse(node)){
             	if(!TactilePane.getBondList(node).isEmpty()){
-            		for(Node bondes: TactilePane.getBondList(node) ){
+            		for(Node bondes: TactilePane.getBondList(node).keySet() ){
             			Point2D difference = TactilePane.calculateDistance(node,bondes);
-            			if (difference.magnitude() > TactilePane.getBondDistance()){
+            			
+            			if (difference.magnitude() > TactilePane.getBondList(node).get(bondes).minDistance){
             				//If two nodes have a bond, and they are out of bond range, nudge them slightly towards each other.
-            				vector = vector.add(difference.normalize().multiply(DEFAULT_BOND));
+            				vector = vector.add(difference.normalize().multiply(TactilePane.getBondList(node).get(bondes).force));
             				TactilePane.setVector(node, vector);
             			}
             		}

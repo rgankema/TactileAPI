@@ -3,6 +3,7 @@ package nl.utwente.cs.caes.tactile.control;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -19,6 +20,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import javafx.css.CssMetaData;
@@ -238,14 +240,17 @@ public class TactilePane extends Control {
     }
     
     /**
-     * Returns the set of {@code Nodes} that are registered to the same
+     * Returns a hashmap of {@code Nodes} that are registered to the same
      * {@code TactilePane} as the given {@code node}, and have a bond
-     * with that {@code node}
+     * with that {@code node}. The hashmap contains the other node the bond is to,
+     * and the minimum distance for the bond to start working, as well as force to
+     * be pulled
      */
-    public static ObservableSet<Node> getBondList(Node node) {
-        ObservableSet<Node> result = (ObservableSet<Node>) getConstraint(node, NODES_BOND);
+	public static ObservableMap<Node, Bond> getBondList(Node node) {
+        @SuppressWarnings("unchecked")
+		ObservableMap<Node, Bond> result = (ObservableMap<Node, Bond>) getConstraint(node, NODES_BOND);
         if (result == null) {
-            result = FXCollections.observableSet(new HashSet<Node>());
+            result = FXCollections.observableMap(new Hashtable<Node, Bond>());
             setConstraint(node, NODES_BOND, result);
         }
         return result;
@@ -553,16 +558,24 @@ public class TactilePane extends Control {
      * Relations are kept symmetric, so that either node one can create a bond with node two, or the developer can 
      * switch these and it will not matter.
      */
-    public static void createBond(Node one, Node two, double force, double distance){
-    	getBondList(one).add(two);
-    	getBondList(two).add(one);
+    public static void createBond(Node one, Node two, double force, double minDistance){
+    	getBondList(one).put(two, new Bond(force, minDistance));
+    	getBondList(two).put(one, new Bond(force, minDistance));
+    }
+    
+    /**
+     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
+     * Uses default values for force and distance.
+     */
+    public static void createBond(Node one, Node two){
+    	createBond(one, two, PhysicsTimer.DEFAULT_BOND,getBondDistance() );
     }
     
     /**
      * Removes a bond between nodes one and two. Removes the bond for both nodes.
      */
     public static void removeBond(Node one, Node two){
-    	if(getBondList(one).contains(two)){
+    	if(getBondList(one).containsKey(two)){
     		getBondList(one).remove(two);
         	getBondList(two).remove(one);
     	} else{
@@ -987,5 +1000,22 @@ public class TactilePane extends Control {
         public String toString() {
             return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %f, localY = %f]", draggable.toString(), touchId, localX, localY);
         }
+    }
+    
+    // Help class used to record Bonds
+    /**
+     * Contains mindistance - the distance at which bond starts pulling
+     * Contains force - the force used to pull, should be negative
+     * @author Shaedys
+     *
+     */
+    public static class Bond {
+    	double minDistance; //distance before force is applied
+    	double force; //amount of force that is applied.
+    	
+    	public Bond(double force, double minDistance){
+    		this.minDistance = minDistance;
+    		this.force = force;
+    	}
     }
 }
