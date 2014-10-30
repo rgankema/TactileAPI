@@ -58,7 +58,7 @@ public class TactilePaneTest extends Application {
                 }
             });
             TactilePane.setOnAreaEntered(circle, event -> {
-                if (TactilePane.isInUse(circle) && !TactilePane.isDraggable(event.getOther())) { //ugly way of saying rectangle.
+                if (TactilePane.isInUse(circle) && !TactilePane.isDraggable(event.getOther()) && TactilePane.isInUse(event.getOther())) { //ugly way of saying rectangle.
                     TactilePane.createBond(circle, event.getOther());
                     System.out.println("created bond");
                 }
@@ -80,7 +80,7 @@ public class TactilePaneTest extends Application {
         enableDebug.setSelected(false);
         controlLayout.getChildren().add(enableDebug);
         
-        root.setLeft(new Button("Loze ruimte"));
+        //root.setLeft(new Button("Loze ruimte"));
         root.setCenter(tactilePane);
         root.setBottom(controlLayout);
         
