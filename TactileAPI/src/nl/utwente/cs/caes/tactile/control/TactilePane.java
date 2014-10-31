@@ -790,8 +790,8 @@ public class TactilePane extends Control {
         if (isDraggable(node) && getAnchor(node) == null) {
 
             Point2D localPoint = this.sceneToLocal(scenePoint);
-            double x = localPoint.getX() - dragContext.localX - getTranslateX();
-            double y = localPoint.getY() - dragContext.localY - getTranslateY();
+            double x = localPoint.getX() - dragContext.localX - node.getTranslateX();
+            double y = localPoint.getY() - dragContext.localY - node.getTranslateY();
 
             if (isBordersCollide()) {
                 Bounds paneBounds = this.getBoundsInLocal();

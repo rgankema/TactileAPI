@@ -49,6 +49,7 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < CIRCLES; i++) {
             Circle circle = new Circle(50);
             circle.setScaleX(1.5);
+            circle.setTranslateX(150); // dit was juist intended, om iets te fixen in de API zelf. ziet er naar uit dat het nu goed werkt though
             circle.relocate(Math.random() * (WIDTH - 100), Math.random() * (HEIGHT - 100));
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
