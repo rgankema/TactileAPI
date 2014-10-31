@@ -24,7 +24,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
-import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
+import nl.utwente.cs.caes.tactile.control.Anchor;
 
 class TermDisplay extends StackPane{
     private final Term term;
