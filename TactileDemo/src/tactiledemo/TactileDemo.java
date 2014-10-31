@@ -13,6 +13,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
+import nl.utwente.cs.caes.tactile.fxml.TactileBuilderFactory;
 
 public class TactileDemo extends Application {
     DebugParent debug;
@@ -22,7 +23,7 @@ public class TactileDemo extends Application {
         BorderPane root = new BorderPane();
         
         // Init TactilePane
-        TactilePane tactilePane = (TactilePane) FXMLLoader.load(getClass().getResource("Main.fxml"));
+        TactilePane tactilePane = (TactilePane) FXMLLoader.load(getClass().getResource("Main.fxml"), null, new TactileBuilderFactory());
         
         // Init Control Pane
         FlowPane controlLayout = new FlowPane();

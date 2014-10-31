@@ -24,7 +24,7 @@ public class ConstantType extends Term {
 
     @Override
     public boolean isApplicable(Term term) {
-        return (term instanceof ConstantType && term.getString().equals(this.getString()));
+        return (term instanceof ConstantType && term.toString().equals(this.toString()));
     }
     
     @Override

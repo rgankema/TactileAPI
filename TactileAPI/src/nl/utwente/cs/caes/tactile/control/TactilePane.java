@@ -2,8 +2,8 @@ package nl.utwente.cs.caes.tactile.control;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -246,11 +246,11 @@ public class TactilePane extends Control {
      * and the minimum distance for the bond to start working, as well as force to
      * be pulled
      */
-	public static ObservableMap<Node, Bond> getBondList(Node node) {
+    public static ObservableMap<Node, Bond> getBondList(Node node) {
         @SuppressWarnings("unchecked")
-		ObservableMap<Node, Bond> result = (ObservableMap<Node, Bond>) getConstraint(node, NODES_BOND);
+	ObservableMap<Node, Bond> result = (ObservableMap<Node, Bond>) getConstraint(node, NODES_BOND);
         if (result == null) {
-            result = FXCollections.observableMap(new Hashtable<Node, Bond>());
+            result = FXCollections.observableMap(new HashMap<Node, Bond>());
             setConstraint(node, NODES_BOND, result);
         }
         return result;
@@ -1070,7 +1070,7 @@ public class TactilePane extends Control {
     	double minDistance; //distance before force is applied
     	double force; //amount of force that is applied.
     	
-    	public Bond(double force, double minDistance){
+        public Bond(double force, double minDistance){
     		this.minDistance = minDistance;
     		this.force = force;
     	}

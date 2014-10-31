@@ -31,8 +31,8 @@ public class List extends Term{
             return this.type.isApplicable(null);
         }
         if (term instanceof List) {
-            List list = (List) term;
-            return this.type.isApplicable(list.getAppliedTerm());
+            List other = (List) term;
+            return this.type.isApplicable(other.getAppliedTerm());
         }
         return false;
     }
@@ -43,8 +43,8 @@ public class List extends Term{
             return this.type.applyTerm(null);
         }
         if (term instanceof List) {
-            List list = (List) term;
-            return this.type.applyTerm(list.getAppliedTerm());
+            List other = (List) term;
+            return this.type.applyTerm(other.getAppliedTerm());
         }
         return false;
     }

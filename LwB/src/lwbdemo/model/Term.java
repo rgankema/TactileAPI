@@ -11,7 +11,8 @@ public abstract class Term {
     
     protected StringProperty string;
     
-    public String getString() {
+    @Override
+    public String toString() {
         return stringProperty().get();
     }
     
