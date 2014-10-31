@@ -5,12 +5,11 @@ import java.util.Map;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
-import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
+import nl.utwente.cs.caes.tactile.control.Anchor;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 /**

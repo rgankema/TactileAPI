@@ -12,9 +12,9 @@
 <?import tactiledemo.*?>
 <?import java.net.*?>
 
-<TactilePane xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" fx:id="root" 
+<TactilePane  xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" fx:id="root" 
            prefHeight="600" prefWidth="800"
-           proximityThreshold="40" >
+           proximityThreshold="40"  >
     
     <ColorItem color="#ff0000" layoutX="0" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
     <ColorItem color="#ff0000" layoutX="100" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
@@ -24,14 +24,16 @@
     <ColorItem color="#0000ff" layoutX="500" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
     <ColorItem color="#ffff00" layoutX="600" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
     <ColorItem color="#ffff00" layoutX="700" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
+   
+   
     
-    <!-- om builder te testen, werkt nog niet
-    <Rectangle fill="#ff00ff" layoutX="600" layoutY="600">
-        <TactilePane.anchor>
-            <Anchor anchorNode="$pane" xOffset="0" yOffset="0"/>
-        </TactilePane.anchor>
-    </Rectangle>
-    -->
+    
 
     <ColorSlotPane layoutY="400" layoutX="100" TactilePane.slideOnRelease="true" tactilePane="$root" fx:id="pane"/>
+    
+    <Rectangle fill="#ff0000" width="50" height="50" layoutX="600" layoutY="600">
+        <TactilePane.anchor>
+            <Anchor anchorNode="$pane" alignment="TOP_CENTER"/>
+        </TactilePane.anchor>
+    </Rectangle>
 </TactilePane>

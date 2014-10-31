@@ -10,7 +10,6 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
-import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 
 class PhysicsTimer extends AnimationTimer {
@@ -119,8 +118,8 @@ class PhysicsTimer extends AnimationTimer {
                 Bounds nodeBounds = node.getBoundsInParent();
                 
                 // Relocate anchored Node
-                double x = anchor.xOffset; 
-                double y = anchor.yOffset;
+                double x = anchor.offsetX; 
+                double y = anchor.offsetY;
                 switch(anchor.alignment) {
                     case TOP_LEFT: 
                         x += anchorBounds.getMinX();

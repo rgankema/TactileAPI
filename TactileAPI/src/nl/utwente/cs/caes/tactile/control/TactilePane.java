@@ -990,58 +990,7 @@ public class TactilePane extends Control {
     }
     
     // NESTED CLASSES
-    
-    // TODO: builder voor maken (zie http://docs.oracle.com/javase/8/javafx/api/javafx/fxml/doc-files/introduction_to_fxml.html)
-    public static class Anchor {
-        final Node anchorNode;
-        final double xOffset;
-        final double yOffset;
-        final Pos alignment;
-        
-        public enum Pos {
-            TOP_LEFT, TOP_CENTER, TOP_RIGHT,
-            CENTER_LEFT, CENTER, CENTER_RIGHT,
-            BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
-        }
-        public Anchor(Node anchorNode) {
-            this(anchorNode, 0, 0, null);
-        }
-        
-        public Anchor(Node anchorNode, double xOffset, double yOffset) {
-            this(anchorNode, xOffset, yOffset, null);
-        }
-        
-        public Anchor(Node anchorNode, Pos alignment) {
-            this(anchorNode, 0, 0, alignment);
-        }
-        
-        public Anchor(Node anchorNode, double xOffset, double yOffset, Pos alignment) {
-            if (anchorNode == null) {
-                throw new NullPointerException("anchorNode may not be null");
-            }
-            
-            this.anchorNode = anchorNode;
-            this.xOffset = xOffset;
-            this.yOffset = yOffset;
-            this.alignment = (alignment == null) ? Pos.TOP_LEFT : alignment;
-        }
-        
-        public Node getAnchorNode() {
-            return anchorNode;
-        }
-        public double getXOffset() {
-            return xOffset;
-        }
-        
-        public double getYOffset() {
-            return yOffset;
-        }
-        
-        public Pos getAlignment() {
-            return alignment;
-        }
-    }
-    
+
     // Help class used for dragging Nodes
     private class DragContext {
         final Node draggable;   // The Node that is dragged around
