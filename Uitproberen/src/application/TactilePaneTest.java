@@ -49,7 +49,6 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < CIRCLES; i++) {
             Circle circle = new Circle(50);
             circle.setScaleX(1.5);
-            circle.setTranslateX(150);
             circle.relocate(Math.random() * (WIDTH - 100), Math.random() * (HEIGHT - 100));
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
