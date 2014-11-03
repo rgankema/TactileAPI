@@ -27,8 +27,6 @@ class PhysicsTimer extends AnimationTimer {
     private static final double THRESHOLD = 2.5;
     // Default value for force
     protected static final double DEFAULT_FORCE = 100;
-    // Default value for bond force
-    protected static final double DEFAULT_BOND_FORCE = -10;
     
     final TactilePane pane;
     final ConcurrentHashMap<Node, Point2D> locationByNode  = new ConcurrentHashMap<>();
@@ -90,27 +88,29 @@ class PhysicsTimer extends AnimationTimer {
                 Point2D newVector = TactilePane.getVector(node).add(new Point2D(deltaX , deltaY).multiply(SLIDE));
                 TactilePane.setVector(node, newVector);
             }
-            // If the node is not in use, update vector for Bonds
-            if (!TactilePane.isInUse(node)){
-            	if(!TactilePane.getBondList(node).isEmpty()){
-            		for(Node bondes: TactilePane.getBondList(node).keySet() ){
-            			Point2D difference = TactilePane.calculateDistance(node,bondes);
-            			
-            			if (difference.magnitude() > TactilePane.getBondList(node).get(bondes).minDistance){
-            				//If two nodes have a bond, and they are out of bond range, nudge them slightly towards each other.
-            				vector = vector.add(difference.normalize().multiply(TactilePane.getBondList(node).get(bondes).force));
-            				TactilePane.setVector(node, vector);
-            			}
-            		}
-            	}
+            // Update vector for Bonds
+            for (Bond bond : TactilePane.getBonds(node)) {
+                Node other = bond.getBondNode();
+                if (other == node) continue;
+                
+                Bounds nodeBounds = node.localToScene(node.getBoundsInLocal());
+                Bounds otherBounds = other.localToScene(other.getBoundsInLocal());
+
+                double nodeX = nodeBounds.getMinX() + nodeBounds.getWidth() / 2;
+                double nodeY = nodeBounds.getMinY() + nodeBounds.getHeight() / 2;
+                double otherX = otherBounds.getMinX() + otherBounds.getWidth() / 2;
+                double otherY = otherBounds.getMinY() + otherBounds.getHeight() / 2;
+                
+                Point2D distance = new Point2D(nodeX - otherX, nodeY - otherY);
+                
+                TactilePane.setVector(node, TactilePane.getVector(node).add(distance.normalize().multiply(- bond.getForceMultiplier()*(distance.magnitude() - bond.getDistance()))));
+                
             }
+            
             // If the node is not actively being used and not anchored update the node's position according to vector
             if (!TactilePane.isInUse(node) && anchor == null && !vector.equals(Point2D.ZERO)) {
                 layoutNode(node, vector.multiply(TIME_STEP));
             }
-            
-            
-            
             // If anchored, update the node's position according to its anchor
             else if (anchor != null) {
                 Node anchorNode = anchor.getAnchorNode();
@@ -118,44 +118,31 @@ class PhysicsTimer extends AnimationTimer {
                 Bounds nodeBounds = node.getBoundsInParent();
                 
                 // Relocate anchored Node
-                double x = anchor.offsetX; 
-                double y = anchor.offsetY;
-                switch(anchor.alignment) {
-                    case TOP_LEFT: 
+                double x = anchor.getOffsetX(); 
+                double y = anchor.getOffsetY();
+                switch(anchor.getAlignment().getHpos()) {
+                    case LEFT: 
                         x += anchorBounds.getMinX();
-                        y += anchorBounds.getMinY();
-                        break;
-                    case TOP_CENTER:
-                        x += anchorBounds.getMinX() + anchorBounds.getWidth() / 2 - nodeBounds.getWidth() / 2;
-                        y += anchorBounds.getMinY();
-                        break;
-                    case TOP_RIGHT:
-                        x += anchorBounds.getMaxX() - nodeBounds.getWidth();
-                        y += anchorBounds.getMinY();
-                        break;
-                    case CENTER_LEFT:
-                        x += anchorBounds.getMinX();
-                        y += anchorBounds.getMinY() + anchorBounds.getHeight() / 2 - nodeBounds.getHeight() / 2;
                         break;
                     case CENTER:
                         x += anchorBounds.getMinX() + anchorBounds.getWidth() / 2 - nodeBounds.getWidth() / 2;
+                        break;
+                    case RIGHT:
+                        x += anchorBounds.getMaxX() - nodeBounds.getWidth();
+                        break;
+                }
+                switch(anchor.getAlignment().getVpos()) {
+                    case TOP:
+                        y += anchorBounds.getMinY();
+                        break;
+                    case CENTER:
                         y += anchorBounds.getMinY() + anchorBounds.getHeight() / 2 - nodeBounds.getHeight() / 2;
                         break;
-                    case CENTER_RIGHT:
-                        x += anchorBounds.getMaxX() - nodeBounds.getWidth();
-                        y += anchorBounds.getMinY() + anchorBounds.getHeight() / 2 - nodeBounds.getHeight() / 2;
-                        break;
-                    case BOTTOM_LEFT:
-                        x += anchorBounds.getMinX();
+                    case BOTTOM:
                         y += anchorBounds.getMaxY() - nodeBounds.getHeight();
                         break;
-                    case BOTTOM_CENTER:
-                        x += anchorBounds.getMinX() + anchorBounds.getWidth() / 2 - nodeBounds.getWidth() / 2;
-                        y += anchorBounds.getMaxY() - nodeBounds.getHeight();
-                        break;
-                    case BOTTOM_RIGHT:
-                        x += anchorBounds.getMaxX() - nodeBounds.getWidth();
-                        y += anchorBounds.getMaxY() - nodeBounds.getHeight();
+                    case BASELINE:
+                        // TODO Support Baseline alignment?
                         break;
                 }
                 node.setLayoutX(x);

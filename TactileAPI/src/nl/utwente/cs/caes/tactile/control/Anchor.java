@@ -5,19 +5,15 @@
  */
 package nl.utwente.cs.caes.tactile.control;
 
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 
 public class Anchor {
-    final Node anchorNode;
-    final double offsetX;
-    final double offsetY;
-    final Pos alignment;
+    private final Node anchorNode;
+    private double offsetX;
+    private double offsetY;
+    private Pos alignment;
 
-    public enum Pos {
-        TOP_LEFT, TOP_CENTER, TOP_RIGHT,
-        CENTER_LEFT, CENTER, CENTER_RIGHT,
-        BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
-    }
     public Anchor(Node anchorNode) {
         this(anchorNode, 0, 0, null);
     }
@@ -44,12 +40,25 @@ public class Anchor {
     public Node getAnchorNode() {
         return anchorNode;
     }
+    
+    public void setOffsetX(double offsetX) {
+        this.offsetX = offsetX;
+    }
+    
     public double getOffsetX() {
         return offsetX;
+    }
+    
+    public void setOffsetY(double offsetY) {
+        this.offsetY = offsetY;
     }
 
     public double getOffsetY() {
         return offsetY;
+    }
+    
+    public void setAlignment(Pos alignment) {
+        this.alignment = alignment;
     }
 
     public Pos getAlignment() {

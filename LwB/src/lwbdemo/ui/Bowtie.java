@@ -78,7 +78,7 @@ public class Bowtie extends Group {
         } else {
             shrink();
             
-            TactilePane.setAnchor(this, new Anchor(termDisplay, 1, 1, Anchor.Pos.CENTER));
+            TactilePane.setAnchor(this, new Anchor(termDisplay, 1, 1, Pos.CENTER));
         }
         anchor = termDisplay;
     }

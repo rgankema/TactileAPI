@@ -6,11 +6,12 @@
 package nl.utwente.cs.caes.tactile.fxml;
 
 import javafx.fxml.JavaFXBuilderFactory;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.util.Builder;
 import javafx.util.BuilderFactory;
 import nl.utwente.cs.caes.tactile.control.Anchor;
-import nl.utwente.cs.caes.tactile.control.TactilePane;
+import nl.utwente.cs.caes.tactile.control.Bond;
 
 public class TactileBuilderFactory implements BuilderFactory {
     private final JavaFXBuilderFactory defaultBuilderFactory = new JavaFXBuilderFactory();
@@ -19,7 +20,7 @@ public class TactileBuilderFactory implements BuilderFactory {
     public Builder<?> getBuilder(Class<?> type) {
         if (type == Anchor.class) {
             return new TactilePaneAnchorBuilder();
-        } else if (type == TactilePane.Bond.class) {
+        } else if (type == Bond.class) {
             throw new UnsupportedOperationException("Not supported yet");
         } else {
             return defaultBuilderFactory.getBuilder(type);
@@ -30,7 +31,7 @@ public class TactileBuilderFactory implements BuilderFactory {
         private Node anchorNode = null;
         private double offsetX = 0;
         private double offsetY = 0;
-        private Anchor.Pos alignment = Anchor.Pos.TOP_LEFT;
+        private Pos alignment = Pos.TOP_LEFT;
 
         public Node getAnchorNode() {
             return anchorNode;
@@ -56,11 +57,11 @@ public class TactileBuilderFactory implements BuilderFactory {
             this.offsetY = offsetY;
         }
 
-        public Anchor.Pos getAlignment() {
+        public Pos getAlignment() {
             return alignment;
         }
         
-        public void setAlignment(Anchor.Pos alignment) {
+        public void setAlignment(Pos alignment) {
             this.alignment = alignment;
         }
 
@@ -69,5 +70,15 @@ public class TactileBuilderFactory implements BuilderFactory {
             return new Anchor(anchorNode, offsetX, offsetY, alignment);
         }
 
+    }
+    
+    public static class TactilePaneBondBuilder implements Builder<Bond> {
+
+        
+        @Override
+        public Bond build() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+        
     }
 }

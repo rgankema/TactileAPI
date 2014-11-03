@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -240,17 +241,23 @@ public class TactilePane extends Control {
     }
     
     /**
-     * Returns a hashmap of {@code Nodes} that are registered to the same
-     * {@code TactilePane} as the given {@code node}, and have a bond
-     * with that {@code node}. The hashmap contains the other node the bond is to,
-     * and the minimum distance for the bond to start working, as well as force to
-     * be pulled
+     * Returns the set of {@code Bonds} associated with the given {@code Node}. If the set
+     * already contains a {@code Bond} with the same {@code bondNode}, the old {@code Bond}
+     * is replaced.
      */
-    public static ObservableMap<Node, Bond> getBondList(Node node) {
-        @SuppressWarnings("unchecked")
-	ObservableMap<Node, Bond> result = (ObservableMap<Node, Bond>) getConstraint(node, NODES_BOND);
+    public static ObservableSet<Bond> getBonds(Node node) {
+	ObservableSet<Bond> result = (ObservableSet<Bond>) getConstraint(node, NODES_BOND);
         if (result == null) {
-            result = FXCollections.observableMap(new HashMap<Node, Bond>());
+            result = FXCollections.observableSet(new HashSet<Bond>() {
+                @Override
+                public boolean add(Bond bond) {
+                    Optional<Bond> opt = stream().filter(b -> b.getBondNode() == bond.getBondNode()).findAny();
+                    if (opt.isPresent()) {
+                        remove(opt.get());
+                    }
+                    return super.add(bond);
+                }
+            });
             setConstraint(node, NODES_BOND, result);
         }
         return result;
@@ -504,7 +511,6 @@ public class TactilePane extends Control {
     // STATIC METHODS
     
     public static void moveAwayFrom(Node move, Node from, double force) {
-        
         if (move.getParent() == null) return;
         
         Node moveDraggable = move;
@@ -522,9 +528,15 @@ public class TactilePane extends Control {
             }
         }
         
-        Point2D distance = calculateDistance(move,from);
+        Bounds moveBounds = move.localToScene(move.getBoundsInLocal());
+        Bounds fromBounds = from.localToScene(from.getBoundsInLocal());
 
-        Point2D vector = distance.normalize().multiply(force);
+        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
+        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
+        double fromX = fromBounds.getMinX() + fromBounds.getWidth() / 2;
+        double fromY = fromBounds.getMinY() + fromBounds.getHeight() / 2;
+        
+        Point2D vector = new Point2D(moveX - fromX, moveY - fromY).normalize().multiply(force);
         TactilePane.setVector(moveDraggable, TactilePane.getVector(move).add(vector));
     }
     
@@ -535,59 +547,6 @@ public class TactilePane extends Control {
      */
     public static void moveAwayFrom(Node move, Node from) {
     	moveAwayFrom(move, from, PhysicsTimer.DEFAULT_FORCE);
-    }
-    
-    /**
-     * Calculates the distance between two nodes, returning the result as a vector of the two distances.
-     */
-    // This calculates the distance between the middle of two nodes, not the border of two nodes, which I think is desirable
-    // Also not really sure if you'd want this to be public
-    public static Point2D calculateDistance(Node one, Node two){
-    	Bounds moveBounds = one.localToScene(one.getBoundsInLocal());
-        Bounds fromBounds = two.localToScene(two.getBoundsInLocal());
-
-        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
-        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
-        double fromX = fromBounds.getMinX() + moveBounds.getWidth() / 2;
-        double fromY = fromBounds.getMinY() + moveBounds.getHeight() / 2;
-
-        double distanceX = moveX - fromX;
-        double distanceY = moveY - fromY;
-
-        Point2D vector = new Point2D(distanceX, distanceY);
-        return vector;
-    }
-    
-    /**
-     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
-     * Relations are kept symmetric, so that either node one can create a bond with node two, or the developer can 
-     * switch these and it will not matter.
-     */
-    public static void createBond(Node one, Node two, double force, double minDistance){
-    	getBondList(one).put(two, new Bond(force, minDistance));
-    	getBondList(two).put(one, new Bond(force, minDistance));
-    }
-    
-    /**
-     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
-     * Uses default values for force and distance.
-     */
-    public static void createBond(Node one, Node two){
-    	createBond(one, two, PhysicsTimer.DEFAULT_BOND_FORCE, getBondDistance() );
-    }
-    
-    /**
-     * Removes a bond between nodes one and two. Removes the bond for both nodes.
-     */
-    public static void removeBond(Node one, Node two){
-    	if(getBondList(one).containsKey(two)){
-    		getBondList(one).remove(two);
-        	getBondList(two).remove(one);
-    	} else{
-    		// TODO: add proper error handling
-    		System.err.println("Attempting to remove a bond that was not placed.");
-    	}
-    	
     }
     
     // INSTANCE VARIABLES
@@ -921,28 +880,6 @@ public class TactilePane extends Control {
         return quadTree.proximityThresholdProperty();
     }
     
-    // TODO: HIER HOREN INSTANCE PROPERTIES TE STAAN, GEEN STATIC DINGEN
-    public static final void setBondDistance(double threshold) {
-    	bondDistanceProperty().set(threshold);
-    }
-
-    public static final double getBondDistance() {
-        return bondDistanceProperty().get();
-    }
-
-    /**
-     * Specifies how close two {@code Nodes} have to be to each other to be
-     * considered out of each others bond reach, at which point they will
-     * start moving towards each other again.
-     * @defaultvalue 150.0
-     */ 
-    public final static DoubleProperty bondDistanceProperty() {
-    	if (bondDistance == null) {
-            bondDistance = new SimpleDoubleProperty(150.0);
-        }
-        return bondDistance;
-    }
-    
     // STYLESHEET HANDLING
     
     // The selector class
@@ -1006,22 +943,5 @@ public class TactilePane extends Control {
         public String toString() {
             return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %f, localY = %f]", draggable.toString(), touchId, localX, localY);
         }
-    }
-    
-    // Help class used to record Bonds
-    /**
-     * Contains mindistance - the distance at which bond starts pulling
-     * Contains force - the force used to pull, should be negative
-     * @author Shaedys
-     *
-     */
-    public static class Bond {
-    	double minDistance; //distance before force is applied
-    	double force; //amount of force that is applied.
-    	
-        public Bond(double force, double minDistance){
-    		this.minDistance = minDistance;
-    		this.force = force;
-    	}
     }
 }

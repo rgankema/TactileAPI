@@ -8,7 +8,6 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.paint.*?>
 <?import nl.utwente.cs.caes.tactile.control.*?>
-<?import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor?>
 <?import tactiledemo.*?>
 <?import java.net.*?>
 
@@ -24,16 +23,6 @@
     <ColorItem color="#0000ff" layoutX="500" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
     <ColorItem color="#ffff00" layoutX="600" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
     <ColorItem color="#ffff00" layoutX="700" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
-   
-   
-    
-    
 
     <ColorSlotPane layoutY="400" layoutX="100" TactilePane.slideOnRelease="true" tactilePane="$root" fx:id="pane"/>
-    
-    <Rectangle fill="#ff0000" width="50" height="50" layoutX="600" layoutY="600">
-        <TactilePane.anchor>
-            <Anchor anchorNode="$pane" alignment="TOP_CENTER"/>
-        </TactilePane.anchor>
-    </Rectangle>
 </TactilePane>
