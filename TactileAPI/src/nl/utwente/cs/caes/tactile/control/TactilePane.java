@@ -2,7 +2,6 @@ package nl.utwente.cs.caes.tactile.control;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -16,12 +15,10 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import javafx.css.CssMetaData;
@@ -39,9 +36,24 @@ import javafx.scene.input.TouchEvent;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 import nl.utwente.cs.caes.tactile.skin.TactilePaneSkin;
 
+/**
+ * A Control that acts like a {@code Pane} in that it only resizes its children
+ * to its preferred sizes, and also exposes its children list as public. On top
+ * of this however, it allows users to layout the children by means of mouse 
+ * and/or touch input. It also has some basic "physics"-like features, such as
+ * collision detection, and an event structure to go along with that.
+ * 
+ * By default, all of TactilePane's children are draggable, which means that a
+ * user can drag them using mouse or touch input. This can be turned off by
+ * setting the attached property {@code draggable} to {@code false}. To prevent
+ * the user from dragging a Node beyond the bounds of the TactilePane, the
+ * {@code bordersCollide} property can be set to {@code true}. Event handling in
+ * order to allow for dragging of Nodes can be done at either the filter or the
+ * handling stage.
+ */
 @DefaultProperty("children")
 public class TactilePane extends Control {
-    // Keys for Attached Properties
+    // Attached Properties for Nodes
     static final String IN_USE = "tactile-pane-in-use";
     static final String ANCHOR = "tactile-pane-anchor";
     static final String VECTOR = "tactile-pane-vector";
@@ -58,8 +70,9 @@ public class TactilePane extends Control {
     static final String ON_AREA_ENTERED = "tactile-pane-on-area-entered";
     static final String ON_AREA_LEFT = "tactile-pane-on-area-left";
     static final String ON_IN_AREA = "tactile-pane-on-in-area";
+    static final String DRAG_CONTEXT = "tactile-pane-drag-context";
     
-    // Attached Properties that are only used privately
+    // Attached Properties for Nodes that are only used privately
     static final String TOUCH_EVENT_HANDLER = "tactile-pane-touch-event-handler";
     static final String MOUSE_EVENT_HANDLER = "tactile-pane-mouse-event-handler";
     
@@ -67,9 +80,14 @@ public class TactilePane extends Control {
     static final int NULL_ID = -1;
     static final int MOUSE_ID = -2;
     
-    private static DoubleProperty bondDistance;
-    
     // ATTACHED PROPERTIES
+    private static void setDragContext(Node node, DragContext dragContext) {
+        setConstraint(node, DRAG_CONTEXT, dragContext);
+    }
+    
+    public static DragContext getDragContext(Node node) {
+        return (DragContext) getConstraint(node, DRAG_CONTEXT);
+    }
     
     static void setInUse(Node node, boolean inUse) {
         inUsePropertyImpl(node).set(inUse);
@@ -646,8 +664,8 @@ public class TactilePane extends Control {
     
     // MAKING CHILDREN DRAGGABLE
     
-    private void addDragEventHandlers(Node node) {
-        if (getConstraint(node, MOUSE_EVENT_HANDLER) != null) {
+    private void addDragEventHandlers(final Node node) {
+        if (getDragContext(node) != null) {
             // The node already has drag event handlers
             return;
         }
@@ -655,50 +673,57 @@ public class TactilePane extends Control {
         final DragContext dragContext = new DragContext(node);
         
         EventHandler<TouchEvent> touchHandler = event -> {
+            if (!isDraggable(node)) return;
+            
             EventType type = event.getEventType();
             
             if (type == TouchEvent.TOUCH_PRESSED) {
                 if (dragContext.touchId == NULL_ID) {
                     dragContext.touchId = event.getTouchPoint().getId();
-                    handleTouchPressed(dragContext, new Point2D(event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY()));
+                    handleTouchPressed(node, event.getTouchPoint().getX(), event.getTouchPoint().getY());
+                    event.consume();
                 }
             } else if (type == TouchEvent.TOUCH_MOVED) {
                 if (dragContext.touchId == event.getTouchPoint().getId()) {
-                    handleTouchMoved(dragContext, new Point2D(event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY()));
+                    handleTouchMoved(node, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+                    event.consume();
                 }
             } else if (type == TouchEvent.TOUCH_RELEASED) {
                 if (dragContext.touchId == event.getTouchPoint().getId()) {
-                    handleTouchReleased(dragContext);
+                    handleTouchReleased(node);
                     dragContext.touchId = NULL_ID;
+                    event.consume();
                 }
-            } else return;
-            
-            event.consume();
+            }
         };
         
         EventHandler<MouseEvent> mouseHandler = event -> {
+            if (!isDraggable(node)) return;
+            
             EventType type = event.getEventType();
             
             if (type == MouseEvent.MOUSE_PRESSED) {
                 if (dragContext.touchId == NULL_ID) {
                     dragContext.touchId = MOUSE_ID;
-                    handleTouchPressed(dragContext, new Point2D(event.getSceneX(), event.getSceneY()));
+                    handleTouchPressed(node, event.getX(), event.getY());
+                    event.consume();
                 }
             } else if (type == MouseEvent.MOUSE_DRAGGED) {
                 
                 if (dragContext.touchId == MOUSE_ID) {
-                    handleTouchMoved(dragContext, new Point2D(event.getSceneX(), event.getSceneY()));
+                    handleTouchMoved(node, event.getSceneX(), event.getSceneY());
+                    event.consume();
                 }
             } else if (type == MouseEvent.MOUSE_RELEASED) {
                 if (dragContext.touchId == MOUSE_ID) {
-                    handleTouchReleased(dragContext);
+                    handleTouchReleased(node);
                     dragContext.touchId = NULL_ID;
+                    event.consume();
                 }
-            } else return;
-            
-            event.consume();
+            }
         };
         
+        setDragContext(node, dragContext);
         setConstraint(node, TOUCH_EVENT_HANDLER, touchHandler);
         setConstraint(node, MOUSE_EVENT_HANDLER, mouseHandler);
         
@@ -723,34 +748,30 @@ public class TactilePane extends Control {
             node.removeEventHandler(MouseEvent.ANY, mouseHandler);
         }
         
+        setDragContext(node, null);
         setConstraint(node, TOUCH_EVENT_HANDLER, null);
         setConstraint(node, MOUSE_EVENT_HANDLER, null);
     }
     
-    private void handleTouchPressed(final DragContext dragContext, Point2D scenePoint) {
-        Node node = dragContext.draggable;
-        if (isDraggable(node)) {
-            setAnchor(node, null);
-            setInUse(node, true);
-            setVector(node, Point2D.ZERO);
-            
-            Point2D localPoint = node.sceneToLocal(scenePoint);
-            dragContext.localX = localPoint.getX();
-            dragContext.localY = localPoint.getY();
+    private void handleTouchPressed(Node node, double localX, double localY) {
+        DragContext dragContext = getDragContext(node);
+        setAnchor(node, null);
+        setInUse(node, true);
+        setVector(node, Point2D.ZERO);
 
-            if (isGoToForegroundOnContact(node)) {
-                node.toFront();
-            }
+        dragContext.localX = localX;
+        dragContext.localY = localY;
+
+        if (isGoToForegroundOnContact(node)) {
+            node.toFront();
         }
     }
 
-    private void handleTouchMoved(final DragContext dragContext, Point2D scenePoint) {
-        Node node = dragContext.draggable;
-        if (isDraggable(node) && getAnchor(node) == null) {
-
-            Point2D localPoint = this.sceneToLocal(scenePoint);
-            double x = localPoint.getX() - dragContext.localX - node.getTranslateX();
-            double y = localPoint.getY() - dragContext.localY - node.getTranslateY();
+    private void handleTouchMoved(Node node, double sceneX, double sceneY) {
+        DragContext dragContext = getDragContext(node);
+        if (getAnchor(node) == null) {
+            double x = sceneX - dragContext.localX - node.getTranslateX();
+            double y = sceneY - dragContext.localY - node.getTranslateY();
 
             if (isBordersCollide()) {
                 Bounds paneBounds = this.getBoundsInLocal();
@@ -775,11 +796,9 @@ public class TactilePane extends Control {
         }
     }
 
-    private void handleTouchReleased(final DragContext dragContext) {
-        Node node = dragContext.draggable;
+    private void handleTouchReleased(Node node) {
         setInUse(node, false);
     }
-    
     
     // INSTANCE PROPERTIES
     
@@ -929,14 +948,50 @@ public class TactilePane extends Control {
     // NESTED CLASSES
 
     // Help class used for dragging Nodes
-    private class DragContext {
-        final Node draggable;   // The Node that is dragged around
+    public class DragContext {
+        Node draggable;         // Node that is being dragged
         double localX, localY;  // The x,y position of the Event in the Node
         int touchId;            // The id of the finger/cursor that is currently dragging the Node
         
-        public DragContext(Node draggable) {
+        private DragContext(Node draggable) {
             this.draggable = draggable;
             touchId = -1;
+        }
+        
+        public Node getDraggable() {
+            return draggable;
+        }
+        
+        public double getLocalX() {
+            return localX;
+        }
+        
+        public double getLocalY() {
+            return localY;
+        }
+        
+        public int getTouchId() {
+            return touchId;
+        }
+        
+        /**
+         * Binds the DragContext to a different event. This allows a TouchPoint other than
+         * the one that started the drag operation to take the drag gesture over.
+         */
+        public void bind(TouchEvent event) {
+            Node target = (Node) event.getTarget();
+            while (target.getParent() != draggable) {
+                target = target.getParent();
+                if (target == null) {
+                    throw new IllegalArgumentException("TouchEvent's target should be draggable, or an ancestor of draggable");
+                }
+            }
+            if (event.getEventType() != TouchEvent.TOUCH_PRESSED) {
+                throw new IllegalArgumentException("TouchEvent should be of type TOUCH_PRESSED");
+            }
+            
+            touchId = event.getTouchPoint().getId();
+            handleTouchPressed(draggable, event.getTouchPoint().getX(), event.getTouchPoint().getY());
         }
         
         @Override

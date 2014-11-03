@@ -5,11 +5,14 @@
  */
 package lwbdemo.ui;
 
+import java.util.Set;
+import java.util.TreeSet;
 import lwbdemo.model.Term;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.input.TouchEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
@@ -61,6 +64,34 @@ public class Bowtie extends Group {
         getChildren().addAll(background, hbox);
         
         TactilePane.setTracker(typeBlade, tracker);
+        
+        // Makes sure that TouchEvents that are targeted on the Knot won't be handled
+        // by Knot in case it's the only TouchPoint manipulating the Bowtie. This 
+        // forces the user to use two fingers to move the Knot, one to hold the 
+        // Bowtie in position, and another to move the knot.
+        final Set<Integer> touchIDs = new TreeSet<>();
+        addEventFilter(TouchEvent.ANY, event -> {
+            int touchId = event.getTouchPoint().getId();
+            
+            if (event.getEventType() == TouchEvent.TOUCH_PRESSED) {
+                touchIDs.add(touchId);
+                if (touchIDs.size() == 1) {
+                    if (event.getTarget() == knot) {
+                        knot.ignoredTouchId = touchId;
+                    }
+                } else {
+                    knot.ignoredTouchId = -1;
+                    if (knot.ignoredTouchId == TactilePane.getDragContext(this).getTouchId()) {
+                        TactilePane.getDragContext(this).bind(event);
+                    }
+                }
+            } else if (event.getEventType() == TouchEvent.TOUCH_RELEASED) {
+                touchIDs.remove(touchId);
+                if (knot.ignoredTouchId == touchId) {
+                    knot.ignoredTouchId = -1;
+                }
+            }
+        });
     }
     
     // PROPERTIES

@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
@@ -50,32 +51,25 @@ public class Main extends Application {
         Bowtie btInt1 = new Bowtie(tactilePane, "1", ConstantType.INT);
         
         tactilePane.setBordersCollide(true);
+        tactilePane.setDragProcessingMode(TactilePane.EventProcessingMode.HANDLER);
         tactilePane.getChildren().addAll(btFuncMap, btFuncConst, btFuncLength, btFuncAdd, btStringFoo, btInt1);
         for (Node child : tactilePane.getChildren()) {
             TactilePane.setSlideOnRelease(child, true);
         }
         
-        // Toggle for TactilePane.setDragProcessingMode
-        ToggleGroup filterOrHandlerToggle = new ToggleGroup();
-        RadioButton filterToggle = new RadioButton("Filter");
-        filterToggle.setToggleGroup(filterOrHandlerToggle);
-        RadioButton handlerToggle = new RadioButton("Handler");
-        handlerToggle.setToggleGroup(filterOrHandlerToggle);
-        filterOrHandlerToggle.selectedToggleProperty().addListener(observable -> {
-            if (filterOrHandlerToggle.getSelectedToggle() == filterToggle) {
-                tactilePane.setDragProcessingMode(TactilePane.EventProcessingMode.FILTER);
-            } else {
-                tactilePane.setDragProcessingMode(TactilePane.EventProcessingMode.HANDLER);
-            }
-        });
-        filterOrHandlerToggle.selectToggle(handlerToggle);
-        
         // Toggle for Debug.setOverlayVisible
         CheckBox debugCheckBox = new CheckBox("Debug");
         debug.overlayVisibleProperty().bind(debugCheckBox.selectedProperty());
         
+        // Button for clearing touchpoints
+        Button clearTouchPointsButton = new Button("Clear TouchPoints");
+        clearTouchPointsButton.visibleProperty().bind(debug.overlayVisibleProperty());
+        clearTouchPointsButton.setOnAction(event -> {
+            debug.clearTouchPoints();
+        });
+        
         root.setCenter(tactilePane);
-        root.setBottom(new FlowPane(debugCheckBox, new Separator(Orientation.VERTICAL), new Label("Drag Mode: "), filterToggle, handlerToggle));
+        root.setBottom(new FlowPane(debugCheckBox, new Separator(Orientation.VERTICAL), clearTouchPointsButton));
         
         debug.registerTactilePane(tactilePane);
         
