@@ -53,8 +53,12 @@ public class Main extends Application {
         tactilePane.setBordersCollide(true);
         tactilePane.setDragProcessingMode(TactilePane.EventProcessingMode.HANDLER);
         tactilePane.getChildren().addAll(btFuncMap, btFuncConst, btFuncLength, btFuncAdd, btStringFoo, btInt1);
+        double x = 10; double y = 10;
         for (Node child : tactilePane.getChildren()) {
             TactilePane.setSlideOnRelease(child, true);
+            child.relocate(x, y);
+            x += 50;
+            y += 50;
         }
         
         // Toggle for Debug.setOverlayVisible

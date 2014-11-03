@@ -47,9 +47,9 @@ import nl.utwente.cs.caes.tactile.skin.TactilePaneSkin;
  * user can drag them using mouse or touch input. This can be turned off by
  * setting the attached property {@code draggable} to {@code false}. To prevent
  * the user from dragging a Node beyond the bounds of the TactilePane, the
- * {@code bordersCollide} property can be set to {@code true}. Event handling in
- * order to allow for dragging of Nodes can be done at either the filter or the
- * handling stage.
+ * {@code bordersCollide} property can be set to {@code true}.
+ * 
+ * //TODO JavaDoc schrijven
  */
 @DefaultProperty("children")
 public class TactilePane extends Control {
@@ -75,10 +75,6 @@ public class TactilePane extends Control {
     // Attached Properties for Nodes that are only used privately
     static final String TOUCH_EVENT_HANDLER = "tactile-pane-touch-event-handler";
     static final String MOUSE_EVENT_HANDLER = "tactile-pane-mouse-event-handler";
-    
-    // IDs to keep track which finger/cursor started dragging a Node
-    static final int NULL_ID = -1;
-    static final int MOUSE_ID = -2;
     
     // ATTACHED PROPERTIES
     private static void setDragContext(Node node, DragContext dragContext) {
@@ -528,6 +524,14 @@ public class TactilePane extends Control {
     
     // STATIC METHODS
     
+    /**
+     * Gives the {@code move} Node a velocity vector with a direction so that it will move
+     * away from the {@code from} Node. The speed with which the Node moves away
+     * depends on {@code force}, which is the magniute of the vector.
+     * @param move  The Node that should move away
+     * @param from  The Node it should move away from
+     * @param force The magnitude of the vector that the Node gets
+     */
     public static void moveAwayFrom(Node move, Node from, double force) {
         if (move.getParent() == null) return;
         
@@ -559,9 +563,10 @@ public class TactilePane extends Control {
     }
     
     /**
-     * Moves two nodes away from each other with the default level of force.
-     * @param move - node moving away
-     * @param from - Node move is moving away from
+     * Gives the {@code move} Node a velocity vector with a direction so that it will move
+     * away from the {@code from} Node. Moves with a default level of force.
+     * @param move  The Node that should move away
+     * @param from  The Node it should move away from
      */
     public static void moveAwayFrom(Node move, Node from) {
     	moveAwayFrom(move, from, PhysicsTimer.DEFAULT_FORCE);
@@ -678,7 +683,7 @@ public class TactilePane extends Control {
             EventType type = event.getEventType();
             
             if (type == TouchEvent.TOUCH_PRESSED) {
-                if (dragContext.touchId == NULL_ID) {
+                if (dragContext.touchId == DragContext.NULL_ID) {
                     dragContext.touchId = event.getTouchPoint().getId();
                     handleTouchPressed(node, event.getTouchPoint().getX(), event.getTouchPoint().getY());
                     event.consume();
@@ -691,7 +696,7 @@ public class TactilePane extends Control {
             } else if (type == TouchEvent.TOUCH_RELEASED) {
                 if (dragContext.touchId == event.getTouchPoint().getId()) {
                     handleTouchReleased(node);
-                    dragContext.touchId = NULL_ID;
+                    dragContext.touchId = DragContext.NULL_ID;
                     event.consume();
                 }
             }
@@ -703,21 +708,21 @@ public class TactilePane extends Control {
             EventType type = event.getEventType();
             
             if (type == MouseEvent.MOUSE_PRESSED) {
-                if (dragContext.touchId == NULL_ID) {
-                    dragContext.touchId = MOUSE_ID;
+                if (dragContext.touchId == DragContext.NULL_ID) {
+                    dragContext.touchId = DragContext.MOUSE_ID;
                     handleTouchPressed(node, event.getX(), event.getY());
                     event.consume();
                 }
             } else if (type == MouseEvent.MOUSE_DRAGGED) {
                 
-                if (dragContext.touchId == MOUSE_ID) {
+                if (dragContext.touchId == DragContext.MOUSE_ID) {
                     handleTouchMoved(node, event.getSceneX(), event.getSceneY());
                     event.consume();
                 }
             } else if (type == MouseEvent.MOUSE_RELEASED) {
-                if (dragContext.touchId == MOUSE_ID) {
+                if (dragContext.touchId == DragContext.MOUSE_ID) {
                     handleTouchReleased(node);
-                    dragContext.touchId = NULL_ID;
+                    dragContext.touchId = DragContext.NULL_ID;
                     event.consume();
                 }
             }
@@ -812,7 +817,7 @@ public class TactilePane extends Control {
     
     /**
      * 
-     * @return modifiable list of {@code Nodes} that should be tracked by this {@code TactilePane}
+     * @return modifiable list of {@code Nodes} that are tracked by this {@code TactilePane}
      */
     public ObservableSet<Node> getActiveNodes() {
         return activeNodes;
@@ -905,7 +910,7 @@ public class TactilePane extends Control {
     private static String DEFAULT_STYLE_CLASS = "tactile-pane";
     
     private static final class StyleableProperties {
-        // TODO CSSMetaData maken voor properties
+        // TODO make properties stylable using CSS
 
         private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
         static {
@@ -939,7 +944,7 @@ public class TactilePane extends Control {
     // ENUMS
     
     /**
-     * Defines whether an Event should be processed at the filter stage or the handler stage.
+     * Defines whether an Event is processed at the filter stage or the handler stage.
      */
     public enum EventProcessingMode {
         HANDLER, FILTER
@@ -947,9 +952,14 @@ public class TactilePane extends Control {
     
     // NESTED CLASSES
 
-    // Help class used for dragging Nodes
+    /**
+     * Help class used for dragging TactilePane's children.
+     */
     public class DragContext {
-        Node draggable;         // Node that is being dragged
+        public static final int NULL_ID = -1;
+        public static final int MOUSE_ID = -2;
+        
+        final Node draggable;         // Node that is being dragged
         double localX, localY;  // The x,y position of the Event in the Node
         int touchId;            // The id of the finger/cursor that is currently dragging the Node
         
@@ -958,32 +968,52 @@ public class TactilePane extends Control {
             touchId = -1;
         }
         
+        /**
+         * The Node that is being dragged
+         */
         public Node getDraggable() {
             return draggable;
         }
         
+        /**
+         * The x location of the touchpoint/cursor that is currently dragging the Node
+         */
         public double getLocalX() {
             return localX;
         }
         
+        /**
+         * The y location of the touchpoint/cursor that is currently dragging the Node
+         */
         public double getLocalY() {
             return localY;
         }
         
+        /**
+         * The id of the TouchPoint that is responsible for dragging the Node.
+         * Returns NULL_ID if the Node is not being dragged, or MOUSE_ID if the
+         * Node is dragged by a mouse cursor.
+         */
         public int getTouchId() {
             return touchId;
         }
         
         /**
-         * Binds the DragContext to a different event. This allows a TouchPoint other than
-         * the one that started the drag operation to take the drag gesture over.
+         * Binds the DragContext to a different TouchEvent. This allows a TouchPoint other than
+         * the one that started the drag operation to take over the drag gesture.
+         * 
+         * @throws IllegalArgumentException Thrown when the TouchEvent is not of 
+         * type TouchEvent.TOUCH_PRESSED, or when the event's target is not the Node that this
+         * DragContext belongs to, or have that Node as ancestor.
          */
         public void bind(TouchEvent event) {
+            if (event.getTouchPoint().getId() == touchId) return;
+            
             Node target = (Node) event.getTarget();
             while (target.getParent() != draggable) {
                 target = target.getParent();
                 if (target == null) {
-                    throw new IllegalArgumentException("TouchEvent's target should be draggable, or an ancestor of draggable");
+                    throw new IllegalArgumentException("TouchEvent's target should be draggable, or have draggable as ancestor");
                 }
             }
             if (event.getEventType() != TouchEvent.TOUCH_PRESSED) {
