@@ -58,13 +58,12 @@ public class TactilePaneTest extends Application {
             });
             TactilePane.setOnInArea(circle, event -> {
                 if (!TactilePane.isInUse(circle) && event.getOther() instanceof Circle) {
-                    TactilePane.moveAwayFrom(circle, event.getOther(), 20);
+                    TactilePane.moveAwayFrom(circle, event.getOther(), 50);
                 }
             });
             TactilePane.setOnAreaEntered(circle, event -> {
                 if (TactilePane.isInUse(circle) && event.getOther() instanceof Rectangle) {
                     TactilePane.getBonds(circle).add(new Bond(event.getOther(), 150, 0.5));
-                    System.out.println("created bond");
                 }
             });
             tactilePane.getChildren().add(circle);
