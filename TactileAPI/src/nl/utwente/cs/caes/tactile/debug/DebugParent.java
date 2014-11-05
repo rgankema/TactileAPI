@@ -224,7 +224,7 @@ public class DebugParent extends StackPane {
      * Whether {@code MouseEvents} will be replaced with corresponding
      * {@code TouchEvents}
      *
-     * @defaultvalue false
+     * @defaultValue false
      */
     private BooleanProperty mapMouseToTouch;
 
@@ -246,7 +246,7 @@ public class DebugParent extends StackPane {
     /**
      * Whether the overlay is visible or not
      * 
-     * @defaultvalue true
+     * @defaultValue true
      */
     private BooleanProperty overlayVisible;
 

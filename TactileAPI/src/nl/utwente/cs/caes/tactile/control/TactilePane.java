@@ -37,19 +37,43 @@ import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 import nl.utwente.cs.caes.tactile.skin.TactilePaneSkin;
 
 /**
- * A Control that acts like a {@code Pane} in that it only resizes its children
- * to its preferred sizes, and also exposes its children list as public. On top
- * of this however, it allows users to layout the children by means of mouse 
- * and/or touch input. It also has some basic "physics"-like features, such as
- * collision detection, and an event structure to go along with that.
- * 
+ * <p>
+ * A Control that allows a user to rearrange the position of its children. Acts
+ * like a {@code Pane} in that it only resizes its children to its preferred
+ * sizes, and also exposes its children list as public. On top of this however,
+ * it allows users to layout the children by means of mouse and/or touch input.
+ * It also has some basic "physics"-like features, such as collision detection,
+ * and an event structure to go along with that.
+ * <p>
+ *
+ * <h1>Dragging Nodes</h1>
+ * <p>
  * By default, all of TactilePane's children are draggable, which means that a
  * user can drag them using mouse or touch input. This can be turned off by
- * setting the attached property {@code draggable} to {@code false}. To prevent
- * the user from dragging a Node beyond the bounds of the TactilePane, the
- * {@code bordersCollide} property can be set to {@code true}.
- * 
- * //TODO JavaDoc schrijven
+ * setting the attached property {@link draggableProperty draggable} to
+ * {@code false}. To prevent the user from dragging a node beyond the bounds of
+ * the TactilePane, the {@link bordersCollideProperty borderCollide} property
+ * can be set to {@code true}.
+ * <p>
+ * To implement dragging of Nodes, Mouse/Touch events are handled (and consumed)
+ * at the draggable node. In case of multi-touch gestures, only events from the
+ * first touch point that interacted with the node will be processed. Calling
+ * {@link getDragContext getDragContext} will provide information relevant to
+ * the dragging operation on a node, such as the id of the touch point that is
+ * being used for dragging. In {@link DragContext DragContext}, it's possible to
+ * bind a drag operation to a new touch point, so that another touch point can
+ * take the drag operation over.
+ * <p>
+ * The moment at which Mouse/Touch Events are handled to implement dragging can
+ * be altered by setting the
+ * {@link dragProcessingModeProperty dragProccesingMode}. This can be set so
+ * that handling (and consuming) Mouse/Touch events happens during the filter or
+ * the handler stage.
+ * <p>
+ * <h1>Active nodes and Events</h1>
+ * <p>
+ * <h1>Physics</h1>
+ * <p>
  */
 @DefaultProperty("children")
 public class TactilePane extends Control {
@@ -160,7 +184,7 @@ public class TactilePane extends Control {
      * Whether this {@code node} will go to the foreground when the user starts
      * a drag gesture with it.
      * 
-     * @defaultvalue true
+     * @defaultValue true
      */
     public static BooleanProperty goToForegroundOnContactProperty(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, GO_TO_FOREGROUND_ON_CONTACT);
@@ -183,7 +207,7 @@ public class TactilePane extends Control {
      * Whether the given node can be dragged by the user. Only nodes that are a direct child of
      * a {@code TactilePane} can be dragged.
      * 
-     * @defaultvalue true
+     * @defaultValue true
      */
     public static BooleanProperty draggableProperty(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, DRAGGABLE);
@@ -215,7 +239,7 @@ public class TactilePane extends Control {
      * Whether the given {@code Node} will get a vector in the direction it was
      * moving when the user stops dragging that {@code Node}
      *
-     * @defaultvalue false
+     * @defaultValue false
      */
     public static BooleanProperty slideOnReleaseProperty(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, SLIDE_ON_RELEASE);
@@ -826,6 +850,8 @@ public class TactilePane extends Control {
     /**
      * Whether Mouse/Touch events at this TactilePane's children should be processed and consumed
      * at the filtering stage or the handling stage.
+     * 
+     * @defaultValue EventProcessingMode.HANDLER
      */
     private ObjectProperty<EventProcessingMode> dragProcessingMode;
     
@@ -862,7 +888,7 @@ public class TactilePane extends Control {
      * children that are moving because of user input or physics to
      * move outside of the {@code TactilePane's} boundaries.
      *
-     * @defaultvalue false
+     * @defaultValue false
      */
     private BooleanProperty bordersCollide;
 
@@ -898,7 +924,7 @@ public class TactilePane extends Control {
      * was set to 0. When set to a negative value, an IllegalArgumentException
      * is thrown.
      *
-     * @defaultvalue 25.0
+     * @defaultValue 25.0
      */
     public final DoubleProperty proximityThresholdProperty() {
         return quadTree.proximityThresholdProperty();
@@ -947,7 +973,15 @@ public class TactilePane extends Control {
      * Defines whether an Event is processed at the filter stage or the handler stage.
      */
     public enum EventProcessingMode {
-        HANDLER, FILTER
+        /**
+         * Represents processing events at the handler stage
+         */
+        HANDLER, 
+        
+        /**
+         * Represents processing events at the filter stage.
+         */
+        FILTER
     }
     
     // NESTED CLASSES
