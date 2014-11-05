@@ -5,6 +5,7 @@
  */
 package lwbdemo.ui;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -20,6 +21,7 @@ abstract class BowtieBlade extends HBox {
     public BowtieBlade(Bowtie bowtie) {
         this.bowtie = bowtie;
         
+        setPadding(new Insets(10));
         setSpacing(10);
         setAlignment(Pos.CENTER);
     }

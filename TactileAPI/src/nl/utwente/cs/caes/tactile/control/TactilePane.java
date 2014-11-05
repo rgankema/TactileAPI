@@ -3,8 +3,8 @@ package nl.utwente.cs.caes.tactile.control;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,12 +15,10 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import javafx.css.CssMetaData;
@@ -38,9 +36,24 @@ import javafx.scene.input.TouchEvent;
 import nl.utwente.cs.caes.tactile.event.TactilePaneEvent;
 import nl.utwente.cs.caes.tactile.skin.TactilePaneSkin;
 
+/**
+ * A Control that acts like a {@code Pane} in that it only resizes its children
+ * to its preferred sizes, and also exposes its children list as public. On top
+ * of this however, it allows users to layout the children by means of mouse 
+ * and/or touch input. It also has some basic "physics"-like features, such as
+ * collision detection, and an event structure to go along with that.
+ * 
+ * By default, all of TactilePane's children are draggable, which means that a
+ * user can drag them using mouse or touch input. This can be turned off by
+ * setting the attached property {@code draggable} to {@code false}. To prevent
+ * the user from dragging a Node beyond the bounds of the TactilePane, the
+ * {@code bordersCollide} property can be set to {@code true}.
+ * 
+ * //TODO JavaDoc schrijven
+ */
 @DefaultProperty("children")
 public class TactilePane extends Control {
-    // Keys for Attached Properties
+    // Attached Properties for Nodes
     static final String IN_USE = "tactile-pane-in-use";
     static final String ANCHOR = "tactile-pane-anchor";
     static final String VECTOR = "tactile-pane-vector";
@@ -57,18 +70,20 @@ public class TactilePane extends Control {
     static final String ON_AREA_ENTERED = "tactile-pane-on-area-entered";
     static final String ON_AREA_LEFT = "tactile-pane-on-area-left";
     static final String ON_IN_AREA = "tactile-pane-on-in-area";
+    static final String DRAG_CONTEXT = "tactile-pane-drag-context";
     
-    // Attached Properties that are only used privately
+    // Attached Properties for Nodes that are only used privately
     static final String TOUCH_EVENT_HANDLER = "tactile-pane-touch-event-handler";
     static final String MOUSE_EVENT_HANDLER = "tactile-pane-mouse-event-handler";
     
-    // IDs to keep track which finger/cursor started dragging a Node
-    static final int NULL_ID = -1;
-    static final int MOUSE_ID = -2;
-    
-    private static DoubleProperty bondDistance;
-    
     // ATTACHED PROPERTIES
+    private static void setDragContext(Node node, DragContext dragContext) {
+        setConstraint(node, DRAG_CONTEXT, dragContext);
+    }
+    
+    public static DragContext getDragContext(Node node) {
+        return (DragContext) getConstraint(node, DRAG_CONTEXT);
+    }
     
     static void setInUse(Node node, boolean inUse) {
         inUsePropertyImpl(node).set(inUse);
@@ -240,17 +255,23 @@ public class TactilePane extends Control {
     }
     
     /**
-     * Returns a hashmap of {@code Nodes} that are registered to the same
-     * {@code TactilePane} as the given {@code node}, and have a bond
-     * with that {@code node}. The hashmap contains the other node the bond is to,
-     * and the minimum distance for the bond to start working, as well as force to
-     * be pulled
+     * Returns the set of {@code Bonds} associated with the given {@code Node}. If the set
+     * already contains a {@code Bond} with the same {@code bondNode}, the old {@code Bond}
+     * is replaced.
      */
-	public static ObservableMap<Node, Bond> getBondList(Node node) {
-        @SuppressWarnings("unchecked")
-		ObservableMap<Node, Bond> result = (ObservableMap<Node, Bond>) getConstraint(node, NODES_BOND);
+    public static ObservableSet<Bond> getBonds(Node node) {
+	ObservableSet<Bond> result = (ObservableSet<Bond>) getConstraint(node, NODES_BOND);
         if (result == null) {
-            result = FXCollections.observableMap(new Hashtable<Node, Bond>());
+            result = FXCollections.observableSet(new HashSet<Bond>() {
+                @Override
+                public boolean add(Bond bond) {
+                    Optional<Bond> opt = stream().filter(b -> b.getBondNode() == bond.getBondNode()).findAny();
+                    if (opt.isPresent()) {
+                        remove(opt.get());
+                    }
+                    return super.add(bond);
+                }
+            });
             setConstraint(node, NODES_BOND, result);
         }
         return result;
@@ -503,8 +524,15 @@ public class TactilePane extends Control {
     
     // STATIC METHODS
     
+    /**
+     * Gives the {@code move} Node a velocity vector with a direction so that it will move
+     * away from the {@code from} Node. The speed with which the Node moves away
+     * depends on {@code force}, which is the magniute of the vector.
+     * @param move  The Node that should move away
+     * @param from  The Node it should move away from
+     * @param force The magnitude of the vector that the Node gets
+     */
     public static void moveAwayFrom(Node move, Node from, double force) {
-        
         if (move.getParent() == null) return;
         
         Node moveDraggable = move;
@@ -522,72 +550,26 @@ public class TactilePane extends Control {
             }
         }
         
-        Point2D distance = calculateDistance(move,from);
+        Bounds moveBounds = move.localToScene(move.getBoundsInLocal());
+        Bounds fromBounds = from.localToScene(from.getBoundsInLocal());
 
-        Point2D vector = distance.normalize().multiply(force);
+        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
+        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
+        double fromX = fromBounds.getMinX() + fromBounds.getWidth() / 2;
+        double fromY = fromBounds.getMinY() + fromBounds.getHeight() / 2;
+        
+        Point2D vector = new Point2D(moveX - fromX, moveY - fromY).normalize().multiply(force);
         TactilePane.setVector(moveDraggable, TactilePane.getVector(move).add(vector));
     }
     
     /**
-     * Moves two nodes away from each other with the default level of force.
-     * @param move - node moving away
-     * @param from - Node move is moving away from
+     * Gives the {@code move} Node a velocity vector with a direction so that it will move
+     * away from the {@code from} Node. Moves with a default level of force.
+     * @param move  The Node that should move away
+     * @param from  The Node it should move away from
      */
     public static void moveAwayFrom(Node move, Node from) {
     	moveAwayFrom(move, from, PhysicsTimer.DEFAULT_FORCE);
-    }
-    
-    /**
-     * Calculates the distance between two nodes, returning the result as a vector of the two distances.
-     */
-    // This calculates the distance between the middle of two nodes, not the border of two nodes, which I think is desirable
-    // Also not really sure if you'd want this to be public
-    public static Point2D calculateDistance(Node one, Node two){
-    	Bounds moveBounds = one.localToScene(one.getBoundsInLocal());
-        Bounds fromBounds = two.localToScene(two.getBoundsInLocal());
-
-        double moveX = moveBounds.getMinX() + moveBounds.getWidth() / 2;
-        double moveY = moveBounds.getMinY() + moveBounds.getHeight() / 2;
-        double fromX = fromBounds.getMinX() + moveBounds.getWidth() / 2;
-        double fromY = fromBounds.getMinY() + moveBounds.getHeight() / 2;
-
-        double distanceX = moveX - fromX;
-        double distanceY = moveY - fromY;
-
-        Point2D vector = new Point2D(distanceX, distanceY);
-        return vector;
-    }
-    
-    /**
-     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
-     * Relations are kept symmetric, so that either node one can create a bond with node two, or the developer can 
-     * switch these and it will not matter.
-     */
-    public static void createBond(Node one, Node two, double force, double minDistance){
-    	getBondList(one).put(two, new Bond(force, minDistance));
-    	getBondList(two).put(one, new Bond(force, minDistance));
-    }
-    
-    /**
-     * Creates a bond between nodes one and two, forcing an attraction if they are ever seperated more than distance.
-     * Uses default values for force and distance.
-     */
-    public static void createBond(Node one, Node two){
-    	createBond(one, two, PhysicsTimer.DEFAULT_BOND_FORCE, getBondDistance() );
-    }
-    
-    /**
-     * Removes a bond between nodes one and two. Removes the bond for both nodes.
-     */
-    public static void removeBond(Node one, Node two){
-    	if(getBondList(one).containsKey(two)){
-    		getBondList(one).remove(two);
-        	getBondList(two).remove(one);
-    	} else{
-    		// TODO: add proper error handling
-    		System.err.println("Attempting to remove a bond that was not placed.");
-    	}
-    	
     }
     
     // INSTANCE VARIABLES
@@ -687,8 +669,8 @@ public class TactilePane extends Control {
     
     // MAKING CHILDREN DRAGGABLE
     
-    private void addDragEventHandlers(Node node) {
-        if (getConstraint(node, MOUSE_EVENT_HANDLER) != null) {
+    private void addDragEventHandlers(final Node node) {
+        if (getDragContext(node) != null) {
             // The node already has drag event handlers
             return;
         }
@@ -696,50 +678,57 @@ public class TactilePane extends Control {
         final DragContext dragContext = new DragContext(node);
         
         EventHandler<TouchEvent> touchHandler = event -> {
+            if (!isDraggable(node)) return;
+            
             EventType type = event.getEventType();
             
             if (type == TouchEvent.TOUCH_PRESSED) {
-                if (dragContext.touchId == NULL_ID) {
+                if (dragContext.touchId == DragContext.NULL_ID) {
                     dragContext.touchId = event.getTouchPoint().getId();
-                    handleTouchPressed(dragContext, new Point2D(event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY()));
+                    handleTouchPressed(node, event.getTouchPoint().getX(), event.getTouchPoint().getY());
+                    event.consume();
                 }
             } else if (type == TouchEvent.TOUCH_MOVED) {
                 if (dragContext.touchId == event.getTouchPoint().getId()) {
-                    handleTouchMoved(dragContext, new Point2D(event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY()));
+                    handleTouchMoved(node, event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY());
+                    event.consume();
                 }
             } else if (type == TouchEvent.TOUCH_RELEASED) {
                 if (dragContext.touchId == event.getTouchPoint().getId()) {
-                    handleTouchReleased(dragContext);
-                    dragContext.touchId = NULL_ID;
+                    handleTouchReleased(node);
+                    dragContext.touchId = DragContext.NULL_ID;
+                    event.consume();
                 }
-            } else return;
-            
-            event.consume();
+            }
         };
         
         EventHandler<MouseEvent> mouseHandler = event -> {
+            if (!isDraggable(node)) return;
+            
             EventType type = event.getEventType();
             
             if (type == MouseEvent.MOUSE_PRESSED) {
-                if (dragContext.touchId == NULL_ID) {
-                    dragContext.touchId = MOUSE_ID;
-                    handleTouchPressed(dragContext, new Point2D(event.getSceneX(), event.getSceneY()));
+                if (dragContext.touchId == DragContext.NULL_ID) {
+                    dragContext.touchId = DragContext.MOUSE_ID;
+                    handleTouchPressed(node, event.getX(), event.getY());
+                    event.consume();
                 }
             } else if (type == MouseEvent.MOUSE_DRAGGED) {
                 
-                if (dragContext.touchId == MOUSE_ID) {
-                    handleTouchMoved(dragContext, new Point2D(event.getSceneX(), event.getSceneY()));
+                if (dragContext.touchId == DragContext.MOUSE_ID) {
+                    handleTouchMoved(node, event.getSceneX(), event.getSceneY());
+                    event.consume();
                 }
             } else if (type == MouseEvent.MOUSE_RELEASED) {
-                if (dragContext.touchId == MOUSE_ID) {
-                    handleTouchReleased(dragContext);
-                    dragContext.touchId = NULL_ID;
+                if (dragContext.touchId == DragContext.MOUSE_ID) {
+                    handleTouchReleased(node);
+                    dragContext.touchId = DragContext.NULL_ID;
+                    event.consume();
                 }
-            } else return;
-            
-            event.consume();
+            }
         };
         
+        setDragContext(node, dragContext);
         setConstraint(node, TOUCH_EVENT_HANDLER, touchHandler);
         setConstraint(node, MOUSE_EVENT_HANDLER, mouseHandler);
         
@@ -764,34 +753,30 @@ public class TactilePane extends Control {
             node.removeEventHandler(MouseEvent.ANY, mouseHandler);
         }
         
+        setDragContext(node, null);
         setConstraint(node, TOUCH_EVENT_HANDLER, null);
         setConstraint(node, MOUSE_EVENT_HANDLER, null);
     }
     
-    private void handleTouchPressed(final DragContext dragContext, Point2D scenePoint) {
-        Node node = dragContext.draggable;
-        if (isDraggable(node)) {
-            setAnchor(node, null);
-            setInUse(node, true);
-            setVector(node, Point2D.ZERO);
-            
-            Point2D localPoint = node.sceneToLocal(scenePoint);
-            dragContext.localX = localPoint.getX();
-            dragContext.localY = localPoint.getY();
+    private void handleTouchPressed(Node node, double localX, double localY) {
+        DragContext dragContext = getDragContext(node);
+        setAnchor(node, null);
+        setInUse(node, true);
+        setVector(node, Point2D.ZERO);
 
-            if (isGoToForegroundOnContact(node)) {
-                node.toFront();
-            }
+        dragContext.localX = localX;
+        dragContext.localY = localY;
+
+        if (isGoToForegroundOnContact(node)) {
+            node.toFront();
         }
     }
 
-    private void handleTouchMoved(final DragContext dragContext, Point2D scenePoint) {
-        Node node = dragContext.draggable;
-        if (isDraggable(node) && getAnchor(node) == null) {
-
-            Point2D localPoint = this.sceneToLocal(scenePoint);
-            double x = localPoint.getX() - dragContext.localX - getTranslateX();
-            double y = localPoint.getY() - dragContext.localY - getTranslateY();
+    private void handleTouchMoved(Node node, double sceneX, double sceneY) {
+        DragContext dragContext = getDragContext(node);
+        if (getAnchor(node) == null) {
+            double x = sceneX - dragContext.localX - node.getTranslateX();
+            double y = sceneY - dragContext.localY - node.getTranslateY();
 
             if (isBordersCollide()) {
                 Bounds paneBounds = this.getBoundsInLocal();
@@ -816,11 +801,9 @@ public class TactilePane extends Control {
         }
     }
 
-    private void handleTouchReleased(final DragContext dragContext) {
-        Node node = dragContext.draggable;
+    private void handleTouchReleased(Node node) {
         setInUse(node, false);
     }
-    
     
     // INSTANCE PROPERTIES
     
@@ -834,7 +817,7 @@ public class TactilePane extends Control {
     
     /**
      * 
-     * @return modifiable list of {@code Nodes} that should be tracked by this {@code TactilePane}
+     * @return modifiable list of {@code Nodes} that are tracked by this {@code TactilePane}
      */
     public ObservableSet<Node> getActiveNodes() {
         return activeNodes;
@@ -921,35 +904,13 @@ public class TactilePane extends Control {
         return quadTree.proximityThresholdProperty();
     }
     
-    // TODO: HIER HOREN INSTANCE PROPERTIES TE STAAN, GEEN STATIC DINGEN
-    public static final void setBondDistance(double threshold) {
-    	bondDistanceProperty().set(threshold);
-    }
-
-    public static final double getBondDistance() {
-        return bondDistanceProperty().get();
-    }
-
-    /**
-     * Specifies how close two {@code Nodes} have to be to each other to be
-     * considered out of each others bond reach, at which point they will
-     * start moving towards each other again.
-     * @defaultvalue 150.0
-     */ 
-    public final static DoubleProperty bondDistanceProperty() {
-    	if (bondDistance == null) {
-            bondDistance = new SimpleDoubleProperty(150.0);
-        }
-        return bondDistance;
-    }
-    
     // STYLESHEET HANDLING
     
     // The selector class
     private static String DEFAULT_STYLE_CLASS = "tactile-pane";
     
     private static final class StyleableProperties {
-        // TODO CSSMetaData maken voor properties
+        // TODO make properties stylable using CSS
 
         private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
         static {
@@ -983,96 +944,89 @@ public class TactilePane extends Control {
     // ENUMS
     
     /**
-     * Defines whether an Event should be processed at the filter stage or the handler stage.
+     * Defines whether an Event is processed at the filter stage or the handler stage.
      */
     public enum EventProcessingMode {
         HANDLER, FILTER
     }
     
     // NESTED CLASSES
-    
-    // TODO: builder voor maken (zie http://docs.oracle.com/javase/8/javafx/api/javafx/fxml/doc-files/introduction_to_fxml.html)
-    public static class Anchor {
-        final Node anchorNode;
-        final double xOffset;
-        final double yOffset;
-        final Pos alignment;
+
+    /**
+     * Help class used for dragging TactilePane's children.
+     */
+    public class DragContext {
+        public static final int NULL_ID = -1;
+        public static final int MOUSE_ID = -2;
         
-        public enum Pos {
-            TOP_LEFT, TOP_CENTER, TOP_RIGHT,
-            CENTER_LEFT, CENTER, CENTER_RIGHT,
-            BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
-        }
-        public Anchor(Node anchorNode) {
-            this(anchorNode, 0, 0, null);
-        }
-        
-        public Anchor(Node anchorNode, double xOffset, double yOffset) {
-            this(anchorNode, xOffset, yOffset, null);
-        }
-        
-        public Anchor(Node anchorNode, Pos alignment) {
-            this(anchorNode, 0, 0, alignment);
-        }
-        
-        public Anchor(Node anchorNode, double xOffset, double yOffset, Pos alignment) {
-            if (anchorNode == null) {
-                throw new NullPointerException("anchorNode may not be null");
-            }
-            
-            this.anchorNode = anchorNode;
-            this.xOffset = xOffset;
-            this.yOffset = yOffset;
-            this.alignment = (alignment == null) ? Pos.TOP_LEFT : alignment;
-        }
-        
-        public Node getAnchorNode() {
-            return anchorNode;
-        }
-        public double getXOffset() {
-            return xOffset;
-        }
-        
-        public double getYOffset() {
-            return yOffset;
-        }
-        
-        public Pos getAlignment() {
-            return alignment;
-        }
-    }
-    
-    // Help class used for dragging Nodes
-    private class DragContext {
-        final Node draggable;   // The Node that is dragged around
+        final Node draggable;         // Node that is being dragged
         double localX, localY;  // The x,y position of the Event in the Node
         int touchId;            // The id of the finger/cursor that is currently dragging the Node
         
-        public DragContext(Node draggable) {
+        private DragContext(Node draggable) {
             this.draggable = draggable;
             touchId = -1;
+        }
+        
+        /**
+         * The Node that is being dragged
+         */
+        public Node getDraggable() {
+            return draggable;
+        }
+        
+        /**
+         * The x location of the touchpoint/cursor that is currently dragging the Node
+         */
+        public double getLocalX() {
+            return localX;
+        }
+        
+        /**
+         * The y location of the touchpoint/cursor that is currently dragging the Node
+         */
+        public double getLocalY() {
+            return localY;
+        }
+        
+        /**
+         * The id of the TouchPoint that is responsible for dragging the Node.
+         * Returns NULL_ID if the Node is not being dragged, or MOUSE_ID if the
+         * Node is dragged by a mouse cursor.
+         */
+        public int getTouchId() {
+            return touchId;
+        }
+        
+        /**
+         * Binds the DragContext to a different TouchEvent. This allows a TouchPoint other than
+         * the one that started the drag operation to take over the drag gesture.
+         * 
+         * @throws IllegalArgumentException Thrown when the TouchEvent is not of 
+         * type TouchEvent.TOUCH_PRESSED, or when the event's target is not the Node that this
+         * DragContext belongs to, or have that Node as ancestor.
+         */
+        public void bind(TouchEvent event) {
+            if (event.getTouchPoint().getId() == touchId) return;
+            
+            Node target = (Node) event.getTarget();
+            while (target.getParent() != draggable) {
+                target = target.getParent();
+                if (target == null) {
+                    throw new IllegalArgumentException("TouchEvent's target should be draggable, or have draggable as ancestor");
+                }
+            }
+            if (event.getEventType() != TouchEvent.TOUCH_PRESSED) {
+                throw new IllegalArgumentException("TouchEvent should be of type TOUCH_PRESSED");
+            }
+            
+            touchId = event.getTouchPoint().getId();
+            handleTouchPressed(draggable, event.getTouchPoint().getX(), event.getTouchPoint().getY());
         }
         
         @Override
         public String toString() {
             return String.format("DragContext [draggable = %s, ,touchId = %d, localX = %f, localY = %f]", draggable.toString(), touchId, localX, localY);
         }
-    }
-    
-    // Help class used to record Bonds
-    /**
-     * Contains mindistance - the distance at which bond starts pulling
-     * Contains force - the force used to pull, should be negative
-     * @author Shaedys
-     *
-     */
-    public static class Bond {
-    	double minDistance; //distance before force is applied
-    	double force; //amount of force that is applied.
-    	
-    	public Bond(double force, double minDistance){
-    		this.minDistance = minDistance;
-    		this.force = force;
-    	}
     }
 }

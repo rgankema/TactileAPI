@@ -5,22 +5,26 @@
  */
 package lwbdemo.ui;
 
+import java.util.Set;
+import java.util.TreeSet;
 import lwbdemo.model.Term;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.input.TouchEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
-import nl.utwente.cs.caes.tactile.control.TactilePane.Anchor;
+import nl.utwente.cs.caes.tactile.control.Anchor;
 
 /**
  *
  * @author Richard
  */
 public class Bowtie extends Group {
-    private static final double BG_OFFSET = 10;
+    private static final double BG_OFFSET = 0;
     
     final Knot knot;
     final HBox hbox;
@@ -30,8 +34,11 @@ public class Bowtie extends Group {
     
     private boolean compact = false;
     private TermDisplay anchor = null;
+    private final TactilePane tracker;
     
     public Bowtie(TactilePane tracker, String name, Term... terms) {
+        this.tracker = tracker;
+        
         termBlade = new TermBlade(this, name);
         typeBlade = new TypeBlade(this, terms);
         knot = new Knot(this);
@@ -57,6 +64,34 @@ public class Bowtie extends Group {
         getChildren().addAll(background, hbox);
         
         TactilePane.setTracker(typeBlade, tracker);
+        
+        // Makes sure that TouchEvents that are targeted on the Knot won't be handled
+        // by Knot in case it's the only TouchPoint manipulating the Bowtie. This 
+        // forces the user to use two fingers to move the Knot, one to hold the 
+        // Bowtie in position, and another to move the knot.
+        final Set<Integer> touchIDs = new TreeSet<>();
+        addEventFilter(TouchEvent.ANY, event -> {
+            int touchId = event.getTouchPoint().getId();
+            
+            if (event.getEventType() == TouchEvent.TOUCH_PRESSED) {
+                touchIDs.add(touchId);
+                if (touchIDs.size() == 1) {
+                    if (event.getTarget() == knot) {
+                        knot.ignoredTouchId = touchId;
+                    }
+                } else {
+                    knot.ignoredTouchId = -1;
+                    if (knot.ignoredTouchId == TactilePane.getDragContext(this).getTouchId()) {
+                        TactilePane.getDragContext(this).bind(event);
+                    }
+                }
+            } else if (event.getEventType() == TouchEvent.TOUCH_RELEASED) {
+                touchIDs.remove(touchId);
+                if (knot.ignoredTouchId == touchId) {
+                    knot.ignoredTouchId = -1;
+                }
+            }
+        });
     }
     
     // PROPERTIES
@@ -74,7 +109,7 @@ public class Bowtie extends Group {
         } else {
             shrink();
             
-            TactilePane.setAnchor(this, new Anchor(termDisplay, 1, 1, Anchor.Pos.CENTER));
+            TactilePane.setAnchor(this, new Anchor(termDisplay, 1, 1, Pos.CENTER));
         }
         anchor = termDisplay;
     }
@@ -103,7 +138,11 @@ public class Bowtie extends Group {
     
     private void shrink() {
         if (!compact) {
+            TactilePane.setTracker(typeBlade, null);
+            
             hbox.getChildren().removeAll(knot, typeBlade);
+            termBlade.setPadding(Insets.EMPTY);
+            
             compact = true;
             
             background.setFill(Color.LIGHTGREEN);
@@ -113,6 +152,10 @@ public class Bowtie extends Group {
     private void grow() {
         if (compact) {
             hbox.getChildren().addAll(knot, typeBlade);
+            termBlade.setPadding(new Insets(10));
+            
+            TactilePane.setTracker(typeBlade, tracker);
+            
             compact = false;
             
             background.setFill(Color.BISQUE);
@@ -131,23 +174,23 @@ public class Bowtie extends Group {
                 hboxBounds.getMinX(), hboxBounds.getMaxY()
             });
         } else {
-            Bounds knotBounds = knot.getBoundsInParent(); //Bowtie.this.sceneToLocal(knot.localToScene(knot.getBoundsInLocal()));
+            Bounds knotBounds = knot.getBoundsInParent();
 
             background.getPoints().addAll(new Double[]{
                 // Top left corner
-                hboxBounds.getMinX() - BG_OFFSET, hboxBounds.getMinY() - BG_OFFSET,
-                knotBounds.getMinX(), hboxBounds.getMinY() - BG_OFFSET,
+                hboxBounds.getMinX(), hboxBounds.getMinY(),
+                knotBounds.getMinX(), hboxBounds.getMinY(),
                 knotBounds.getMinX() + knotBounds.getWidth() / 2, hboxBounds.getMinY() + hboxBounds.getHeight() / 2,
-                knotBounds.getMaxX(), hboxBounds.getMinY() - BG_OFFSET,
+                knotBounds.getMaxX(), hboxBounds.getMinY(),
                 // Top right corner
-                hboxBounds.getMaxX() + BG_OFFSET, hboxBounds.getMinY() - BG_OFFSET,
+                hboxBounds.getMaxX(), hboxBounds.getMinY(),
                 // Bottom right corner
-                hboxBounds.getMaxX() + BG_OFFSET, hboxBounds.getMaxY() + BG_OFFSET,
-                knotBounds.getMaxX(), hboxBounds.getMaxY() + BG_OFFSET,
+                hboxBounds.getMaxX(), hboxBounds.getMaxY(),
+                knotBounds.getMaxX(), hboxBounds.getMaxY(),
                 knotBounds.getMinX() + knotBounds.getWidth() / 2, hboxBounds.getMinY() + hboxBounds.getHeight() / 2,
-                knotBounds.getMinX(), hboxBounds.getMaxY() + BG_OFFSET,
+                knotBounds.getMinX(), hboxBounds.getMaxY(),
                 // Bottom left corner
-                hboxBounds.getMinX() - BG_OFFSET, hboxBounds.getMaxY() + BG_OFFSET
+                hboxBounds.getMinX(), hboxBounds.getMaxY()
             });
         }
     }

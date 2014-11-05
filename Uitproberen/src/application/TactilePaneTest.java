@@ -18,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import nl.utwente.cs.caes.tactile.control.Bond;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 import nl.utwente.cs.caes.tactile.debug.DebugParent;
 
@@ -42,12 +43,11 @@ public class TactilePaneTest extends Application {
         for (int i = 0; i < RECTANGLES; i++) {
             Rectangle rectangle = new Rectangle(80, 80);
             rectangle.relocate(Math.random() * (WIDTH - 80), Math.random() * (HEIGHT - 80));
-            TactilePane.setDraggable(rectangle, false);
+            //TactilePane.setDraggable(rectangle, false);
             tactilePane.getChildren().add(rectangle);
         }
         for (int i = 0; i < CIRCLES; i++) {
             Circle circle = new Circle(50);
-            circle.setScaleX(1.5);
             circle.relocate(Math.random() * (WIDTH - 100), Math.random() * (HEIGHT - 100));
             TactilePane.setSlideOnRelease(circle, true);
             TactilePane.setOnInProximity(circle, event -> {
@@ -55,10 +55,14 @@ public class TactilePaneTest extends Application {
                     TactilePane.moveAwayFrom(circle, event.getOther(), 20);
                 }
             });
+            TactilePane.setOnInArea(circle, event -> {
+                if (!TactilePane.isInUse(circle) && event.getOther() instanceof Circle) {
+                    TactilePane.moveAwayFrom(circle, event.getOther(), 50);
+                }
+            });
             TactilePane.setOnAreaEntered(circle, event -> {
                 if (TactilePane.isInUse(circle) && event.getOther() instanceof Rectangle) {
-                    TactilePane.createBond(circle, event.getOther());
-                    System.out.println("created bond");
+                    TactilePane.getBonds(circle).add(new Bond(event.getOther(), 150, 0.5));
                 }
             });
             tactilePane.getChildren().add(circle);
@@ -70,7 +74,6 @@ public class TactilePaneTest extends Application {
         
         // Set proximity threshhold
         tactilePane.proximityThresholdProperty().set(75);
-        TactilePane.setBondDistance(250);
         
         // Init Control Pane
         FlowPane controlLayout = new FlowPane();

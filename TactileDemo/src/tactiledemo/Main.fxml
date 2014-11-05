@@ -11,9 +11,9 @@
 <?import tactiledemo.*?>
 <?import java.net.*?>
 
-<TactilePane xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" fx:id="root" 
+<TactilePane  xmlns:fx="http://javafx.com/fxml/1" bordersCollide="true" fx:id="root" 
            prefHeight="600" prefWidth="800"
-           proximityThreshold="40" >
+           proximityThreshold="40"  >
     
     <ColorItem color="#ff0000" layoutX="0" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
     <ColorItem color="#ff0000" layoutX="100" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
@@ -24,5 +24,5 @@
     <ColorItem color="#ffff00" layoutX="600" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
     <ColorItem color="#ffff00" layoutX="700" TactilePane.slideOnRelease="true" TactilePane.tracker="$root"/>
 
-    <ColorSlotPane layoutY="400" layoutX="100" TactilePane.slideOnRelease="true" tactilePane="$root"/>
+    <ColorSlotPane layoutY="400" layoutX="100" TactilePane.slideOnRelease="true" tactilePane="$root" fx:id="pane"/>
 </TactilePane>

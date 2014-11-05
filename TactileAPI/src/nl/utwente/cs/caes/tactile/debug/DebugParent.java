@@ -293,6 +293,15 @@ public class DebugParent extends StackPane {
         return touchCircleRadius;
     }
     
+    public void clearTouchPoints() {
+        List<Node> toRemove = new ArrayList<>();
+        for (Node node : overlay.getChildren()) {
+            if (node instanceof TouchDisplay)
+                toRemove.add(node);
+        }
+        overlay.getChildren().removeAll(toRemove);
+    }
+    
     public void registerTactilePane(TactilePane pane) {
         for (Node node : pane.getChildren()) {
             registerDraggable(node);

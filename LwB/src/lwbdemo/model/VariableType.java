@@ -26,6 +26,11 @@ public class VariableType extends Term{
     
     @Override
     public boolean isApplicable(Term term) {
+        if (this.type != null) {
+            if (term != null) {
+                return this.type.applyTerm(term);
+            } 
+        }
         return true;
     }
     
