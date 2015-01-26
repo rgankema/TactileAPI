@@ -151,7 +151,7 @@ public class QuadTree {
             proximityBoundsByObject.put(object, bounds);
 
             Set<Node> objects = proximityBoundsByObject.keySet();
-            if (objects.size() >= MAX_OBJECTS && this.level < MAX_DEPTH) {
+            if (objects.size() >= MAX_OBJECTS && this.level < MAX_DEPTH && children == null) {
                 split();
             }
         } else {

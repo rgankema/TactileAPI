@@ -215,7 +215,11 @@ public class DebugParent extends StackPane {
                     overlay.getChildren().remove(qtd);
                 }
                 quadTreeDisplays.clear();
+                
                 for (TactilePane pane : quadTreeByTactilePane.keySet()) {
+                    QuadTreeDisplay qtd = new QuadTreeDisplay(pane.quadTree, "root");
+                    quadTreeDisplays.add(qtd);
+                    overlay.getChildren().add(qtd);
                     drawQuadTreeChildren(pane.quadTree, "");
                 }
             }
