@@ -210,6 +210,7 @@ public class DebugParent extends StackPane {
                     boundsDisplay.setBoundsHeight(bounds.getHeight());
                     boundsDisplay.relocate(bounds.getMinX(), bounds.getMinY());
                 }
+                // Dit is extreem inefficient, maar het is niet de bedoeling dat deze functionaliteit er in blijft
                 for (QuadTreeDisplay qtd : quadTreeDisplays) {
                     overlay.getChildren().remove(qtd);
                 }
@@ -221,6 +222,7 @@ public class DebugParent extends StackPane {
         }.start();
     }
     
+    //Tijdelijk
     private void drawQuadTreeChildren(QuadTree root, String label){
         if (root.children == null) return;
         int postfix = 0;
