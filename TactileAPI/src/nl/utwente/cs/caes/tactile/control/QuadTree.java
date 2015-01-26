@@ -15,16 +15,18 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 
-class QuadTree {
+// TODO: uiteindelijk package-private, alleen voor debug
+public class QuadTree {
 
     private final int MAX_DEPTH = 5;
     private final int MAX_OBJECTS = 10;
 
     private QuadTree parent;
-    private QuadTree[] children;
-    private final int level;
+    //TODO: tijdelijk public voor debug
+    public QuadTree[] children;
+    public final int level;
     private boolean boundsChanged = false;
-    private final Map<Node, Bounds> proximityBoundsByObject = new HashMap<>();
+    public final Map<Node, Bounds> proximityBoundsByObject = new HashMap<>();
 
     /**
      * Constructor of the QuadTree
