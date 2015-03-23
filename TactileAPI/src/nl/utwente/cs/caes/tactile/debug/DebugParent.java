@@ -29,7 +29,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.util.Duration;
-import nl.utwente.cs.caes.tactile.control.QuadTree;
 import nl.utwente.cs.caes.tactile.control.TactilePane;
 
 public class DebugParent extends StackPane {
@@ -41,8 +40,6 @@ public class DebugParent extends StackPane {
     Map<Node, VectorDisplay> vectorDisplayByDraggable = new ConcurrentHashMap<>();
     Map<Node, ProximityDisplay> proximityDisplayByNode = new ConcurrentHashMap<>();
     Map<Node, BoundsDisplay> boundsDisplayByNode = new ConcurrentHashMap<>();
-    
-    Map<TactilePane, QuadTree> quadTreeByTactilePane = new ConcurrentHashMap<>();
 
     List<TouchPoint> touchPoints = new ArrayList<>();
     int touchSetId = 0;
@@ -331,8 +328,6 @@ public class DebugParent extends StackPane {
                 deregisterActiveNode(c.getElementRemoved());
             }
         });
-        
-        quadTreeByTactilePane.put(pane, pane.quadTree);
     }
     
     private void registerActiveNode(Node node, TactilePane pane) {

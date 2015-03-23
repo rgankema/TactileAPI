@@ -22,18 +22,15 @@ public class QuadTree {
     private final int MAX_OBJECTS = 10;
 
     private QuadTree parent;
-    //TODO: tijdelijk public voor debug
-    public QuadTree[] children;
-    public final int level;
+    private QuadTree[] children;
+    private final int level;
     private boolean boundsChanged = false;
-    public final Map<Node, Bounds> proximityBoundsByObject = new HashMap<>();
+    private final Map<Node, Bounds> proximityBoundsByObject = new HashMap<>();
 
     /**
      * Constructor of the QuadTree
      *
      * @param bounds The bounds of the 2D space that this QuadTree divides
-     * @param proximityThreshold The maximum gap between two Nodes which makes
-     * them neighbours
      */
     public QuadTree(Bounds bounds) {
         setBounds(bounds);
