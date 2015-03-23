@@ -23,7 +23,7 @@ public class TactileDemo extends Application {
         BorderPane root = new BorderPane();
         
         // Init TactilePane
-        TactilePane tactilePane = (TactilePane) FXMLLoader.load(getClass().getResource("Main.fxml"), null, new TactileBuilderFactory());
+        TactilePane tactilePane = (TactilePane) FXMLLoader.load(getClass().getResource("/fxml/Main.fxml"), null, new TactileBuilderFactory());
         
         // Init Control Pane
         FlowPane controlLayout = new FlowPane();
