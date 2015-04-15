@@ -44,7 +44,7 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * sizes, and also exposes its children list as public. On top of this however,
  * it allows users to layout the children by means of mouse and/or touch input.
  * It also has some basic "physics"-like features, such as collision detection,
- * and an event structure to go along with that.
+ * inertia, gravity, etc.
  * <p>
  *
  * <h1>Dragging Nodes</h1>
@@ -71,9 +71,26 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * that handling (and consuming) Mouse/Touch events happens during the filter or
  * the handler stage.
  * <p>
- * <h1>Active nodes and Events</h1>
+ * <h1>Active Nodes and Events</h1>
+ * <p>
+ * Apart from making Nodes draggable, TactilePane can also check if given Nodes
+ * collide with each other. In order to achieve this, Nodes can be added to
+ * {@link getActiveNodes getActiveNodes}. Every Node in this list will be
+ * tracked by the TactilePane. When any pair of Nodes from activeNodes get close
+ * to each other or collide, a TactilePaneEvent is fired.
  * <p>
  * <h1>Physics</h1>
+ * <p>
+ * The last main feature of TactilePane is the physics system. Nodes can be
+ * given vectors which give it a force into a certain direction. This can for
+ * instance be combined with the Active Node feature by making a Node A "flee"
+ * from another Node B when B gets too close to A. TactilePane can be setup so
+ * that Nodes will bounce off its borders when a given force would otherwise
+ * result in a Node to be laid out outside of the TactilePane's boundaries.
+ *
+ * Other features include things such as giving a Node A a 'bond' with another
+ * Node B, so that that A will be given a vector such that it always attempts to
+ * keep a certain distance from B.
  * <p>
  */
 @DefaultProperty("children")
