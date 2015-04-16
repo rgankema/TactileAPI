@@ -68,41 +68,6 @@ public class DebugParent extends StackPane {
         getChildren().addListener((Observable value) -> {
             overlay.toFront();
         });
-        
-        // Maps mouse events to touch events
-        addEventFilter(MouseEvent.ANY, event -> {
-            if (getMapMouseToTouch() && !event.isSynthesized()) {
-                if (event.getEventType().equals(MouseEvent.MOUSE_PRESSED)) {
-                    TouchPoint tp = createTouchPoint(event);
-                    TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_PRESSED,
-                            tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(),
-                            event.isAltDown(), event.isMetaDown());
-                    Event.fireEvent(event.getTarget(), tEvent);
-                } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
-                    TouchPoint tp = createTouchPoint(event);
-                    TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_MOVED,
-                            tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(),
-                            event.isAltDown(), event.isMetaDown());
-                    Event.fireEvent(event.getTarget(), tEvent);
-                } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED) {
-                    TouchPoint tp = createTouchPoint(event);
-                    TouchEvent tEvent = new TouchEvent(this, event.getTarget(), TouchEvent.TOUCH_RELEASED,
-                            tp, touchPoints, touchSetId, event.isShiftDown(), event.isControlDown(),
-                            event.isAltDown(), event.isMetaDown());
-                    Event.fireEvent(event.getTarget(), tEvent);
-
-                    touchSetId++;
-                }
-                // Send synthesized MouseEvent
-                MouseEvent mouseEvent = new MouseEvent(event.getSource(), event.getTarget(), event.getEventType(),
-                        event.getSceneX(), event.getSceneY(), event.getScreenX(), event.getScreenY(), event.getButton(),
-                        event.getClickCount(), event.isShiftDown(), event.isControlDown(), event.isAltDown(), event.isMetaDown(),
-                        event.isPrimaryButtonDown(), event.isMiddleButtonDown(), event.isSecondaryButtonDown(), true,
-                        event.isPopupTrigger(), event.isStillSincePress(), event.getPickResult());
-                Event.fireEvent(event.getTarget(), mouseEvent);
-                event.consume();
-            }
-        });
 
         addEventFilter(TouchEvent.TOUCH_PRESSED, event -> {
             int touchId = event.getTouchPoint().getId();
@@ -218,29 +183,6 @@ public class DebugParent extends StackPane {
         touchPoints.clear();
         touchPoints.add(tp);
         return tp;
-    }
-
-    /**
-     * Whether {@code MouseEvents} will be replaced with corresponding
-     * {@code TouchEvents}
-     *
-     * @defaultValue false
-     */
-    private BooleanProperty mapMouseToTouch;
-
-    public void setMapMouseToTouch(boolean value) {
-        mapMouseToTouchProperty().set(value);
-    }
-
-    public boolean getMapMouseToTouch() {
-        return mapMouseToTouchProperty().get();
-    }
-
-    public BooleanProperty mapMouseToTouchProperty() {
-        if (mapMouseToTouch == null) {
-            mapMouseToTouch = new SimpleBooleanProperty(false);
-        }
-        return mapMouseToTouch;
     }
     
     /**

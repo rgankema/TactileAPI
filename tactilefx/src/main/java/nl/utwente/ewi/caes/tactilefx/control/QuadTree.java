@@ -15,8 +15,7 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 
-// TODO: uiteindelijk package-private, alleen voor debug
-public class QuadTree {
+class QuadTree {
 
     private final int MAX_DEPTH = 5;
     private final int MAX_OBJECTS = 10;

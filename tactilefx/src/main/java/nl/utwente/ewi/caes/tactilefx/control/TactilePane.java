@@ -57,13 +57,19 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * can be set to {@code true}.
  * <p>
  * To implement dragging of Nodes, Mouse/Touch events are handled (and consumed)
- * at the draggable node. In case of multi-touch gestures, only events from the
- * first touch point that interacted with the node will be processed. Calling
- * {@link getDragContext getDragContext} will provide information relevant to
- * the dragging operation on a node, such as the id of the touch point that is
- * being used for dragging. In {@link DragContext DragContext}, it's possible to
- * bind a drag operation to a new touch point, so that another touch point can
- * take the drag operation over.
+ * at the draggable node. Note that this includes synthesized MouseEvents that
+ * come along with TouchEvents. The first TouchEvent.PRESSED or
+ * MouseEvent.PRESSED determines which set of events is used for dragging. This
+ * ensures that having multiple touch points on a draggable node won't mess up
+ * the drag operation. The other Mouse/Touch events are ignored and not
+ * consumed, which means that even though TactilePane consumes the events used
+ * to drag a Node, there can still be events that bubble up.
+ *
+ * Calling {@link getDragContext getDragContext} will provide information
+ * relevant to the dragging operation on a node, such as the id of the touch
+ * point that is being used for dragging. In {@link DragContext DragContext},
+ * it's possible to bind a drag operation to a new touch point, so that another
+ * touch point can take the drag operation over.
  * <p>
  * The moment at which Mouse/Touch Events are handled to implement dragging can
  * be altered by setting the
