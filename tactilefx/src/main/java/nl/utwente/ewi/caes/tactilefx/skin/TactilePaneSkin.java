@@ -9,6 +9,11 @@ import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import nl.utwente.ewi.caes.tactilefx.control.TactilePane;
 
+/**
+ * The skin for TactilePane.
+ * 
+ * @author Richard
+ */
 public class TactilePaneSkin extends SkinBase<TactilePane> {
     TactilePane pane;
     

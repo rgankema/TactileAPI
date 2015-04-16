@@ -5,6 +5,11 @@ import javafx.scene.Node;
 import javafx.util.Builder;
 import nl.utwente.ewi.caes.tactilefx.control.Anchor;
 
+/**
+ * Builder for the {@code TactilePane.Anchor} class.
+ * 
+ * @author Richard
+ */
 public class TactilePaneAnchorBuilder implements Builder<Anchor> {
     private Node anchorNode = null;
     private double offsetX = 0;

@@ -23,15 +23,14 @@ import javafx.scene.input.TouchPoint;
  * regular mouse. It consumes incoming MouseEvents, and fires equivalent
  * TouchEvents. It is recommended to add this to the Scene as an EventFilter.
  * </p>
- * 
+ * <p>
  * For example:
- * 
+ * </p>
  * <pre>
  * {@code
  * Scene scene = new Scene(root);
  * scene.addEventFilter(new MouseToTouchMapper());
  * }</pre>
- * </p>
  * 
  * @author Richard
  */

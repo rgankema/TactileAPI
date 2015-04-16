@@ -16,7 +16,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.SetChangeListener;
-import javafx.event.Event;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
@@ -31,7 +30,15 @@ import javafx.scene.shape.Line;
 import javafx.util.Duration;
 import nl.utwente.ewi.caes.tactilefx.control.TactilePane;
 
-public class DebugParent extends StackPane {
+/**
+ * A wrapper for TactilePane that can be used to visually debug
+ * TactilePane. It can show information on the screen such as the current
+ * TouchPoints, the BoundingBoxes and proximity area of Active Nodes, and the
+ * vectors that Nodes have.
+ * 
+ * @author Richard
+ */
+public final class DebugParent extends StackPane {
     
     Pane overlay = new Pane();
     Map<Integer, TouchDisplay> circleByTouchId = new TreeMap<>();
@@ -45,14 +52,10 @@ public class DebugParent extends StackPane {
     int touchSetId = 0;
     boolean active = false;
 
-    public DebugParent() {
-        super();
-        initialise();
-    }
-
-    public DebugParent(Node node) {
+    public DebugParent(TactilePane node) {
         super(node);
         initialise();
+        registerTactilePane(node);
     }
 
     private void initialise() {
@@ -186,9 +189,7 @@ public class DebugParent extends StackPane {
     }
     
     /**
-     * Whether the overlay is visible or not
-     * 
-     * @defaultValue true
+     * Whether the overlay is visible or not.
      */
     private BooleanProperty overlayVisible;
 
@@ -235,16 +236,7 @@ public class DebugParent extends StackPane {
         return touchCircleRadius;
     }
     
-    public void clearTouchPoints() {
-        List<Node> toRemove = new ArrayList<>();
-        for (Node node : overlay.getChildren()) {
-            if (node instanceof TouchDisplay)
-                toRemove.add(node);
-        }
-        overlay.getChildren().removeAll(toRemove);
-    }
-    
-    public void registerTactilePane(TactilePane pane) {
+    private void registerTactilePane(TactilePane pane) {
         for (Node node : pane.getChildren()) {
             registerDraggable(node);
         }

@@ -39,15 +39,15 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
 
 /**
  * <p>
- * A Control that allows a user to rearrange the position of its children. Acts
+ * A {@code Control} that allows a user to rearrange the position of its children. Acts
  * like a {@code Pane} in that it only resizes its children to its preferred
  * sizes, and also exposes its children list as public. On top of this however,
  * it allows users to layout the children by means of mouse and/or touch input.
  * It also has some basic "physics"-like features, such as collision detection,
  * inertia, gravity, etc.
- * <p>
+ * </p>
  *
- * <h1>Dragging Nodes</h1>
+ * <h2>Dragging Nodes</h2>
  * <p>
  * By default, all of TactilePane's children are draggable, which means that a
  * user can drag them using mouse or touch input. This can be turned off by
@@ -55,6 +55,7 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * {@code false}. To prevent the user from dragging a node beyond the bounds of
  * the TactilePane, the {@link bordersCollideProperty borderCollide} property
  * can be set to {@code true}.
+ * </p>
  * <p>
  * To implement dragging of Nodes, Mouse/Touch events are handled (and consumed)
  * at the draggable node. Note that this includes synthesized MouseEvents that
@@ -64,40 +65,62 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * the drag operation. The other Mouse/Touch events are ignored and not
  * consumed, which means that even though TactilePane consumes the events used
  * to drag a Node, there can still be events that bubble up.
- *
+ * </p>
+ * <p>
  * Calling {@link getDragContext getDragContext} will provide information
  * relevant to the dragging operation on a node, such as the id of the touch
  * point that is being used for dragging. In {@link DragContext DragContext},
  * it's possible to bind a drag operation to a new touch point, so that another
  * touch point can take the drag operation over.
+ * </p>
  * <p>
  * The moment at which Mouse/Touch Events are handled to implement dragging can
  * be altered by setting the
  * {@link dragProcessingModeProperty dragProccesingMode}. This can be set so
  * that handling (and consuming) Mouse/Touch events happens during the filter or
  * the handler stage.
- * <p>
- * <h1>Active Nodes and Events</h1>
+ * </p>
+ * <h2>Active Nodes and Events</h2>
  * <p>
  * Apart from making Nodes draggable, TactilePane can also check if given Nodes
  * collide with each other. In order to achieve this, Nodes can be added to
  * {@link getActiveNodes getActiveNodes}. Every Node in this list will be
  * tracked by the TactilePane. When any pair of Nodes from activeNodes get close
  * to each other or collide, a TactilePaneEvent is fired.
- * <p>
- * <h1>Physics</h1>
+ * </p>
+ * 
+ * <h2>Physics</h2>
  * <p>
  * The last main feature of TactilePane is the physics system. Nodes can be
  * given vectors which give it a force into a certain direction. This can for
  * instance be combined with the Active Node feature by making a Node A "flee"
- * from another Node B when B gets too close to A. TactilePane can be setup so
- * that Nodes will bounce off its borders when a given force would otherwise
- * result in a Node to be laid out outside of the TactilePane's boundaries.
+ * from another Node B when B gets too close to A. See the code listing below:
+ * </p>
+ * <pre>
+ * {@code
+ *  TactilePane tp = new TactilePane();
+ *  Rectangle r1 = new Rectangle(50, 50, 0, 0);
+ *  Rectangle r2 = new Rectangle(50, 50, 100, 0);
+ *  tp.getChildren().addAll(r1, r2);
+ * 
+ *  // Track r1 and r2 for collision/proximity
+ *  tp.getActiveNodes().addAll(r1, r2);
+ * 
+ *  // When r1 and r2 are in eachothers proximity, move r1 away from r2
+ *  TactilePane.setOnInProximity(r1, e -> {
+ *      TactilePane.moveAwayFrom(r1, r2);
+ *  });
+ * }
+ * </pre>
+ * <p>
+ * TactilePane can be setup so that Nodes will bounce off its borders when a
+ * given force would otherwise result in a Node to be laid out outside of the
+ * TactilePane's boundaries.
  *
  * Other features include things such as giving a Node A a 'bond' with another
  * Node B, so that that A will be given a vector such that it always attempts to
- * keep a certain distance from B.
- * <p>
+ * stay at a certain distance from B.
+ * </p>
  */
 @DefaultProperty("children")
 public class TactilePane extends Control {
@@ -137,6 +160,9 @@ public class TactilePane extends Control {
         inUsePropertyImpl(node).set(inUse);
     }
     
+    /**
+     * Gets the value of the property inUse
+     */
     public static boolean isInUse(Node node) {
         return inUsePropertyImpl(node).get();
     }
@@ -158,15 +184,24 @@ public class TactilePane extends Control {
         return inUsePropertyImpl(node);
     }
     
+    /**
+     * Sets the value of the property anchor
+     */
     public static void setAnchor(Node node, Anchor anchor) {
         anchorProperty(node).set(anchor);
     }
     
+    /**
+     * Gets the value of the property anchor
+     */
     public static Anchor getAnchor(Node node) {
         return anchorProperty(node).get();
     }
     
-    // TODO: Rewrite JavaDoc
+    /**
+     * The anchor for a given node. When not <code>null</code>, this Node's
+     * location will be bound to another Node.
+     */
     public static ObjectProperty<Anchor> anchorProperty(Node node) {
         ObjectProperty<Anchor> property = (ObjectProperty<Anchor>) getConstraint(node, ANCHOR);
         if (property == null) {
@@ -176,10 +211,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Gets the value of the property vector
+     */
     public static void setVector(Node node, Point2D vector) {
         vectorProperty(node).set(vector);
     }
     
+    /**
+     * Sets the value of the property vector
+     */
     public static Point2D getVector(Node node) {
         return vectorProperty(node).get();
     }
@@ -196,10 +237,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Gets the value of the property goToForegroundOnContact
+     */
     public static void setGoToForegroundOnContact(Node node, boolean goToForegroundOnContact) {
         goToForegroundOnContactProperty(node).set(goToForegroundOnContact);
     }
     
+    /**
+     * Sets the value of the property goToForegroundOnContact
+     */
     public static boolean isGoToForegroundOnContact(Node node) {
         return goToForegroundOnContactProperty(node).get();
     }
@@ -207,8 +254,6 @@ public class TactilePane extends Control {
     /**
      * Whether this {@code node} will go to the foreground when the user starts
      * a drag gesture with it.
-     * 
-     * @defaultValue true
      */
     public static BooleanProperty goToForegroundOnContactProperty(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, GO_TO_FOREGROUND_ON_CONTACT);
@@ -219,10 +264,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Sets the value of the property draggable
+     */
     public static void setDraggable(Node node, boolean draggable) {
         draggableProperty(node).set(draggable);
     }
     
+    /**
+     * Gets the value of the property draggable
+     */
     public static boolean isDraggable(Node node) {
         return draggableProperty(node).get();
     }
@@ -230,8 +281,6 @@ public class TactilePane extends Control {
     /**
      * Whether the given node can be dragged by the user. Only nodes that are a direct child of
      * a {@code TactilePane} can be dragged.
-     * 
-     * @defaultValue true
      */
     public static BooleanProperty draggableProperty(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, DRAGGABLE);
@@ -251,10 +300,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Sets the value of the property setSlideOnRelease
+     */
     public static void setSlideOnRelease(Node node, boolean slideOnRelease) {
         slideOnReleaseProperty(node).set(slideOnRelease);
     }
     
+    /**
+     * Gets the value of the property setSlideOnRelease
+     */
     public static boolean isSlideOnRelease(Node node) {
         return slideOnReleaseProperty(node).get();
     }
@@ -262,8 +317,6 @@ public class TactilePane extends Control {
     /**
      * Whether the given {@code Node} will get a vector in the direction it was
      * moving when the user stops dragging that {@code Node}
-     *
-     * @defaultValue false
      */
     public static BooleanProperty slideOnReleaseProperty(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, SLIDE_ON_RELEASE);
@@ -326,10 +379,16 @@ public class TactilePane extends Control {
     }
     
     
+    /**
+     * Sets the value of the property onInProximity
+     */
     public static void setOnInProximity(Node node, EventHandler<? super TactilePaneEvent> handler) {
         onInProximityProperty(node).set(handler);
     }
     
+    /**
+     * Gets the value of the property onInProximity
+     */
     public static EventHandler<? super TactilePaneEvent> getOnInProximity(Node node) {
         return onInProximityProperty(node).get();
     }
@@ -359,10 +418,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Sets the value of the property onProximityEntered
+     */
     public static void setOnProximityEntered(Node node, EventHandler<? super TactilePaneEvent> handler) {
         onProximityEnteredProperty(node).set(handler);
     }
     
+    /**
+     * Gets the value of the property onProximityEntered
+     */
     public static EventHandler<? super TactilePaneEvent> getOnProximityEntered(Node node) {
         return onProximityEnteredProperty(node).get();
     }
@@ -392,10 +457,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Sets the value of the property onProximityLeft
+     */
     public static void setOnProximityLeft(Node node, EventHandler<? super TactilePaneEvent> handler) {
         onProximityLeftProperty(node).set(handler);
     }
     
+    /**
+     * Gets the value of the property onProximityLeft
+     */
     public static EventHandler<? super TactilePaneEvent> getOnProximityLeft(Node node) {
         return onProximityLeftProperty(node).get();
     }
@@ -425,10 +496,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Sets the value of the property onInArea
+     */
     public static void setOnInArea(Node node, EventHandler<? super TactilePaneEvent> handler) {
         onInAreaProperty(node).set(handler);
     }
     
+    /**
+     * Gets the value of the property onInArea
+     */
     public static EventHandler<? super TactilePaneEvent> getOnInArea(Node node) {
         return onInAreaProperty(node).get();
     }
@@ -458,10 +535,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Sets the value of the property onAreaEntered
+     */
     public static void setOnAreaEntered(Node node, EventHandler<? super TactilePaneEvent> handler) {
         onAreaEnteredProperty(node).set(handler);
     }
     
+    /**
+     * Gets the value of the property onAreaEntered
+     */
     public static EventHandler<? super TactilePaneEvent> getOnAreaEntered(Node node) {
         return onAreaEnteredProperty(node).get();
     }
@@ -491,10 +574,16 @@ public class TactilePane extends Control {
         return property;
     }
     
+    /**
+     * Sets the value of the property onAreaLeft
+     */
     public static void setOnAreaLeft(Node node, EventHandler<? super TactilePaneEvent> handler) {
         onAreaLeftProperty(node).set(handler);
     }
     
+    /**
+     * Gets the value of the property onAreaLeft
+     */
     public static EventHandler<? super TactilePaneEvent> getOnAreaLeft(Node node) {
         return onAreaLeftProperty(node).get();
     }
@@ -622,7 +711,7 @@ public class TactilePane extends Control {
     
     // INSTANCE VARIABLES
     private final PhysicsTimer physics;
-    protected final QuadTree quadTree;
+    final QuadTree quadTree;
     private final ObservableSet<Node> activeNodes;
     
     // CONSTRUCTORS
@@ -877,8 +966,6 @@ public class TactilePane extends Control {
     /**
      * Whether Mouse/Touch events at this TactilePane's children should be processed and consumed
      * at the filtering stage or the handling stage.
-     * 
-     * @defaultValue EventProcessingMode.HANDLER
      */
     private ObjectProperty<EventProcessingMode> dragProcessingMode;
     
@@ -914,8 +1001,6 @@ public class TactilePane extends Control {
      * {@code TactilePane}. If set to true the {@code TactilePane} will prevent
      * children that are moving because of user input or physics to
      * move outside of the {@code TactilePane's} boundaries.
-     *
-     * @defaultValue false
      */
     private BooleanProperty bordersCollide;
 
@@ -950,8 +1035,6 @@ public class TactilePane extends Control {
      * {@code Nodes} that entered each other's proximity before the threshold
      * was set to 0. When set to a negative value, an IllegalArgumentException
      * is thrown.
-     *
-     * @defaultValue 25.0
      */
     public final DoubleProperty proximityThresholdProperty() {
         return quadTree.proximityThresholdProperty();
@@ -961,8 +1044,6 @@ public class TactilePane extends Control {
      * A scalar by which a vector is multiplied during every physics calculation.
      * Must between 0 and 1. Influences how fast a node stops moving after it has
      * been given a vector.
-     * 
-     * @defaultValue 0.95
      */
     private DoubleProperty frictionMultiplier;
     
@@ -993,8 +1074,6 @@ public class TactilePane extends Control {
      * A scalar by which a node's vector is multiplied whenever it collides with
      * a border of the TactilePane. Must be a value between 0 and 1. Influences
      * how much energy it loses retains after bouncing off a border.
-     *
-     * @defaultValue 0.7
      */
     private DoubleProperty bounceMultiplier;
     
@@ -1025,8 +1104,6 @@ public class TactilePane extends Control {
      * A scalar by which a vector is multiplied if its node is configured to
      * slide on release. May not be a negative value. Influences how much speed the
      * node will have when it is released.
-     *
-     * @defaultValue 1.6
      */
     private DoubleProperty slideMultiplier;
     
@@ -1055,8 +1132,6 @@ public class TactilePane extends Control {
     
     /**
      * The minimum magnitude a vector must have before it is reset to a zero vector.
-     * 
-     * @defaultValue 2.5
      */
     private DoubleProperty vectorThreshold;
     

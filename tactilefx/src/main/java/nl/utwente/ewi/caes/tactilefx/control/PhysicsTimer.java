@@ -237,6 +237,9 @@ class PhysicsTimer extends AnimationTimer {
         pane.quadTree.update();
 
         for (Node thisNode : pane.getActiveNodes()) {
+            // Don't do calculations for nodes that aren't part of the scene graph
+            if (thisNode.getParent() == null) continue;
+            
             Bounds thisBounds = thisNode.localToScene(thisNode.getBoundsInLocal());
             Bounds proximityBounds = null;
             
@@ -251,6 +254,8 @@ class PhysicsTimer extends AnimationTimer {
 
             List<Node> otherNodes = pane.quadTree.retrieve(thisNode);
             for (Node otherNode : otherNodes) {
+                if (otherNode.getParent() == null) continue;
+                
                 Bounds otherBounds = otherNode.localToScene(otherNode.getBoundsInLocal());
 
                 if (thisBounds.intersects(otherBounds)) {
