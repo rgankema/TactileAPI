@@ -19,18 +19,19 @@ import javafx.scene.input.TouchPoint;
 
 /**
  * <p>
- * An EventHandler that can be used to test TouchEvents using only a
- * regular mouse. It consumes incoming MouseEvents, and fires equivalent
- * TouchEvents. It is recommended to add this to the Scene as an EventFilter.
- * </p>
+ * An EventHandler that can be used to test TouchEvents using only a regular
+ * mouse. It consumes incoming MouseEvents, and fires equivalent TouchEvents. In
+ * contrast to regular TouchEvents, MouseToTouchMappe does not synthesize
+ * MouseEvents to go along with the TouchEvents. It is recommended to add this
+ * to the Scene as an EventFilter.
  * <p>
  * For example:
- * </p>
  * <pre>
  * {@code
  * Scene scene = new Scene(root);
  * scene.addEventFilter(new MouseToTouchMapper());
  * }</pre>
+ * <p>
  * 
  * @author Richard
  */

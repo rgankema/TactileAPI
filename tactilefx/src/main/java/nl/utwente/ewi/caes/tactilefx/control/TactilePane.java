@@ -45,17 +45,15 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * it allows users to layout the children by means of mouse and/or touch input.
  * It also has some basic "physics"-like features, such as collision detection,
  * inertia, gravity, etc.
- * </p>
- *
- * <h2>Dragging Nodes</h2>
  * <p>
+ *
+ * <h3>Dragging Nodes</h3>
  * By default, all of TactilePane's children are draggable, which means that a
  * user can drag them using mouse or touch input. This can be turned off by
  * setting the attached property {@link draggableProperty draggable} to
  * {@code false}. To prevent the user from dragging a node beyond the bounds of
  * the TactilePane, the {@link bordersCollideProperty borderCollide} property
  * can be set to {@code true}.
- * </p>
  * <p>
  * To implement dragging of Nodes, Mouse/Touch events are handled (and consumed)
  * at the draggable node. Note that this includes synthesized MouseEvents that
@@ -65,37 +63,33 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * the drag operation. The other Mouse/Touch events are ignored and not
  * consumed, which means that even though TactilePane consumes the events used
  * to drag a Node, there can still be events that bubble up.
- * </p>
  * <p>
  * Calling {@link getDragContext getDragContext} will provide information
  * relevant to the dragging operation on a node, such as the id of the touch
  * point that is being used for dragging. In {@link DragContext DragContext},
  * it's possible to bind a drag operation to a new touch point, so that another
  * touch point can take the drag operation over.
- * </p>
  * <p>
  * The moment at which Mouse/Touch Events are handled to implement dragging can
  * be altered by setting the
  * {@link dragProcessingModeProperty dragProccesingMode}. This can be set so
  * that handling (and consuming) Mouse/Touch events happens during the filter or
  * the handler stage.
- * </p>
- * <h2>Active Nodes and Events</h2>
  * <p>
+ * <h3>Active Nodes and Events</h3>
  * Apart from making Nodes draggable, TactilePane can also check if given Nodes
  * collide with each other. In order to achieve this, Nodes can be added to
  * {@link getActiveNodes getActiveNodes}. Every Node in this list will be
  * tracked by the TactilePane. When any pair of Nodes from activeNodes get close
  * to each other or collide, a TactilePaneEvent is fired.
- * </p>
- * 
- * <h2>Physics</h2>
  * <p>
+ * 
+ * <h3>Physics</h3>
  * The last main feature of TactilePane is the physics system. Nodes can be
  * given vectors which give it a force into a certain direction. This can for
  * instance be combined with the Active Node feature by making a Node A "flee"
  * from another Node B when B gets too close to A. See the code listing below:
- * </p>
+ * <p>
  * <pre>
  * {@code
  *  TactilePane tp = new TactilePane();
@@ -120,7 +114,7 @@ import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
  * Other features include things such as giving a Node A a 'bond' with another
  * Node B, so that that A will be given a vector such that it always attempts to
  * stay at a certain distance from B.
- * </p>
+ * <p>
  */
 @DefaultProperty("children")
 public class TactilePane extends Control {
