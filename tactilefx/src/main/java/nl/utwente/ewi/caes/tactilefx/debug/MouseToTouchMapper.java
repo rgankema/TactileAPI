@@ -41,18 +41,17 @@ import javafx.scene.input.TouchPoint.State;
  */
 public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
     
-    
     private boolean pressed = false;
     private boolean moved = false;
+    private boolean dragging = false;
     
     // MouseEvent parameters
-    private boolean dragging = false;
+    private PickResult pickResult;
     private boolean primaryDown = true;
     private boolean stillSincePress = true;
     
     // TouchEvent parameters
     private EventTarget target;
-    private PickResult pickResult;
     private boolean shiftDown;
     private boolean controlDown;
     private boolean altDown;
@@ -60,7 +59,7 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
     private double x, y, screenX, screenY;
     private int eventSetId = 1;
     
-    // For synthesizing MouseEvents
+    // To determine MouseEvent.MOUSE_DRAGGED events
     private long startTime = -1;
     private double startScreenX, startScreenY;
     
@@ -73,17 +72,9 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
             public void handle(long now) {
                 if (pressed) {
                     if (!moved) {
+                        // Mouse button prssed but not moving is equivalent to touch stationary
                         fireTouchEvent(State.STATIONARY, TouchEvent.TOUCH_STATIONARY);
                         moved = false;
-                    }
-                    
-                    if (!dragging && (Math.abs(screenX - startScreenX) > 5 || Math.abs(screenY - startScreenY) > 5)) {
-                        dragging = true;
-                        stillSincePress = false;
-                        primaryDown = System.currentTimeMillis() - startTime < 500;
-                        fireMouseEvent(MouseEvent.MOUSE_PRESSED);
-                        fireMouseEvent(MouseEvent.MOUSE_DRAGGED);
-                        fireMouseEvent(MouseEvent.DRAG_DETECTED);
                     }
                 }
             }
@@ -93,57 +84,76 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
 
     @Override
     public void handle(MouseEvent event) {
+        // Only map real mouse events
         if (event.isSynthesized()) return;
         
+        // Store mouse event parameters
         target = event.getTarget();
-        pickResult = event.getPickResult();
-        shiftDown = event.isShiftDown();
-        controlDown = event.isControlDown();
-        altDown = event.isAltDown();
-        metaDown = event.isMetaDown();
-        //stillSincePress = event.isStillSincePress();
-        
         x = event.getX();
         y = event.getY();
         screenX = event.getScreenX();
         screenY = event.getScreenY();
+        shiftDown = event.isShiftDown();
+        controlDown = event.isControlDown();
+        altDown = event.isAltDown();
+        metaDown = event.isMetaDown();
+        pickResult = event.getPickResult();
 
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
             startScreenX = screenX;
             startScreenY = screenY;
             
             pressed = true;
+            stillSincePress = true;
             startTime = System.currentTimeMillis();
+            eventSetId = 1;
             
+            // Mouse press is equivalent to touch press
             fireTouchEvent(State.PRESSED, TouchEvent.TOUCH_PRESSED);
+            // No mouse press is synthesized just yet, need to wait to determine
+            // whether the touch event stands for a left or right click
         }
         if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
             moved = true;
+            // Mouse drag is equivalent to touch move
             fireTouchEvent(State.MOVED, TouchEvent.TOUCH_MOVED);
+            // Fire synthesized mouse drag event
             if (dragging) {
                 fireMouseEvent(MouseEvent.MOUSE_DRAGGED);
+            } else {
+                // If the touchpoint has moved further than a certain threshold, its time to synthesize mouse pressed/dragged
+                if ((Math.abs(screenX - startScreenX) > 5 || Math.abs(screenY - startScreenY) > 5)) {
+                    dragging = true;
+                    stillSincePress = false;
+                    primaryDown = System.currentTimeMillis() - startTime < 500;
+                    // The DRAG_DETECTED event always comes after the first MOUSE_DRAGGED event, which of course comes after a MOUSE_PRESSED event
+                    fireMouseEvent(MouseEvent.MOUSE_PRESSED);
+                    fireMouseEvent(MouseEvent.MOUSE_DRAGGED);
+                    fireMouseEvent(MouseEvent.DRAG_DETECTED);
+                }
             }
         }
         if (event.getEventType() == MouseEvent.MOUSE_RELEASED) {
+            // Mouse release is equivalent to touch release
             fireTouchEvent(State.RELEASED, TouchEvent.TOUCH_RELEASED);
             
+            // If there was no dragging, mouse press still has to be synthesized
             if (!dragging) {
                 primaryDown = System.currentTimeMillis() - startTime < 500;
                 fireMouseEvent(MouseEvent.MOUSE_PRESSED);
             }
+            // Synthesize mouse release and mouse click
             fireMouseEvent(MouseEvent.MOUSE_RELEASED);
             fireMouseEvent(MouseEvent.MOUSE_CLICKED);
             
-            startTime = -1;
-            dragging = false;
             pressed = false;
-            stillSincePress = true;
-            eventSetId = 1;
+            dragging = false;
         }
         event.consume();
     }
 
-    private void fireTouchEvent(TouchPoint.State state, EventType<TouchEvent> type) {
+    // Fires a touch event based on the current state and the given TouchPoint.State and EventType
+    private void fireTouchEvent(State state, EventType<TouchEvent> type) {
         TouchPoint tp = new TouchPoint(1, state, x, y, screenX, screenY, target, null);
         List<TouchPoint> tpList = Collections.singletonList(tp);
         
@@ -151,6 +161,7 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
         Event.fireEvent(target, te);
     }
 
+    // Fires a mouse event based on the current state and the given EventType
     private void fireMouseEvent(EventType<MouseEvent> type) {
         MouseButton button = (primaryDown ? MouseButton.PRIMARY : MouseButton.SECONDARY);
         int clickCount = (type == MouseEvent.MOUSE_MOVED) ? 0 : 1;

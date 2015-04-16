@@ -1,7 +1,5 @@
 package nl.utwente.ewi.caes.tactilefx.debug;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,9 +16,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.SetChangeListener;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TouchEvent;
-import javafx.scene.input.TouchPoint;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Pane;
@@ -40,25 +36,24 @@ import nl.utwente.ewi.caes.tactilefx.control.TactilePane;
  */
 public final class DebugParent extends StackPane {
     
+    // PRIVATE FIELDS
+    
     Pane overlay = new Pane();
     Map<Integer, TouchDisplay> circleByTouchId = new TreeMap<>();
     Map<Integer, Line> lineByTouchId = new TreeMap<>();
-
     Map<Node, VectorDisplay> vectorDisplayByDraggable = new ConcurrentHashMap<>();
     Map<Node, ProximityDisplay> proximityDisplayByNode = new ConcurrentHashMap<>();
     Map<Node, BoundsDisplay> boundsDisplayByNode = new ConcurrentHashMap<>();
 
-    List<TouchPoint> touchPoints = new ArrayList<>();
-    int touchSetId = 0;
-    boolean active = false;
-
-    public DebugParent(TactilePane node) {
-        super(node);
-        initialise();
-        registerTactilePane(node);
-    }
-
-    private void initialise() {
+    // CONSTRUCTOR
+    
+    /**
+     * Initializes a new DebugParent
+     * @param tactilePane the TactilePane that needs to be debugged
+     */
+    public DebugParent(TactilePane tactilePane) {
+        super(tactilePane);
+        
         overlay.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
 
         // Overlay shouldn't receive events
@@ -68,7 +63,7 @@ public final class DebugParent extends StackPane {
 
         // Makes sure the overlay is always drawn on top of the other child
         getChildren().add(overlay);
-        getChildren().addListener((Observable value) -> {
+        getChildren().addListener((Observable v) -> {
             overlay.toFront();
         });
 
@@ -80,16 +75,19 @@ public final class DebugParent extends StackPane {
             double x = event.getTouchPoint().getSceneX();
             double y = event.getTouchPoint().getSceneY();
 
+            // Draw circle around touch point
             TouchDisplay circle = new TouchDisplay(x, y, getTouchCircleRadius(), touchId);
             circleByTouchId.put(touchId, circle);
             overlay.getChildren().add(circle);
 
+            // Draw line to event target
             Line line = new Line(x, y, bounds.getMinX(), bounds.getMinY());
             lineByTouchId.put(touchId, line);
             overlay.getChildren().add(line);
 
             circle.relocate(x, y);
 
+            // Animate TouchDisplay
             ScaleTransition st = new ScaleTransition(new Duration(200), circle);
             st.setFromX(0);
             st.setFromY(0);
@@ -148,8 +146,8 @@ public final class DebugParent extends StackPane {
             ft.play();
         });
 
+        // Update overlay for every repaint
         new AnimationTimer() {
-
             @Override
             public void handle(long arg0) {
                 for (Node node : vectorDisplayByDraggable.keySet()) {
@@ -176,16 +174,9 @@ public final class DebugParent extends StackPane {
                 }
             }
         }.start();
-    }
-    
-    // Returns a TouchPoint for a given MouseEvent
-    private TouchPoint createTouchPoint(MouseEvent event) {
-        TouchPoint tp = new TouchPoint(1, TouchPoint.State.PRESSED,
-                event.getSceneX(), event.getSceneY(), event.getScreenX(), event.getScreenY(),
-                event.getTarget(), null);
-        touchPoints.clear();
-        touchPoints.add(tp);
-        return tp;
+        
+        // Register TactilePane
+        registerTactilePane(tactilePane);
     }
     
     /**
@@ -236,6 +227,7 @@ public final class DebugParent extends StackPane {
         return touchCircleRadius;
     }
     
+    // Track every Draggable and every Active Node for this TactilePane
     private void registerTactilePane(TactilePane pane) {
         for (Node node : pane.getChildren()) {
             registerDraggable(node);
@@ -264,6 +256,7 @@ public final class DebugParent extends StackPane {
         });
     }
     
+    // Track Active Node
     private void registerActiveNode(Node node, TactilePane pane) {
         Bounds bounds = node.localToScene(node.getBoundsInLocal());
         
@@ -281,6 +274,7 @@ public final class DebugParent extends StackPane {
         proximityDisplayByNode.put(node, pd);
     }
     
+    // Stop tracking Active Node
     private void deregisterActiveNode(Node node) {
         ProximityDisplay pd = proximityDisplayByNode.remove(node);
         overlay.getChildren().remove(pd);
@@ -291,6 +285,7 @@ public final class DebugParent extends StackPane {
         }
     }
 
+    // Track Draggable
     private void registerDraggable(Node node) {
         if (!vectorDisplayByDraggable.containsKey(node)) {
             Bounds bounds = node.localToScene(node.getBoundsInLocal());
@@ -310,6 +305,7 @@ public final class DebugParent extends StackPane {
         }
     }
 
+    // Stop tracking Draggable
     private void deregisterDraggable(Node node) {
         VectorDisplay vector = vectorDisplayByDraggable.remove(node);
         if (vector != null) {
