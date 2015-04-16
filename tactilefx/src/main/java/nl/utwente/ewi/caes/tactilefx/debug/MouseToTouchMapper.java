@@ -41,6 +41,7 @@ import javafx.scene.input.TouchPoint.State;
  */
 public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
     
+    
     private boolean pressed = false;
     private boolean moved = false;
     
@@ -61,8 +62,7 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
     
     // For synthesizing MouseEvents
     private long startTime = -1;
-    
-    
+    private double startScreenX, startScreenY;
     
     /**
      * Creates a new MouseToTouchMapper
@@ -71,18 +71,20 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                if (pressed && !moved) {
-                    fireTouchEvent(State.STATIONARY, TouchEvent.TOUCH_STATIONARY);
-                }
-                moved = false;
-                
-                if (!dragging && !stillSincePress) {
-                    dragging = true;
-                    primaryDown = System.currentTimeMillis() - startTime < 500;
-                    fireMouseEvent(MouseEvent.MOUSE_PRESSED);
-                    fireMouseEvent(MouseEvent.DRAG_DETECTED);
-                } else if (dragging) {
-                    fireMouseEvent(MouseEvent.MOUSE_DRAGGED);
+                if (pressed) {
+                    if (!moved) {
+                        fireTouchEvent(State.STATIONARY, TouchEvent.TOUCH_STATIONARY);
+                        moved = false;
+                    }
+                    
+                    if (!dragging && (Math.abs(screenX - startScreenX) > 5 || Math.abs(screenY - startScreenY) > 5)) {
+                        dragging = true;
+                        stillSincePress = false;
+                        primaryDown = System.currentTimeMillis() - startTime < 500;
+                        fireMouseEvent(MouseEvent.MOUSE_PRESSED);
+                        fireMouseEvent(MouseEvent.MOUSE_DRAGGED);
+                        fireMouseEvent(MouseEvent.DRAG_DETECTED);
+                    }
                 }
             }
         };
@@ -99,7 +101,7 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
         controlDown = event.isControlDown();
         altDown = event.isAltDown();
         metaDown = event.isMetaDown();
-        stillSincePress = event.isStillSincePress();
+        //stillSincePress = event.isStillSincePress();
         
         x = event.getX();
         y = event.getY();
@@ -107,24 +109,35 @@ public final class MouseToTouchMapper implements EventHandler<MouseEvent> {
         screenY = event.getScreenY();
 
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
+            startScreenX = screenX;
+            startScreenY = screenY;
+            
             pressed = true;
             startTime = System.currentTimeMillis();
+            
             fireTouchEvent(State.PRESSED, TouchEvent.TOUCH_PRESSED);
         }
         if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
             moved = true;
             fireTouchEvent(State.MOVED, TouchEvent.TOUCH_MOVED);
+            if (dragging) {
+                fireMouseEvent(MouseEvent.MOUSE_DRAGGED);
+            }
         }
         if (event.getEventType() == MouseEvent.MOUSE_RELEASED) {
-            pressed = false;
-            startTime = -1;
-            fireTouchEvent(State.RELEASED, TouchEvent.TOUCH_PRESSED);
+            fireTouchEvent(State.RELEASED, TouchEvent.TOUCH_RELEASED);
             
-            if (event.isStillSincePress()) {
-                fireMouseEvent(MouseEvent.MOUSE_CLICKED);
+            if (!dragging) {
+                primaryDown = System.currentTimeMillis() - startTime < 500;
+                fireMouseEvent(MouseEvent.MOUSE_PRESSED);
             }
             fireMouseEvent(MouseEvent.MOUSE_RELEASED);
             fireMouseEvent(MouseEvent.MOUSE_CLICKED);
+            
+            startTime = -1;
+            dragging = false;
+            pressed = false;
+            stillSincePress = true;
             eventSetId = 1;
         }
         event.consume();
