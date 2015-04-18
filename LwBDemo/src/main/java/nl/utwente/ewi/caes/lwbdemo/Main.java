@@ -1,14 +1,10 @@
 package nl.utwente.ewi.caes.lwbdemo;
 
 import javafx.application.Application;
-import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import nl.utwente.ewi.caes.lwbdemo.ui.Bowtie;
 import nl.utwente.ewi.caes.lwbdemo.model.Function;
@@ -26,8 +22,8 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         tactilePane = new TactilePane();
+        debug = new DebugParent(tactilePane);
         root = new BorderPane();
-        debug = new DebugParent(root);
         
         // map bowtie
         VariableType a = new VariableType("a");
@@ -62,19 +58,10 @@ public class Main extends Application {
         CheckBox debugCheckBox = new CheckBox("Debug");
         debug.overlayVisibleProperty().bind(debugCheckBox.selectedProperty());
         
-        // Button for clearing touchpoints
-        Button clearTouchPointsButton = new Button("Clear TouchPoints");
-        clearTouchPointsButton.visibleProperty().bind(debug.overlayVisibleProperty());
-        clearTouchPointsButton.setOnAction(event -> {
-            debug.clearTouchPoints();
-        });
+        root.setCenter(debug);
+        root.setBottom(debugCheckBox);
         
-        root.setCenter(tactilePane);
-        root.setBottom(new FlowPane(debugCheckBox, new Separator(Orientation.VERTICAL), clearTouchPointsButton));
-        
-        debug.registerTactilePane(tactilePane);
-        
-        Scene scene = new Scene(debug, 800, 600);
+        Scene scene = new Scene(root, 800, 600);
         
         stage.setScene(scene);
         stage.show();

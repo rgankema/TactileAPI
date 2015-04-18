@@ -81,14 +81,12 @@ public class TactilePaneTest extends Application {
         enableDebug.setSelected(false);
         controlLayout.getChildren().add(enableDebug);
         
-        //root.setLeft(new Button("Loze ruimte"));
-        root.setCenter(tactilePane);
-        root.setBottom(controlLayout);
-        
         // Debug layer
-        debug = new DebugParent(root);
+        debug = new DebugParent(tactilePane);
         debug.overlayVisibleProperty().bindBidirectional(enableDebug.selectedProperty());
-        debug.registerTactilePane(tactilePane);
+        
+        root.setCenter(debug);
+        root.setBottom(controlLayout);
         
         // Key bindings
         debug.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
@@ -106,7 +104,7 @@ public class TactilePaneTest extends Application {
         	
         });
         
-        Scene scene = new Scene(debug);
+        Scene scene = new Scene(root);
         primaryStage.setFullScreen(false);
         primaryStage.setOnCloseRequest(event -> { Platform.exit(); });
         primaryStage.setScene(scene);

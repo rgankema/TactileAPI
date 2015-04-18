@@ -2,7 +2,6 @@ package nl.utwente.ewi.caes.tactiledemo;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
@@ -31,28 +30,23 @@ public class TactileDemo extends Application {
         enableDebug.setSelected(false);
         controlLayout.getChildren().add(enableDebug);
         
-        root.setCenter(tactilePane);
+        // Init Debug
+        debug = new DebugParent(tactilePane);
+        debug.overlayVisibleProperty().bindBidirectional(enableDebug.selectedProperty());
+        
+        root.setCenter(debug);
         root.setBottom(controlLayout);
         
-        // Init Debug
-        debug = new DebugParent(root);
-        debug.overlayVisibleProperty().bindBidirectional(enableDebug.selectedProperty());
-        debug.registerTactilePane(tactilePane);
-        
         // Key bindings
-        debug.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
-        	@Override
-        	public void handle(KeyEvent keyEvent){
-                if (keyEvent.getCode() == KeyCode.F11) {
-                	if (stage.isFullScreen()){
-                		stage.setFullScreen(false);
-                	} else {
-                		stage.setFullScreen(true);
-                	}
-                	keyEvent.consume();
+        root.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent keyEvent) -> {
+            if (keyEvent.getCode() == KeyCode.F11) {
+                if (stage.isFullScreen()){
+                    stage.setFullScreen(false);
+                } else {
+                    stage.setFullScreen(true);
                 }
+                keyEvent.consume();
             }
-        	
         });
         
         Scene scene = new Scene(debug);

@@ -1,13 +1,13 @@
 package nl.utwente.ewi.caes.tactilefx.control;
 
+import com.sun.javafx.css.converters.BooleanConverter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import javafx.animation.PauseTransition;
 
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
@@ -23,7 +23,9 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import javafx.css.CssMetaData;
+import javafx.css.PseudoClass;
 import javafx.css.Styleable;
+import javafx.css.StyleableBooleanProperty;
 import javafx.css.StyleableProperty;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -34,6 +36,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TouchEvent;
+import javafx.util.Duration;
 import nl.utwente.ewi.caes.tactilefx.event.TactilePaneEvent;
 import nl.utwente.ewi.caes.tactilefx.skin.TactilePaneSkin;
 
@@ -164,7 +167,28 @@ public class TactilePane extends Control {
     static BooleanProperty inUsePropertyImpl(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, IN_USE);
         if (property == null) {
-            property = new SimpleBooleanProperty(false);
+            property = new StyleableBooleanProperty(false) {
+
+                @Override 
+                public void invalidated() {
+                    node.pseudoClassStateChanged(ATTACHED_IN_USE_STATE, get());
+                }
+                
+                @Override
+                public Object getBean() {
+                    return null;
+                }
+
+                @Override
+                public String getName() {
+                    return "inUse";
+                }
+
+                @Override
+                public CssMetaData<? extends Styleable, Boolean> getCssMetaData() {
+                    return StyleableProperties.Attached.IN_USE;
+                }
+            };
             setConstraint(node, IN_USE, property);
         }
         return property;
@@ -279,7 +303,7 @@ public class TactilePane extends Control {
     public static BooleanProperty draggableProperty(Node node) {
         BooleanProperty property = (BooleanProperty) getConstraint(node, DRAGGABLE);
         if (property == null) {
-            property = new SimpleBooleanProperty(true) {
+            property = new StyleableBooleanProperty(true) {
                 @Override
                 public void set(boolean draggable) {
                     if (!draggable) {
@@ -287,6 +311,26 @@ public class TactilePane extends Control {
                         setInUse(node, false);
                     }
                     super.set(draggable);
+                }
+
+                @Override
+                public void invalidated() {
+                    node.pseudoClassStateChanged(ATTACHED_DRAGGABLE_STATE, get());
+                }
+                
+                @Override
+                public Object getBean() {
+                    return null;
+                }
+
+                @Override
+                public String getName() {
+                    return "draggable";
+                }
+
+                @Override
+                public CssMetaData<? extends Styleable, Boolean> getCssMetaData() {
+                    return StyleableProperties.Attached.DRAGGABLE;
                 }
             };
             setConstraint(node, DRAGGABLE, property);
@@ -715,6 +759,8 @@ public class TactilePane extends Control {
      */
     public TactilePane() {
         getStyleClass().setAll(DEFAULT_STYLE_CLASS);
+        // Pseudo class with default value needs to be set from constructor
+        pseudoClassStateChanged(BORDERS_COLLIDE_STATE, false);
         // Since this Control is more or less a Pane, focusTraversable should be false by default
         ((StyleableProperty<Boolean>)focusTraversableProperty()).applyStyle(null, false);
         
@@ -723,19 +769,14 @@ public class TactilePane extends Control {
             while(c.next()) {
                 for (Node node: c.getRemoved()) {
                     // Delay removal of drag event handlers, just in case all that
-                    // happened is a node.toFront() call.
-
-                    // TODO: Rewrite code so this ugly workaround isn't necessary
-                    TimerTask removeDragEventHandlers = new TimerTask() {
-                        @Override
-                        public void run() {
-                            if (node.getParent() != TactilePane.this) {
-                                removeDragEventHandlers(node);
-                            }
+                    // happened is a node.toFront() call. Ugly workaround, but I can't find a prettier solution
+                    PauseTransition holdTimer = new PauseTransition(Duration.millis(500));
+                    holdTimer.setOnFinished(e -> { 
+                        if (node.getParent() != TactilePane.this) {
+                            removeDragEventHandlers(node);
                         }
-                    };
-                    Timer timer = new Timer();
-                    timer.schedule(removeDragEventHandlers, 500);
+                    });
+                    holdTimer.playFromStart();
                 }
                 for (Node node: c.getAddedSubList()) {
                     addDragEventHandlers(node);
@@ -834,7 +875,7 @@ public class TactilePane extends Control {
         };
         
         EventHandler<MouseEvent> mouseHandler = event -> {
-            if (!isDraggable(node)) return;
+            if (!isDraggable(node) || event.isSynthesized()) return;
             
             EventType type = event.getEventType();
             
@@ -876,7 +917,7 @@ public class TactilePane extends Control {
         EventHandler<TouchEvent> touchHandler = (EventHandler<TouchEvent>) getConstraint(node, TOUCH_EVENT_HANDLER);
         EventHandler<MouseEvent> mouseHandler = (EventHandler<MouseEvent>) getConstraint(node, MOUSE_EVENT_HANDLER);
         
-        // assuming that mouseHandler will be null if touchHandler is null
+        // Assuming that mouseHandler will be null if touchHandler is null
         if (touchHandler == null) return;
         
         if (getDragProcessingMode() == EventProcessingMode.FILTER) {
@@ -913,6 +954,7 @@ public class TactilePane extends Control {
             double y = sceneY - dragContext.localY - node.getTranslateY();
 
             if (isBordersCollide()) {
+                
                 Bounds paneBounds = this.getBoundsInLocal();
                 Bounds nodeBounds = node.getBoundsInParent();
                 
@@ -1008,7 +1050,29 @@ public class TactilePane extends Control {
 
     public final BooleanProperty bordersCollideProperty() {
         if (bordersCollide == null) {
-            bordersCollide = new SimpleBooleanProperty(false);
+            bordersCollide = new StyleableBooleanProperty(false) {
+
+                @Override
+                public void invalidated() {
+                    pseudoClassStateChanged(BORDERS_COLLIDE_STATE, get());
+                }
+                
+                @Override
+                public Object getBean() {
+                    return TactilePane.this;
+                }
+
+                @Override
+                public String getName() {
+                    return PSEUDO_CLASS_BORDERS_COLLIDE;
+                }
+
+                @Override
+                public CssMetaData<? extends Styleable, Boolean> getCssMetaData() {
+                    return StyleableProperties.BORDERS_COLLIDE;
+                }
+                
+            };
         }
         return bordersCollide;
     }
@@ -1155,19 +1219,86 @@ public class TactilePane extends Control {
     // STYLESHEET HANDLING
     
     // The selector class
-    private static String DEFAULT_STYLE_CLASS = "tactile-pane";
+    private static final String DEFAULT_STYLE_CLASS = "tactilefx-tactile-pane";
+    // Only property that I feel makes sense as a pseudo class
+    private static final String PSEUDO_CLASS_BORDERS_COLLIDE = "bordersCollide";
+    // Attached pseudo class for draggable nodes
+    private static final String ATTACHED_PSEUDO_CLASS_DRAGGABLE = "tactilePaneDraggable";
+    private static final String ATTACHED_PSEUDO_CLASS_IN_USE = "tactilePaneInUse";
     
     private static final class StyleableProperties {
-        // TODO make properties stylable using CSS
+        
+        private static final CssMetaData<TactilePane, Boolean> BORDERS_COLLIDE =
+                new CssMetaData<TactilePane, Boolean>("-tactilefx-borders-collide", BooleanConverter.getInstance(), Boolean.FALSE) {
+                    
+            @Override
+            public boolean isSettable(TactilePane styleable) {
+                return styleable.bordersCollide == null || !styleable.bordersCollide.isBound();
+            }
 
+            @Override
+            public StyleableProperty<Boolean> getStyleableProperty(TactilePane styleable) {
+                return (StyleableProperty<Boolean>) styleable.bordersCollideProperty();
+            }
+        };
+        
         private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
         static {
                 final List<CssMetaData<? extends Styleable, ?>> styleables = 
                     new ArrayList<>(Control.getClassCssMetaData());
-
+                styleables.add(BORDERS_COLLIDE);
+                // Adding attached properties as if they are the TactilePane's
+                // own properties means that styling children's attached properties
+                // can simply be done from TactilePane itself.
+                styleables.addAll(Attached.STYLEABLES);
                 STYLEABLES = Collections.unmodifiableList(styleables);
         }
+        
+        
+        // Attache Styleable Properties
+        private static final class Attached {
+
+            private static final CssMetaData<Node, Boolean> DRAGGABLE
+                    = new CssMetaData<Node, Boolean>("-tactilefx-tactilepane-draggable", BooleanConverter.getInstance(), Boolean.FALSE) {
+
+                        @Override
+                        public boolean isSettable(Node styleable) {
+                            return TactilePane.draggableProperty(styleable).isBound();
+                        }
+
+                        @Override
+                        public StyleableProperty<Boolean> getStyleableProperty(Node styleable) {
+                            return (StyleableProperty<Boolean>) TactilePane.draggableProperty(styleable);
+                        }
+                    };
+
+            private static final CssMetaData<Node, Boolean> IN_USE
+                    = new CssMetaData<Node, Boolean>("-tactilefx-tactilepane-in-use", BooleanConverter.getInstance(), Boolean.FALSE) {
+
+                        @Override
+                        public boolean isSettable(Node styleable) {
+                            return false;
+                        }
+
+                        @Override
+                        public StyleableProperty<Boolean> getStyleableProperty(Node styleable) {
+                            return (StyleableProperty<Boolean>) TactilePane.inUseProperty(styleable);
+                        }
+                    };
+
+            private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+            static {
+                final List<CssMetaData<? extends Styleable, ?>> styleables
+                        = new ArrayList<>();
+                styleables.add(DRAGGABLE);
+                styleables.add(IN_USE);
+                STYLEABLES = Collections.unmodifiableList(styleables);
+            }
+        }
     }
+    
+    
     
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
         return StyleableProperties.STYLEABLES;
@@ -1180,6 +1311,15 @@ public class TactilePane extends Control {
     public List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
         return getClassCssMetaData();
     }
+    
+    // Pseudo classes
+    private static final PseudoClass BORDERS_COLLIDE_STATE =
+            PseudoClass.getPseudoClass(PSEUDO_CLASS_BORDERS_COLLIDE);
+    // Attached pseudo classes
+    private static final PseudoClass ATTACHED_DRAGGABLE_STATE =
+            PseudoClass.getPseudoClass(ATTACHED_PSEUDO_CLASS_DRAGGABLE);
+    private static final PseudoClass ATTACHED_IN_USE_STATE =
+            PseudoClass.getPseudoClass(ATTACHED_PSEUDO_CLASS_IN_USE);
     
     /**
      * {@inheritDoc}
