@@ -1247,54 +1247,41 @@ public class TactilePane extends Control {
                 final List<CssMetaData<? extends Styleable, ?>> styleables = 
                     new ArrayList<>(Control.getClassCssMetaData());
                 styleables.add(BORDERS_COLLIDE);
-                // Adding attached properties as if they are the TactilePane's
-                // own properties means that styling children's attached properties
-                // can simply be done from TactilePane itself.
-                styleables.addAll(Attached.STYLEABLES);
                 STYLEABLES = Collections.unmodifiableList(styleables);
         }
         
         
-        // Attache Styleable Properties
+        // Attached Styleable Properties. It does not actually seem to be possible
+        // to style Nodes with them, but they can still be used for pseudo classes.
         private static final class Attached {
 
             private static final CssMetaData<Node, Boolean> DRAGGABLE
                     = new CssMetaData<Node, Boolean>("-tactilefx-tactilepane-draggable", BooleanConverter.getInstance(), Boolean.FALSE) {
 
-                        @Override
-                        public boolean isSettable(Node styleable) {
-                            return TactilePane.draggableProperty(styleable).isBound();
-                        }
+                @Override
+                public boolean isSettable(Node styleable) {
+                    return TactilePane.draggableProperty(styleable).isBound();
+                }
 
-                        @Override
-                        public StyleableProperty<Boolean> getStyleableProperty(Node styleable) {
-                            return (StyleableProperty<Boolean>) TactilePane.draggableProperty(styleable);
-                        }
-                    };
+                @Override
+                public StyleableProperty<Boolean> getStyleableProperty(Node styleable) {
+                    return (StyleableProperty<Boolean>) TactilePane.draggableProperty(styleable);
+                }
+            };
 
             private static final CssMetaData<Node, Boolean> IN_USE
                     = new CssMetaData<Node, Boolean>("-tactilefx-tactilepane-in-use", BooleanConverter.getInstance(), Boolean.FALSE) {
 
-                        @Override
-                        public boolean isSettable(Node styleable) {
-                            return false;
-                        }
+                @Override
+                public boolean isSettable(Node styleable) {
+                    return false;
+                }
 
-                        @Override
-                        public StyleableProperty<Boolean> getStyleableProperty(Node styleable) {
-                            return (StyleableProperty<Boolean>) TactilePane.inUseProperty(styleable);
-                        }
-                    };
-
-            private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
-
-            static {
-                final List<CssMetaData<? extends Styleable, ?>> styleables
-                        = new ArrayList<>();
-                styleables.add(DRAGGABLE);
-                styleables.add(IN_USE);
-                STYLEABLES = Collections.unmodifiableList(styleables);
-            }
+                @Override
+                public StyleableProperty<Boolean> getStyleableProperty(Node styleable) {
+                    return (StyleableProperty<Boolean>) TactilePane.inUseProperty(styleable);
+                }
+            };
         }
     }
     
