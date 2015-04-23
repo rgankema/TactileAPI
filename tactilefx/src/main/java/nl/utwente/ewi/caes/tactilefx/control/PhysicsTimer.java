@@ -145,7 +145,7 @@ class PhysicsTimer extends AnimationTimer {
                 while(anchorNode != null && !pane.getChildren().contains(anchorNode)) {
                     anchorNode = anchorNode.getParent();
                 }
-                if (anchorNode != null && pane.getChildren().indexOf(node) < pane.getChildren().indexOf(anchorNode)) {
+                if (anchorNode != null && anchor.isToFront() && pane.getChildren().indexOf(node) < pane.getChildren().indexOf(anchorNode)) {
                     node.toFront();
                 }
                 

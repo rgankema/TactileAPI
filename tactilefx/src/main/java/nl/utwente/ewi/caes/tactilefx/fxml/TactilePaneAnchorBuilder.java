@@ -15,6 +15,7 @@ public class TactilePaneAnchorBuilder implements Builder<Anchor> {
     private double offsetX = 0;
     private double offsetY = 0;
     private Pos alignment = Pos.TOP_LEFT;
+    private boolean toFront = true;
 
     public Node getAnchorNode() {
         return anchorNode;
@@ -47,10 +48,18 @@ public class TactilePaneAnchorBuilder implements Builder<Anchor> {
     public void setAlignment(Pos alignment) {
         this.alignment = alignment;
     }
+    
+    public boolean isToFront() {
+        return toFront;
+    }
+    
+    public void setToFront(boolean toFront) {
+        this.toFront = toFront;
+    }
 
     @Override
     public Anchor build() {
-        return new Anchor(anchorNode, offsetX, offsetY, alignment);
+        return new Anchor(anchorNode, offsetX, offsetY, alignment, toFront);
     }
 
 }

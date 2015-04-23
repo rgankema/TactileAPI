@@ -27,6 +27,7 @@ public final class Anchor {
     private double offsetX;
     private double offsetY;
     private Pos alignment;
+    private boolean toFront;
 
     /**
      * Initialises an Anchor with offsets set to 0 and alignment to null.
@@ -34,7 +35,7 @@ public final class Anchor {
      * @param anchorNode the Node that acts as anchor
      */
     public Anchor(Node anchorNode) {
-        this(anchorNode, 0, 0, null);
+        this(anchorNode, 0, 0, null, true);
     }
 
     /**
@@ -46,7 +47,7 @@ public final class Anchor {
      * @param offsetY by how much the Node should be offset vertically
      */
     public Anchor(Node anchorNode, double offsetX, double offsetY) {
-        this(anchorNode, offsetX, offsetY, null);
+        this(anchorNode, offsetX, offsetY, null, true);
     }
 
     /**
@@ -56,7 +57,7 @@ public final class Anchor {
      * @param alignment the alignment of the Node relative to its anchorNode
      */
     public Anchor(Node anchorNode, Pos alignment) {
-        this(anchorNode, 0, 0, alignment);
+        this(anchorNode, 0, 0, alignment, true);
     }
 
     /**
@@ -67,7 +68,7 @@ public final class Anchor {
      * @param offsetY by how much the Node should be offset vertically
      * @param alignment the alignment of the Node relative to its anchorNode
      */
-    public Anchor(Node anchorNode, double offsetX, double offsetY, Pos alignment) {
+    public Anchor(Node anchorNode, double offsetX, double offsetY, Pos alignment, boolean toFront) {
         if (anchorNode == null) {
             throw new NullPointerException("anchorNode may not be null");
         }
@@ -76,6 +77,7 @@ public final class Anchor {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         this.alignment = (alignment == null) ? Pos.TOP_LEFT : alignment;
+        this.toFront = toFront;
     }
 
     /**
@@ -137,5 +139,23 @@ public final class Anchor {
      */
     public Pos getAlignment() {
         return alignment;
+    }
+    
+    /**
+     * Sets whether the anchored Node should be kept in the front while it's
+     * anchored.
+     * @param toFront whether the anchored Node should stay in front
+     */
+    public void setToFront(boolean toFront) {
+        this.toFront = toFront;
+    }
+    
+    /**
+     * Gets whether the anchored Node should be kept in the front while it's
+     * anchored.
+     * @return whether the anchored Node should stay in front
+     */
+    public boolean isToFront() {
+        return toFront;
     }
 }
