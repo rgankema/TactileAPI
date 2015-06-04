@@ -87,7 +87,7 @@ class QuadTree {
     }
 
     /**
-     *
+     * The bounds of the QuadTree
      */
     private ObjectProperty<Bounds> bounds;
 
@@ -106,6 +106,17 @@ class QuadTree {
                 public void set(Bounds value) {
                     super.set(value);
                     boundsChanged = true;
+                    if (children != null) {
+                        double halfWidth = getBounds().getWidth() / 2.0;
+                        double halfHeight = getBounds().getHeight() / 2.0;
+                        double x = getBounds().getMinX();
+                        double y = getBounds().getMinY();
+
+                        children[0].setBounds(new BoundingBox(x, y, halfWidth, halfHeight));
+                        children[1].setBounds(new BoundingBox(x + halfWidth, y, halfWidth, halfHeight));
+                        children[2].setBounds(new BoundingBox(x + halfWidth, y + halfHeight, halfWidth, halfHeight));
+                        children[3].setBounds(new BoundingBox(x, y + halfHeight, halfWidth, halfHeight));
+                    }
                 }
             };
         }
@@ -235,14 +246,13 @@ class QuadTree {
 
         while (iterator.hasNext()) {
             Node object = iterator.next();
+            
             Bounds bounds = object.localToScene(object.getBoundsInLocal());
             Bounds boundsAround = getProximityBounds(bounds);
 
-            if (!boundsAround.equals(proximityBoundsByObject.get(object)) || boundsChanged) {
-                iterator.remove();
-                objectsToAdd.add(object);
-                boundsToAdd.add(boundsAround);
-            }
+            iterator.remove();
+            objectsToAdd.add(object);
+            boundsToAdd.add(boundsAround);
         }
 
         boundsChanged = false;

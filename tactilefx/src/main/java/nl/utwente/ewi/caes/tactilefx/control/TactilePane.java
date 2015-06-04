@@ -688,10 +688,7 @@ public class TactilePane extends Control {
 
     static Object getConstraint(Node node, Object key) {
         if (node.hasProperties()) {
-            Object value = node.getProperties().get(key);
-            if (value != null) {
-                return value;
-            }
+            return node.getProperties().get(key);
         }
         return null;
     }
@@ -839,7 +836,8 @@ public class TactilePane extends Control {
         super.getChildren().addAll(children);
     }
     
-    // MAKING CHILDREN DRAGGABLE
+    
+    // HELP METHODS FOR CONSTRUCTOR
     
     private void addDragEventHandlers(final Node node) {
         if (getDragContext(node) != null) {

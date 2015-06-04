@@ -29,8 +29,8 @@ public class TactilePaneSkin extends SkinBase<TactilePane> {
      * Called during the layout pass of the scenegraph. 
      */
     @Override
-    protected void layoutChildren(final double contentX, final double contentY,
-            final double contentWidth, final double contentHeight) {
+    protected void layoutChildren(final double x, final double y,
+            final double w, final double h) {
         
         // Like a Pane, it will only set the size of managed, resizable content 
         // to their preferred sizes and does not do any node positioning.

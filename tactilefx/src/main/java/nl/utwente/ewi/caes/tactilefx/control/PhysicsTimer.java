@@ -2,7 +2,9 @@ package nl.utwente.ewi.caes.tactilefx.control;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.AnimationTimer;
@@ -18,9 +20,11 @@ class PhysicsTimer extends AnimationTimer {
     // Default value for force
     protected static final double DEFAULT_FORCE = 100;
     
-    final TactilePane pane;
-    final ConcurrentHashMap<Node, Point2D> locationByNode  = new ConcurrentHashMap<>();
-
+    private final TactilePane pane;
+    private final Map<Node, Point2D> locationByNode  = new ConcurrentHashMap<>();
+    private final Map<Node, Bounds> boundsByNode = new HashMap<>();
+    private final Map<Node, Bounds> proximityBoundsByNode = new HashMap<>();
+    
     PhysicsTimer(TactilePane tactilePane) {
         this.pane = tactilePane;
     }
@@ -58,17 +62,18 @@ class PhysicsTimer extends AnimationTimer {
         for (Node node: children) {
             Point2D vector = TactilePane.getVector(node);
             
-            // Multiply with FRICTION to model friction
-            vector = vector.multiply(pane.getFrictionMultiplier());
-            TactilePane.setVector(node, vector);
-            
-            // If the resulting vector is small enough, set the vector to zero vector
-            if (Math.abs(vector.magnitude()) < pane.getVectorThreshold()) {
-                vector = Point2D.ZERO;
+            if (!vector.equals(Point2D.ZERO)) {
+                // Multiply with FRICTION to model friction
+                vector = vector.multiply(pane.getFrictionMultiplier());
                 TactilePane.setVector(node, vector);
+
+                // If the resulting vector is small enough, set the vector to zero vector
+                if (Math.abs(vector.magnitude()) < pane.getVectorThreshold()) {
+                    vector = Point2D.ZERO;
+                    TactilePane.setVector(node, vector);
+                }
             }
             
-            Anchor anchor = TactilePane.getAnchor(node);
             // If the node is in use, update its vector for slide behaviour
             if (TactilePane.isInUse(node) && TactilePane.isSlideOnRelease(node)) {
                 Point2D prevLocation = locationByNode.get(node);
@@ -81,6 +86,7 @@ class PhysicsTimer extends AnimationTimer {
                 Point2D newVector = TactilePane.getVector(node).add(new Point2D(deltaX , deltaY).multiply(pane.getSlideMultiplier()));
                 TactilePane.setVector(node, newVector);
             }
+            
             // Update vector for Bonds
             for (Bond bond : TactilePane.getBonds(node)) {
                 Node other = bond.getBondNode();
@@ -100,6 +106,7 @@ class PhysicsTimer extends AnimationTimer {
                 
             }
             
+            Anchor anchor = TactilePane.getAnchor(node);
             // If the node is not actively being used and not anchored update the node's position according to vector
             if (!TactilePane.isInUse(node) && anchor == null && !vector.equals(Point2D.ZERO)) {
                 layoutNode(node, vector.multiply(TIME_STEP));
@@ -136,7 +143,7 @@ class PhysicsTimer extends AnimationTimer {
                         break;
                     case BASELINE:
                         // TODO Support Baseline alignment?
-                        break;
+                        throw new UnsupportedOperationException("TactilePane does not support baseline alignment");
                 }
                 node.setLayoutX(x);
                 node.setLayoutY(y);
@@ -240,23 +247,19 @@ class PhysicsTimer extends AnimationTimer {
             // Don't do calculations for nodes that aren't part of the scene graph
             if (thisNode.getParent() == null) continue;
             
-            Bounds thisBounds = thisNode.localToScene(thisNode.getBoundsInLocal());
+            Bounds thisBounds = getBounds(thisNode);
             Bounds proximityBounds = null;
             
             double pt = pane.getProximityThreshold();
             if (pt > 0) {
-                double x = thisBounds.getMinX() - pt;
-                double y = thisBounds.getMinY() - pt;
-                double w = thisBounds.getWidth() + pt * 2;
-                double h = thisBounds.getHeight() + pt * 2;
-                proximityBounds = new BoundingBox(x, y, w, h);
+                proximityBounds = getProximityBounds(thisNode);
             }
 
             List<Node> otherNodes = pane.quadTree.retrieve(thisNode);
             for (Node otherNode : otherNodes) {
                 if (otherNode.getParent() == null) continue;
                 
-                Bounds otherBounds = otherNode.localToScene(otherNode.getBoundsInLocal());
+                Bounds otherBounds = getBounds(otherNode);
 
                 if (thisBounds.intersects(otherBounds)) {
                     if (TactilePane.getNodesColliding(thisNode).add(otherNode)) {
@@ -291,6 +294,35 @@ class PhysicsTimer extends AnimationTimer {
                     }
                 }
             }
+            // Reset bounds caches
+            boundsByNode.clear();
+            proximityBoundsByNode.clear();
         }
+    }
+    
+    // HELP METHODS
+    
+    private Bounds getBounds(Node node) {
+        Bounds bounds = boundsByNode.get(node);
+        if (bounds == null) {
+            bounds = node.localToScene(node.getBoundsInLocal());
+            boundsByNode.put(node, bounds);
+        }
+        return bounds;
+    }
+    
+    private Bounds getProximityBounds(Node node) {
+        Bounds proximityBounds = proximityBoundsByNode.get(node);
+        if (proximityBounds == null) {
+            Bounds normalBounds = getBounds(node); 
+            double pt = pane.getProximityThreshold();
+            double x = normalBounds.getMinX() - pt;
+            double y = normalBounds.getMinY() - pt;
+            double w = normalBounds.getWidth() + pt * 2;
+            double h = normalBounds.getHeight() + pt * 2;
+            proximityBounds = new BoundingBox(x, y, w, h);
+            proximityBoundsByNode.put(node, proximityBounds);
+        }
+        return proximityBounds;
     }
 }
