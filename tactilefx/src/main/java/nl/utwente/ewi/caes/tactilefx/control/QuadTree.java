@@ -23,7 +23,6 @@ class QuadTree {
     private QuadTree parent;
     private QuadTree[] children;
     private final int level;
-    private boolean boundsChanged = false;
     private final Map<Node, Bounds> proximityBoundsByObject = new HashMap<>();
 
     /**
@@ -104,18 +103,24 @@ class QuadTree {
             bounds = new SimpleObjectProperty<Bounds>() {
                 @Override
                 public void set(Bounds value) {
-                    super.set(value);
-                    boundsChanged = true;
-                    if (children != null) {
-                        double halfWidth = getBounds().getWidth() / 2.0;
-                        double halfHeight = getBounds().getHeight() / 2.0;
-                        double x = getBounds().getMinX();
-                        double y = getBounds().getMinY();
+                    if (!value.equals(get())) {
+                        super.set(value);
+                        // Update bounds of children
+                        if (children != null) {
+                            double halfWidth = getBounds().getWidth() / 2.0;
+                            double halfHeight = getBounds().getHeight() / 2.0;
+                            double x = getBounds().getMinX();
+                            double y = getBounds().getMinY();
 
-                        children[0].setBounds(new BoundingBox(x, y, halfWidth, halfHeight));
-                        children[1].setBounds(new BoundingBox(x + halfWidth, y, halfWidth, halfHeight));
-                        children[2].setBounds(new BoundingBox(x + halfWidth, y + halfHeight, halfWidth, halfHeight));
-                        children[3].setBounds(new BoundingBox(x, y + halfHeight, halfWidth, halfHeight));
+                            children[0].setBounds(new BoundingBox(x, y, halfWidth, halfHeight));
+                            children[1].setBounds(new BoundingBox(x + halfWidth, y, halfWidth, halfHeight));
+                            children[2].setBounds(new BoundingBox(x + halfWidth, y + halfHeight, halfWidth, halfHeight));
+                            children[3].setBounds(new BoundingBox(x, y + halfHeight, halfWidth, halfHeight));
+                        }
+                        // If root, update
+                        if (parent == null) {
+                            update();
+                        }
                     }
                 }
             };
@@ -138,31 +143,31 @@ class QuadTree {
     }
 
     /**
-     * Inserts an object into the QuadTree
+     * Inserts a node into the QuadTree
      *
-     * @param object The object that is to be inserted
+     * @param node The node that is to be inserted
      */
-    public void insert(Node object) {
-        Bounds bounds = object.localToScene(object.getBoundsInLocal());
+    public void insert(Node node) {
+        Bounds bounds = node.localToScene(node.getBoundsInLocal());
         if (getProximityThreshold() > 0) {
             Bounds boundsAround = getProximityBounds(bounds);
-            insert(object, boundsAround);
+            insert(node, boundsAround);
         } else {
-            insert(object, bounds);
+            insert(node, bounds);
         }
     }
 
-    private void insert(Node object, Bounds bounds) {
+    private void insert(Node node, Bounds bounds) {
         QuadTree insertNode = getTreeNode(bounds);
         if (insertNode == this || insertNode == null) {
-            proximityBoundsByObject.put(object, bounds);
+            proximityBoundsByObject.put(node, bounds);
 
             Set<Node> objects = proximityBoundsByObject.keySet();
             if (objects.size() >= MAX_OBJECTS && this.level < MAX_DEPTH && children == null) {
                 split();
             }
         } else {
-            insertNode.insert(object, bounds);
+            insertNode.insert(node, bounds);
         }
     }
 
@@ -220,18 +225,18 @@ class QuadTree {
     }
 
     /**
-     * Removes an object from the QuadTree
+     * Removes a node from the QuadTree
      *
-     * @param object The object that is to be removed
+     * @param node The node that is to be removed
      */
-    public void remove(Node object) {
-        Bounds bounds = object.localToScene(object.getBoundsInLocal());
+    public void remove(Node node) {
+        Bounds bounds = node.localToScene(node.getBoundsInLocal());
         QuadTree removeNode = getTreeNode(getProximityBounds(bounds));
 
         if (removeNode == this || removeNode == null) {
-            proximityBoundsByObject.remove(object);
+            proximityBoundsByObject.remove(node);
         } else {
-            removeNode.remove(object);
+            removeNode.remove(node);
         }
     }
 
@@ -256,8 +261,6 @@ class QuadTree {
             boundsToAdd.add(boundsAround);
         }
 
-        boundsChanged = false;
-
         for (int i = 0; i < objectsToAdd.size(); i++) {
             insert(objectsToAdd.get(i), boundsToAdd.get(i));
         }
@@ -279,26 +282,26 @@ class QuadTree {
     }
 
     /**
-     * Retrieves all the objects that could be in the proximity (or collide
-     * with) the given object.
+     * Retrieves all the nodes that could be in the proximity (or collide
+     * with) the given node.
      *
-     * @param object The object to find neighbours for
+     * @param node The node to find neighbours for
      */
-    public List<Node> retrieve(Node object) {
-        List<Node> returnObjects = retrieve(object, new ArrayList<>());
-        returnObjects.remove(object);
+    public List<Node> retrieve(Node node) {
+        List<Node> returnObjects = retrieve(node, new ArrayList<>());
+        returnObjects.remove(node);
         return returnObjects;
     }
 
-    private List<Node> retrieve(Node object, List<Node> returnObjects) {
-        QuadTree retrieveNode = getTreeNode(proximityBoundsByObject.get(object));
+    private List<Node> retrieve(Node node, List<Node> returnObjects) {
+        QuadTree retrieveNode = getTreeNode(proximityBoundsByObject.get(node));
 
         if ((retrieveNode == this || retrieveNode == null || retrieveNode.level < this.level) && children != null) {
             for (QuadTree child : children) {
-                child.retrieve(object, returnObjects);
+                child.retrieve(node, returnObjects);
             }
         } else if (retrieveNode != null && retrieveNode.level > this.level) {
-            retrieveNode.retrieve(object, returnObjects);
+            retrieveNode.retrieve(node, returnObjects);
         }
 
         returnObjects.addAll(proximityBoundsByObject.keySet());
