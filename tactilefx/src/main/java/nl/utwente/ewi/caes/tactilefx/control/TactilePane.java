@@ -3,8 +3,10 @@ package nl.utwente.ewi.caes.tactilefx.control;
 import com.sun.javafx.css.converters.BooleanConverter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.animation.PauseTransition;
@@ -17,6 +19,8 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -32,6 +36,7 @@ import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.input.MouseEvent;
@@ -143,6 +148,7 @@ public class TactilePane extends Control {
     // Attached Properties for Nodes that are only used privately
     static final String TOUCH_EVENT_HANDLER = "tactile-pane-touch-event-handler";
     static final String MOUSE_EVENT_HANDLER = "tactile-pane-mouse-event-handler";
+    static final String DIRTY = "tactile-pane-dirty";
     
     // ATTACHED PROPERTIES
     private static void setDragContext(Node node, DragContext dragContext) {
@@ -674,6 +680,15 @@ public class TactilePane extends Control {
         return (TactilePane) getConstraint(node, TRACKER);
     }
     
+    static boolean isDirty(Node node) {
+        Boolean dirty = (Boolean) getConstraint(node, DIRTY);
+        return dirty == null || dirty;
+    }
+    
+    static void setDirty(Node node, boolean dirty) {
+        setConstraint(node, DIRTY, dirty);
+    }
+    
     // Used to attach a Property to a Node
     static void setConstraint(Node node, Object key, Object value) {
         if (value == null) {
@@ -749,6 +764,10 @@ public class TactilePane extends Control {
     final QuadTree quadTree;
     private final ObservableSet<Node> activeNodes;
     
+    private final Map<Node, List<Node>> ancestorsByNode = new HashMap<>();
+    private final Map<Node, ChangeListener<Bounds>> boundsListenerByNode = new HashMap<>();
+    private final Map<Node, ChangeListener<Parent>> parentListenerByNode = new HashMap<>();
+    
     // CONSTRUCTORS
     
     /**
@@ -801,6 +820,8 @@ public class TactilePane extends Control {
                 }
                 quadTree.insert(node);
                 setConstraint(node, TRACKER, TactilePane.this);
+                
+                startTrackingLocation(node);
             }
             else {
                 Node node = change.getElementRemoved();
@@ -819,6 +840,8 @@ public class TactilePane extends Control {
                 TactilePane.getNodesInProximity(node).clear();
                 
                 setConstraint(node, TRACKER, null);
+                
+                stopTrackingLocation(node);
             }
         });
         
@@ -977,6 +1000,31 @@ public class TactilePane extends Control {
 
     private void handleTouchReleased(Node node) {
         setInUse(node, false);
+    }
+    
+    private void startTrackingLocation(Node node) {
+        List<Node> ancestors = getAncestors(node);
+        ancestorsByNode.put(node, ancestors);
+        
+        for (Node ancestor : ancestors) {
+            ancestor.boundsInParentProperty().addListener(getBoundsListener(node));
+            ancestor.parentProperty().addListener(getParentListener(node));
+        }
+        node.boundsInParentProperty().addListener(getBoundsListener(node));
+        node.parentProperty().addListener(getParentListener(node));
+    }
+    
+    private void stopTrackingLocation(Node node) {
+        for (Node ancestor : ancestorsByNode.get(node)) {
+            ancestor.boundsInParentProperty().removeListener(getBoundsListener(node));
+            ancestor.parentProperty().removeListener(getParentListener(node));
+        }
+        node.boundsInParentProperty().removeListener(getBoundsListener(node));
+        node.parentProperty().removeListener(getParentListener(node));
+        
+        ancestorsByNode.remove(node);
+        boundsListenerByNode.remove(node);
+        parentListenerByNode.remove(node);
     }
     
     // INSTANCE PROPERTIES
@@ -1214,6 +1262,53 @@ public class TactilePane extends Control {
         return vectorThreshold;
     }
     
+    // HELPER METHODS
+    
+    // Returns all ancestors of a given node
+    private List<Node> getAncestors(Node node) {
+        List<Node> ancestors = new ArrayList<>();
+        Node parent = node.getParent();
+        
+        while (parent != null) {
+            System.out.println(parent);
+            ancestors.add(parent);
+            parent = parent.getParent();
+        }
+        
+        return ancestors;
+    }
+    
+    // Returns the bounds listener for the given node, or creates on if it doesn't exist
+    private ChangeListener<Bounds> getBoundsListener(Node node) {
+        ChangeListener<Bounds> result = boundsListenerByNode.get(node);
+        if (result == null) {
+            result = new ChangeListener<Bounds>() {
+                @Override
+                public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue) {
+                    setDirty(node, true);
+                }
+            };
+            boundsListenerByNode.put(node, result);
+        }
+        return result;
+    }
+    
+    // Returns the parent listener for the given node, or creates on if it doesn't exist
+    private ChangeListener<Parent> getParentListener(Node node) {
+        ChangeListener<Parent> result = parentListenerByNode.get(node);
+        if (result == null) {
+            result = new ChangeListener<Parent>() {
+                @Override
+                public void changed(ObservableValue<? extends Parent> observable, Parent oldValue, Parent newValue) {
+                    stopTrackingLocation(node);
+                    startTrackingLocation(node);
+                }
+            };
+            parentListenerByNode.put(node, result);
+        }
+        return result;
+    }
+    
     // STYLESHEET HANDLING
     
     // The selector class
@@ -1282,8 +1377,6 @@ public class TactilePane extends Control {
             };
         }
     }
-    
-    
     
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
         return StyleableProperties.STYLEABLES;

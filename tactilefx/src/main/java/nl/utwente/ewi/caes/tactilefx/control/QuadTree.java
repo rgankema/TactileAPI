@@ -246,6 +246,7 @@ class QuadTree {
 
         while (iterator.hasNext()) {
             Node object = iterator.next();
+            if (!TactilePane.isDirty(object)) continue;
             
             Bounds bounds = object.localToScene(object.getBoundsInLocal());
             Bounds boundsAround = getProximityBounds(bounds);

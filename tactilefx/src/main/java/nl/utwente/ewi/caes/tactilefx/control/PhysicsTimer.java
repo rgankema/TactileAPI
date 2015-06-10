@@ -232,7 +232,7 @@ class PhysicsTimer extends AnimationTimer {
             // Relocate node to the wall it collides with
             node.setLayoutX(node.getLayoutX() + deltaX);
             node.setLayoutY(node.getLayoutY() + deltaY);
-            TactilePane.setVector(node, reflectionDelta.multiply(1 / TIME_STEP).multiply(pane.getBounceMultiplier()));
+            TactilePane.setVector(node, reflectionDelta.multiply(pane.getBounceMultiplier() / TIME_STEP));
             
             // Layout the node for the remaining delta
             layoutNode(node, reflectionDelta);
@@ -294,16 +294,14 @@ class PhysicsTimer extends AnimationTimer {
                     }
                 }
             }
-            // Reset bounds caches
-            boundsByNode.clear();
-            proximityBoundsByNode.clear();
+            TactilePane.setDirty(thisNode, false);
         }
     }
     
     // HELP METHODS
     
     private Bounds getBounds(Node node) {
-        Bounds bounds = boundsByNode.get(node);
+        Bounds bounds = TactilePane.isDirty(node) ? null : boundsByNode.get(node);
         if (bounds == null) {
             bounds = node.localToScene(node.getBoundsInLocal());
             boundsByNode.put(node, bounds);
@@ -312,7 +310,7 @@ class PhysicsTimer extends AnimationTimer {
     }
     
     private Bounds getProximityBounds(Node node) {
-        Bounds proximityBounds = proximityBoundsByNode.get(node);
+        Bounds proximityBounds = TactilePane.isDirty(node) ? null : proximityBoundsByNode.get(node);
         if (proximityBounds == null) {
             Bounds normalBounds = getBounds(node); 
             double pt = pane.getProximityThreshold();
