@@ -1,12 +1,14 @@
 package nl.utwente.ewi.caes.tactilefx.control;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.AnimationTimer;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -26,6 +28,17 @@ class PhysicsTimer extends AnimationTimer {
     
     PhysicsTimer(TactilePane tactilePane) {
         this.pane = tactilePane;
+        
+        // Keep maps clean
+        pane.getChildren().addListener((ListChangeListener.Change<? extends Node> c) -> {
+            while (c.next()) {
+                for (Node node : c.getRemoved()) {
+                    boundsByNode.remove(node);
+                    proximityBoundsByNode.remove(node);
+                    locationByNode.remove(node);
+                }
+            }
+        });
     }
     
     private double accumulatedTime;
@@ -53,7 +66,8 @@ class PhysicsTimer extends AnimationTimer {
     
     private void updatePositions() {
         // Copy children to new list, so we don't get a ConcurrentModificationException when calling toFront()
-        List<Node> children = pane.getChildren();
+        List<Node> children = new ArrayList<>();
+        pane.getChildren().stream().forEach(children::add);
         
         for (Node node: children) {
             Point2D vector = TactilePane.getVector(node);
@@ -88,7 +102,7 @@ class PhysicsTimer extends AnimationTimer {
                 Node other = bond.getBondNode();
                 if (other == node) continue;
                 
-                Bounds nodeBounds = node.localToScene(node.getBoundsInLocal());
+                Bounds nodeBounds = getBounds(node);
                 Bounds otherBounds = other.localToScene(other.getBoundsInLocal());
 
                 double nodeX = nodeBounds.getMinX() + nodeBounds.getWidth() / 2;
@@ -227,7 +241,7 @@ class PhysicsTimer extends AnimationTimer {
             // Relocate node to the wall it collides with
             node.setLayoutX(node.getLayoutX() + deltaX);
             node.setLayoutY(node.getLayoutY() + deltaY);
-            TactilePane.setVector(node, reflectionDelta.multiply(1 / TIME_STEP).multiply(pane.getBounceMultiplier()));
+            TactilePane.setVector(node, reflectionDelta.multiply(pane.getBounceMultiplier() / TIME_STEP));
             
             // Layout the node for the remaining delta
             layoutNode(node, reflectionDelta);
@@ -289,16 +303,14 @@ class PhysicsTimer extends AnimationTimer {
                     }
                 }
             }
-            // Reset bounds caches
-            boundsByNode.clear();
-            proximityBoundsByNode.clear();
+            TactilePane.setDirty(thisNode, false);
         }
     }
     
     // HELP METHODS
     
     private Bounds getBounds(Node node) {
-        Bounds bounds = boundsByNode.get(node);
+        Bounds bounds = TactilePane.isDirty(node) ? null : boundsByNode.get(node);
         if (bounds == null) {
             bounds = node.localToScene(node.getBoundsInLocal());
             boundsByNode.put(node, bounds);
@@ -307,7 +319,7 @@ class PhysicsTimer extends AnimationTimer {
     }
     
     private Bounds getProximityBounds(Node node) {
-        Bounds proximityBounds = proximityBoundsByNode.get(node);
+        Bounds proximityBounds = TactilePane.isDirty(node) ? null : proximityBoundsByNode.get(node);
         if (proximityBounds == null) {
             Bounds normalBounds = getBounds(node); 
             double pt = pane.getProximityThreshold();
@@ -319,5 +331,15 @@ class PhysicsTimer extends AnimationTimer {
             proximityBoundsByNode.put(node, proximityBounds);
         }
         return proximityBounds;
+    }
+    
+    private void cleanBoundsCaches() {
+        pane.getChildren()
+                .stream()
+                .filter(TactilePane::isDirty)
+                .forEach(node -> { 
+            boundsByNode.remove(node);
+            proximityBoundsByNode.remove(node);
+        });
     }
 }

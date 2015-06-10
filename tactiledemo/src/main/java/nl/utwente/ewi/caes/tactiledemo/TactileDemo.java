@@ -49,7 +49,7 @@ public class TactileDemo extends Application {
             }
         });
         
-        Scene scene = new Scene(debug);
+        Scene scene = new Scene(root);
         stage.setFullScreen(true);
         stage.setOnCloseRequest(event -> { Platform.exit(); });
         stage.setScene(scene);
