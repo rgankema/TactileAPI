@@ -1,7 +1,6 @@
 package nl.utwente.ewi.caes.tactilefx.control;
 
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,10 +53,7 @@ class PhysicsTimer extends AnimationTimer {
     
     private void updatePositions() {
         // Copy children to new list, so we don't get a ConcurrentModificationException when calling toFront()
-        List<Node> children = new ArrayList<>();
-        pane.getChildren().stream()
-                .filter(TactilePane::isDraggable)
-                .forEach(children::add);
+        List<Node> children = pane.getChildren();
         
         for (Node node: children) {
             Point2D vector = TactilePane.getVector(node);
@@ -103,7 +99,6 @@ class PhysicsTimer extends AnimationTimer {
                 Point2D distance = new Point2D(nodeX - otherX, nodeY - otherY);
                 
                 TactilePane.setVector(node, TactilePane.getVector(node).add(distance.normalize().multiply(- bond.getForceMultiplier()*(distance.magnitude() - bond.getDistance()))));
-                
             }
             
             Anchor anchor = TactilePane.getAnchor(node);
