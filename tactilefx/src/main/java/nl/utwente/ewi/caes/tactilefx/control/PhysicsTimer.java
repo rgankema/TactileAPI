@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.AnimationTimer;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -27,6 +28,17 @@ class PhysicsTimer extends AnimationTimer {
     
     PhysicsTimer(TactilePane tactilePane) {
         this.pane = tactilePane;
+        
+        // Keep maps clean
+        pane.getChildren().addListener((ListChangeListener.Change<? extends Node> c) -> {
+            while (c.next()) {
+                for (Node node : c.getRemoved()) {
+                    boundsByNode.remove(node);
+                    proximityBoundsByNode.remove(node);
+                    locationByNode.remove(node);
+                }
+            }
+        });
     }
     
     private double accumulatedTime;
@@ -55,9 +67,7 @@ class PhysicsTimer extends AnimationTimer {
     private void updatePositions() {
         // Copy children to new list, so we don't get a ConcurrentModificationException when calling toFront()
         List<Node> children = new ArrayList<>();
-        pane.getChildren().stream()
-                .filter(TactilePane::isDraggable)
-                .forEach(children::add);
+        pane.getChildren().stream().forEach(children::add);
         
         for (Node node: children) {
             Point2D vector = TactilePane.getVector(node);
@@ -92,7 +102,7 @@ class PhysicsTimer extends AnimationTimer {
                 Node other = bond.getBondNode();
                 if (other == node) continue;
                 
-                Bounds nodeBounds = node.localToScene(node.getBoundsInLocal());
+                Bounds nodeBounds = getBounds(node);
                 Bounds otherBounds = other.localToScene(other.getBoundsInLocal());
 
                 double nodeX = nodeBounds.getMinX() + nodeBounds.getWidth() / 2;
@@ -103,7 +113,6 @@ class PhysicsTimer extends AnimationTimer {
                 Point2D distance = new Point2D(nodeX - otherX, nodeY - otherY);
                 
                 TactilePane.setVector(node, TactilePane.getVector(node).add(distance.normalize().multiply(- bond.getForceMultiplier()*(distance.magnitude() - bond.getDistance()))));
-                
             }
             
             Anchor anchor = TactilePane.getAnchor(node);
@@ -322,5 +331,15 @@ class PhysicsTimer extends AnimationTimer {
             proximityBoundsByNode.put(node, proximityBounds);
         }
         return proximityBounds;
+    }
+    
+    private void cleanBoundsCaches() {
+        pane.getChildren()
+                .stream()
+                .filter(TactilePane::isDirty)
+                .forEach(node -> { 
+            boundsByNode.remove(node);
+            proximityBoundsByNode.remove(node);
+        });
     }
 }
