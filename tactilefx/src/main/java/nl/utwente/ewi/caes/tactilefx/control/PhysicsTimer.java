@@ -87,14 +87,15 @@ class PhysicsTimer extends AnimationTimer {
             // If the node is in use, update its vector for slide behaviour
             if (TactilePane.isInUse(node) && TactilePane.isSlideOnRelease(node)) {
                 Point2D prevLocation = locationByNode.get(node);
-                
-                // Calculate change in position
-                double deltaX = node.getLayoutX() - prevLocation.getX();
-                double deltaY = node.getLayoutY() - prevLocation.getY();
-                
-                // Update vector
-                Point2D newVector = TactilePane.getVector(node).add(new Point2D(deltaX , deltaY).multiply(pane.getSlideMultiplier()));
-                TactilePane.setVector(node, newVector);
+                if (prevLocation != null) {
+                    // Calculate change in position
+                    double deltaX = node.getLayoutX() - prevLocation.getX();
+                    double deltaY = node.getLayoutY() - prevLocation.getY();
+
+                    // Update vector
+                    Point2D newVector = TactilePane.getVector(node).add(new Point2D(deltaX , deltaY).multiply(pane.getSlideMultiplier()));
+                    TactilePane.setVector(node, newVector);
+                }
             }
             
             // Update vector for Bonds

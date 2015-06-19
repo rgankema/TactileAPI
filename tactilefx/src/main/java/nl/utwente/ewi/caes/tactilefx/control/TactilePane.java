@@ -1270,7 +1270,6 @@ public class TactilePane extends Control {
         Node parent = node.getParent();
         
         while (parent != null) {
-            System.out.println(parent);
             ancestors.add(parent);
             parent = parent.getParent();
         }
