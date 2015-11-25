@@ -933,7 +933,7 @@ public class TactilePane extends Control {
             node.addEventHandler(MouseEvent.ANY, mouseHandler);
         }
     }
-    
+
     private void removeDragEventHandlers(Node node) {
         EventHandler<TouchEvent> touchHandler = (EventHandler<TouchEvent>) getConstraint(node, TOUCH_EVENT_HANDLER);
         EventHandler<MouseEvent> mouseHandler = (EventHandler<MouseEvent>) getConstraint(node, MOUSE_EVENT_HANDLER);
@@ -971,17 +971,18 @@ public class TactilePane extends Control {
     private void handleTouchMoved(Node node, double sceneX, double sceneY) {
         DragContext dragContext = getDragContext(node);
         if (getAnchor(node) == null) {
-            double x = sceneX - dragContext.localX - node.getTranslateX();
-            double y = sceneY - dragContext.localY - node.getTranslateY();
+            Point2D thisP = sceneToLocal(new Point2D(sceneX, sceneY));
+            double x = thisP.getX() - dragContext.localX - node.getTranslateX();
+            double y = thisP.getY() - dragContext.localY - node.getTranslateY();
 
             if (isBordersCollide()) {
-                
-                Bounds paneBounds = this.getBoundsInLocal();
+                // TODO: This fails when a pane has a shadow effect
+                Bounds paneBounds = this.getLayoutBounds();
                 Bounds nodeBounds = node.getBoundsInParent();
                 
                 double deltaX = node.getLayoutX() - nodeBounds.getMinX();
                 double deltaY = node.getLayoutY() - nodeBounds.getMinY();
-
+                
                 if (x - deltaX < paneBounds.getMinX()) {
                     x = paneBounds.getMinX() + deltaX;
                 } else if (x - deltaX + nodeBounds.getWidth() > paneBounds.getMaxX()) {
@@ -993,6 +994,7 @@ public class TactilePane extends Control {
                     y = paneBounds.getMaxY() - nodeBounds.getHeight() + deltaY;
                 }
             }
+            
             node.setLayoutX(x); 
             node.setLayoutY(y);
         }
